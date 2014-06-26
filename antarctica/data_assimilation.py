@@ -27,7 +27,7 @@ bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
 #mesh = MeshFactory.get_antarctica_coarse()
-mesh = Mesh('meshes/antarctica_3D_50H_mesh.xml')
+mesh = MeshFactory.get_antarctica_3D_50H()
 
 dm  = DataInput(None, measures, mesh=mesh)
 db1 = DataInput(None, bedmap1,  mesh=mesh)
@@ -39,18 +39,18 @@ dm.set_data_min('U_ob', 0.0,   0.0)
 
 db2.data['B'] = db2.data['S'] - db2.data['H']
 
-Thickness          = db2.get_spline_expression("H")
-Surface            = db2.get_spline_expression("S")
-Bed                = db2.get_spline_expression("B")
-Mask               = db2.get_nearest_expression("mask")
-SurfaceTemperature = db1.get_spline_expression("srfTemp")
-BasalHeatFlux      = db1.get_spline_expression("q_geo")
-adot               = db1.get_spline_expression("adot")
-U_observed         = dm.get_spline_expression("U_ob")
+H     = db2.get_spline_expression("H")
+S     = db2.get_spline_expression("S")
+B     = db2.get_spline_expression("B")
+M     = db2.get_nearest_expression("mask")
+T_s   = db1.get_spline_expression("srfTemp")
+SMB   = db1.get_spline_expression("q_geo")
+adot  = db1.get_spline_expression("adot")
+U_ob  = dm.get_spline_expression("U_ob")
 
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(Surface, Bed, mask=Mask, deform=True)
+model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
@@ -81,7 +81,7 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'inner_tol'           : 0.0,
-             'max_iter'            : 2
+             'max_iter'            : 1
            },
            'velocity' : 
            { 
@@ -102,8 +102,8 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'use_surface_climate' : False,
-             'T_surface'           : SurfaceTemperature,
-             'q_geo'               : BasalHeatFlux,# 0.042*60*60*24*365,
+             'T_surface'           : T_s,
+             'q_geo'               : SMB,# 0.042*60*60*24*365,
              'lateral_boundaries'  : None
            },
            'free_surface' :
@@ -131,7 +131,7 @@ config = { 'mode'                         : 'steady',
            },
            'adjoint' :
            { 
-             'alpha'               : [Thickness**2],
+             'alpha'               : [H**2],
              'beta'                : 0.0,
              'max_fun'             : 20,
              'objective_function'  : 'logarithmic',
@@ -139,8 +139,6 @@ config = { 'mode'                         : 'steady',
              'control_variable'    : None,
              'regularization_type' : 'Tikhonov'
            }}
-
-model.eps_reg = 1e-15
 
 F = solvers.SteadySolver(model,config)
 if i != 0: 
@@ -161,7 +159,7 @@ config['velocity']['use_T0']           = False
 config['adjoint']['control_variable']  = [model.beta2]
 
 A = solvers.AdjointSolver(model,config)
-A.set_target_velocity(U = U_observed)
+A.set_target_velocity(U = U_ob)
 if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
 t02 = time()
 A.solve()
