@@ -8,7 +8,9 @@ from varglas.helper               import default_nonlin_solver_params
 from varglas.utilities            import DataInput, DataOutput
 from fenics                       import *
 from time                         import time
+from termcolor                    import colored, cprint
 
+t0 = time()
 
 # get the input args :
 i = int(sys.argv[2])           # assimilation number
@@ -60,7 +62,7 @@ File(out_dir + 'ff.pvd') << model.ff
 nonlin_solver_params = default_nonlin_solver_params()
 nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
+nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
 #nonlin_solver_params['newton_solver']['linear_solver']           = 'gmres'
 #nonlin_solver_params['newton_solver']['preconditioner']          = 'hypre_amg'
@@ -144,9 +146,7 @@ F = solvers.SteadySolver(model,config)
 if i != 0: 
   File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
   config['velocity']['approximation'] = 'stokes'
-t01 = time()
 F.solve()
-tf1 = time()
 
 params = config['velocity']['newton_params']['newton_solver']
 params['relaxation_parameter']         = 1.0
@@ -161,9 +161,7 @@ config['adjoint']['control_variable']  = [model.beta2]
 A = solvers.AdjointSolver(model,config)
 A.set_target_velocity(U = U_ob)
 if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
-t02 = time()
 A.solve()
-tf2 = time()
     
 File(out_dir + 'S.xml')       << model.S
 File(out_dir + 'B.xml')       << model.B
@@ -188,11 +186,18 @@ File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
 #f.write(model.U,     'U')
 #f.write(model.eta,   'eta')
 
+tf = time()
+
 # calculate total time to compute
-s = (tf1 - t01) + (tf2 - t02)
+s = tf - t0
 m = s / 60.0
 h = m / 60.0
 s = s % 60
 m = m % 60
-print "Total time to compute: \r%02d:%02d:%02d" % (h,m,s)
+if MPI.rank(mpi_comm_world()) == 0:
+  s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
+  text = colored(s, 'red', attrs=['bold'])
+  print text
+
+
 
