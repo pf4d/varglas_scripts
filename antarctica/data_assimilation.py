@@ -56,8 +56,6 @@ model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
-File(out_dir + 'ff.pvd') << model.ff
-
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
 nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
@@ -170,6 +168,7 @@ F.solve()
 #File(out_dir + 'w.xml')       << project(model.w, model.Q)
 #File(out_dir + 'beta2.xml')   << model.beta2
 #File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
+#File(out_dir + 'ff.pvd')      << model.ff
 #
 ##XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 ##
