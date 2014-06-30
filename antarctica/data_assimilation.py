@@ -148,43 +148,43 @@ if i != 0:
   config['velocity']['approximation'] = 'stokes'
 F.solve()
 
-params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']         = 1.0
-config['velocity']['viscosity_mode']   = 'linear'
-config['velocity']['b_linear']         = model.eta
-config['enthalpy']['on']               = False
-config['surface_climate']['on']        = False
-config['coupled']['on']                = False
-config['velocity']['use_T0']           = False
-config['adjoint']['control_variable']  = [model.beta2]
-
-A = solvers.AdjointSolver(model,config)
-A.set_target_velocity(U = U_ob)
-if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
-A.solve()
-    
-File(out_dir + 'S.xml')       << model.S
-File(out_dir + 'B.xml')       << model.B
-File(out_dir + 'u.xml')       << project(model.u, model.Q)
-File(out_dir + 'v.xml')       << project(model.v, model.Q)
-File(out_dir + 'w.xml')       << project(model.w, model.Q)
-File(out_dir + 'beta2.xml')   << model.beta2
-File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-
-#XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
+#params = config['velocity']['newton_params']['newton_solver']
+#params['relaxation_parameter']         = 1.0
+#config['velocity']['viscosity_mode']   = 'linear'
+#config['velocity']['b_linear']         = model.eta
+#config['enthalpy']['on']               = False
+#config['surface_climate']['on']        = False
+#config['coupled']['on']                = False
+#config['velocity']['use_T0']           = False
+#config['adjoint']['control_variable']  = [model.beta2]
 #
-## save the state of the model :
-#if i !=0: rw = 'a'
-#else:     rw = 'w'
-#f = HDF5File(out_dir + '3D_5H_stokes.h5', rw)
-#f.write(model.mesh,  'mesh')
-#f.write(model.beta2, 'beta2')
-#f.write(model.Mb,    'Mb')
-#f.write(model.T,     'T')
-#f.write(model.S,     'S')
-#f.write(model.B,     'B')
-#f.write(model.U,     'U')
-#f.write(model.eta,   'eta')
+#A = solvers.AdjointSolver(model,config)
+#A.set_target_velocity(U = U_ob)
+#if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
+#A.solve()
+#    
+#File(out_dir + 'S.xml')       << model.S
+#File(out_dir + 'B.xml')       << model.B
+#File(out_dir + 'u.xml')       << project(model.u, model.Q)
+#File(out_dir + 'v.xml')       << project(model.v, model.Q)
+#File(out_dir + 'w.xml')       << project(model.w, model.Q)
+#File(out_dir + 'beta2.xml')   << model.beta2
+#File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
+#
+##XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
+##
+### save the state of the model :
+##if i !=0: rw = 'a'
+##else:     rw = 'w'
+##f = HDF5File(out_dir + '3D_5H_stokes.h5', rw)
+##f.write(model.mesh,  'mesh')
+##f.write(model.beta2, 'beta2')
+##f.write(model.Mb,    'Mb')
+##f.write(model.T,     'T')
+##f.write(model.S,     'S')
+##f.write(model.B,     'B')
+##f.write(model.U,     'U')
+##f.write(model.eta,   'eta')
 
 tf = time()
 
@@ -194,7 +194,7 @@ m = s / 60.0
 h = m / 60.0
 s = s % 60
 m = m % 60
-if MPI.rank(mpi_comm_world()) == 0:
+if model.MPI_rank == 0:
   s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
   text = colored(s, 'red', attrs=['bold'])
   print text
