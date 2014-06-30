@@ -20,7 +20,6 @@ dir_b = sys.argv[1] + '/0'     # directory to save
 out_dir = dir_b + str(i) + '/'
 
 set_log_active(True)
-#set_log_level(PROGRESS)
 
 thklim = 200.0
 
@@ -47,6 +46,7 @@ B     = db2.get_spline_expression("B")
 M     = db2.get_nearest_expression("mask")
 T_s   = db1.get_spline_expression("srfTemp")
 SMB   = db1.get_spline_expression("q_geo")
+#SMB   = Expression('0.042*60*60*24*365', element=model.Q.ufl_element())
 adot  = db1.get_spline_expression("adot")
 U_ob  = dm.get_spline_expression("U_ob")
 
@@ -56,7 +56,27 @@ model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
-File(out_dir + 'ff.pvd') << model.ff
+File(out_dir + 'U_ob.pvd')    << interpolate(U_ob, model.Q)
+
+# constraints on optimization for beta2 :
+b_min = interpolate(Constant(0.0), model.Q)
+class Bounds_max(Expression):
+  def eval(self, values, x):
+    if M(x[0], x[1], x[2]) > 0:
+      values[0] = DOLFIN_EPS
+    else:
+      values[0] = 20.0
+b_max = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
+
+# initial friction coef :
+class Beta_0(Expression):
+  def eval(self, values, x):
+    if M(x[0], x[1], x[2]) > 0:
+      values[0] = DOLFIN_EPS
+    else:
+      values[0] = 0.5
+beta_0 = Beta_0(element = model.Q.ufl_element())
+
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
@@ -64,8 +84,6 @@ nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
 nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
-#nonlin_solver_params['newton_solver']['linear_solver']           = 'gmres'
-#nonlin_solver_params['newton_solver']['preconditioner']          = 'hypre_amg'
 nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
 nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
 parameters['form_compiler']['quadrature_degree']                 = 2
@@ -90,11 +108,11 @@ config = { 'mode'                         : 'steady',
              'on'                  : True,
              'newton_params'       : nonlin_solver_params,
              'viscosity_mode'      : 'full',
-             'b_linear'            : None,
+             'b_linear'            : model.eta,
              'use_T0'              : True,
              'T0'                  : 268.0,
              'A0'                  : 1e-16,
-             'beta2'               : 0.5,
+             'beta2'               : beta_0,
              'r'                   : 1.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
@@ -105,7 +123,7 @@ config = { 'mode'                         : 'steady',
              'on'                  : True,
              'use_surface_climate' : False,
              'T_surface'           : T_s,
-             'q_geo'               : SMB,# 0.042*60*60*24*365,
+             'q_geo'               : SMB,
              'lateral_boundaries'  : None
            },
            'free_surface' :
@@ -133,58 +151,62 @@ config = { 'mode'                         : 'steady',
            },
            'adjoint' :
            { 
-             'alpha'               : [H**2],
-             'beta'                : 0.0,
+             'alpha'               : H**2,
              'max_fun'             : 20,
              'objective_function'  : 'logarithmic',
-             'bounds'              : [(0,20)],
-             'control_variable'    : None,
+             'bounds'              : (b_min, b_max),
+             'control_variable'    : model.beta2,
              'regularization_type' : 'Tikhonov'
            }}
 
-F = solvers.SteadySolver(model,config)
+if model.MPI_rank != 0:
+  parameters['krylov_solver']['report'] = False
+
+F = solvers.SteadySolver(model, config)
 if i != 0: 
   File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
   config['velocity']['approximation'] = 'stokes'
 F.solve()
 
-#params = config['velocity']['newton_params']['newton_solver']
-#params['relaxation_parameter']         = 1.0
-#config['velocity']['viscosity_mode']   = 'linear'
-#config['velocity']['b_linear']         = model.eta
-#config['enthalpy']['on']               = False
-#config['surface_climate']['on']        = False
-#config['coupled']['on']                = False
-#config['velocity']['use_T0']           = False
-#config['adjoint']['control_variable']  = [model.beta2]
+params = config['velocity']['newton_params']['newton_solver']
+params['relaxation_parameter']         = 0.5
+config['velocity']['viscosity_mode']   = 'linear'
+config['enthalpy']['on']               = False
+config['surface_climate']['on']        = False
+config['coupled']['on']                = False
+config['velocity']['use_T0']           = False
+
+File(out_dir + 'beta2_0.pvd') << model.beta2
+File(out_dir + 'U_ob.pvd')    << interpolate(U_ob, model.Q)
+
+A = solvers.AdjointSolver(model, config)
+A.set_target_velocity(U = U_ob)
+if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
+A.solve()
+    
+File(out_dir + 'S.xml')       << model.S
+File(out_dir + 'B.xml')       << model.B
+File(out_dir + 'u.xml')       << project(model.u, model.Q)
+File(out_dir + 'v.xml')       << project(model.v, model.Q)
+File(out_dir + 'w.xml')       << project(model.w, model.Q)
+File(out_dir + 'beta2.xml')   << model.beta2
+File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
+File(out_dir + 'ff.pvd')      << model.ff
+
+#XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
-#A = solvers.AdjointSolver(model,config)
-#A.set_target_velocity(U = U_ob)
-#if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
-#A.solve()
-#    
-#File(out_dir + 'S.xml')       << model.S
-#File(out_dir + 'B.xml')       << model.B
-#File(out_dir + 'u.xml')       << project(model.u, model.Q)
-#File(out_dir + 'v.xml')       << project(model.v, model.Q)
-#File(out_dir + 'w.xml')       << project(model.w, model.Q)
-#File(out_dir + 'beta2.xml')   << model.beta2
-#File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-#
-##XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
-##
-### save the state of the model :
-##if i !=0: rw = 'a'
-##else:     rw = 'w'
-##f = HDF5File(out_dir + '3D_5H_stokes.h5', rw)
-##f.write(model.mesh,  'mesh')
-##f.write(model.beta2, 'beta2')
-##f.write(model.Mb,    'Mb')
-##f.write(model.T,     'T')
-##f.write(model.S,     'S')
-##f.write(model.B,     'B')
-##f.write(model.U,     'U')
-##f.write(model.eta,   'eta')
+## save the state of the model :
+#if i !=0: rw = 'a'
+#else:     rw = 'w'
+#f = HDF5File(out_dir + '3D_5H_stokes.h5', rw)
+#f.write(model.mesh,  'mesh')
+#f.write(model.beta2, 'beta2')
+#f.write(model.Mb,    'Mb')
+#f.write(model.T,     'T')
+#f.write(model.S,     'S')
+#f.write(model.B,     'B')
+#f.write(model.U,     'U')
+#f.write(model.eta,   'eta')
 
 tf = time()
 
