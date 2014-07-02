@@ -27,33 +27,35 @@ measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_50H()
+mesh = MeshFactory.get_antarctica_3D_gradS()
 
 dm  = DataInput(None, measures, mesh=mesh)
 db1 = DataInput(None, bedmap1,  mesh=mesh)
 db2 = DataInput(None, bedmap2,  mesh=mesh)
 
-db2.set_data_val('H',   32767, thklim)
-db2.set_data_val('S',   32767, 0.0)
-
 db2.data['B'] = db2.data['S'] - db2.data['H']
 
-H      = db2.get_spline_expression("H")
-S      = db2.get_spline_expression("S")
-B      = db2.get_spline_expression("B")
+#db2.set_data_val('H',   32767, thklim)
+#db2.set_data_val('S',   32767, 0.0)
+
+H      = db2.get_nearest_expression("H")
+S      = db2.get_nearest_expression("S")
+B      = db2.get_nearest_expression("B")
 M      = db2.get_nearest_expression("mask")
-T_s    = db1.get_spline_expression("srfTemp")
-q_geo  = db1.get_spline_expression("q_geo")
+T_s    = db1.get_nearest_expression("srfTemp")
+q_geo  = db1.get_nearest_expression("q_geo")
 #q_geo = Expression('0.042*60*60*24*365', element=model.Q.ufl_element())
-adot   = db1.get_spline_expression("adot")
-u      = dm.get_spline_expression("vx")
-v      = dm.get_spline_expression("vy")
+adot   = db1.get_nearest_expression("adot")
+u      = dm.get_nearest_expression("vx")
+v      = dm.get_nearest_expression("vy")
 
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
+
+File(out_dir + 'U_ob.pvd') << interpolate(H, model.Q)
 
 # constraints on optimization for beta2 :
 class Bounds_max(Expression):
@@ -78,9 +80,9 @@ beta_0 = Beta_0(element = model.Q.ufl_element())
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.9
+nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 10
+nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
 nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
 nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
@@ -187,7 +189,8 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << project(model.w, model.Q)
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-File(out_dir + 'U_ob.pvd')    << project(sqrt(u**2 + v**2), model.Q)
+File(out_dir + 'U_ob.pvd')    << project(sqrt(model.u_o**2 + model.v_o**2), 
+                                         model.Q)
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
