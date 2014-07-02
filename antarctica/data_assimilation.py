@@ -27,8 +27,7 @@ measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-#mesh = MeshFactory.get_antarctica_coarse()
-mesh = MeshFactory.get_antarctica_3D_50H()
+mesh = MeshFactory.get_antarctica_3D_100H()
 
 dm  = DataInput(None, measures, mesh=mesh)
 db1 = DataInput(None, bedmap1,  mesh=mesh)
@@ -36,19 +35,19 @@ db2 = DataInput(None, bedmap2,  mesh=mesh)
 
 db2.set_data_val('H',   32767, thklim)
 db2.set_data_val('S',   32767, 0.0)
-dm.set_data_min('U_ob', 0.0,   0.0)
 
 db2.data['B'] = db2.data['S'] - db2.data['H']
 
-H     = db2.get_spline_expression("H")
-S     = db2.get_spline_expression("S")
-B     = db2.get_spline_expression("B")
-M     = db2.get_nearest_expression("mask")
-T_s   = db1.get_spline_expression("srfTemp")
-SMB   = db1.get_spline_expression("q_geo")
-#SMB   = Expression('0.042*60*60*24*365', element=model.Q.ufl_element())
-adot  = db1.get_spline_expression("adot")
-U_ob  = dm.get_spline_expression("U_ob")
+H      = db2.get_spline_expression("H")
+S      = db2.get_spline_expression("S")
+B      = db2.get_spline_expression("B")
+M      = db2.get_nearest_expression("mask")
+T_s    = db1.get_spline_expression("srfTemp")
+q_geo  = db1.get_spline_expression("q_geo")
+#q_geo = Expression('0.042*60*60*24*365', element=model.Q.ufl_element())
+adot   = db1.get_spline_expression("adot")
+u      = dm.get_spline_expression("vx")
+v      = dm.get_spline_expression("vy")
 
 model = model.Model()
 model.set_mesh(mesh)
@@ -56,31 +55,30 @@ model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
-File(out_dir + 'U_ob.pvd')    << interpolate(U_ob, model.Q)
-
 # constraints on optimization for beta2 :
-b_min = interpolate(Constant(0.0), model.Q)
 class Bounds_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = DOLFIN_EPS
+      values[0] = 1e-8
     else:
       values[0] = 20.0
-b_max = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
 
 # initial friction coef :
 class Beta_0(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = DOLFIN_EPS
+      values[0] = 1e-11
     else:
       values[0] = 0.5
+
+b_min  = interpolate(Constant(DOLFIN_EPS), model.Q)
+b_max  = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
 beta_0 = Beta_0(element = model.Q.ufl_element())
 
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
+nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.9
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
 nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
@@ -101,16 +99,16 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'inner_tol'           : 0.0,
-             'max_iter'            : 1
+             'max_iter'            : 2
            },
            'velocity' : 
            { 
              'on'                  : True,
              'newton_params'       : nonlin_solver_params,
              'viscosity_mode'      : 'full',
-             'b_linear'            : model.eta,
+             'b_linear'            : None,
              'use_T0'              : True,
-             'T0'                  : 268.0,
+             'T0'                  : model.T_w - 50.0,
              'A0'                  : 1e-16,
              'beta2'               : beta_0,
              'r'                   : 1.0,
@@ -123,7 +121,7 @@ config = { 'mode'                         : 'steady',
              'on'                  : True,
              'use_surface_climate' : False,
              'T_surface'           : T_s,
-             'q_geo'               : SMB,
+             'q_geo'               : q_geo,
              'lateral_boundaries'  : None
            },
            'free_surface' :
@@ -152,38 +150,37 @@ config = { 'mode'                         : 'steady',
            'adjoint' :
            { 
              'alpha'               : H**2,
-             'max_fun'             : 20,
+             'max_fun'             : 10,
              'objective_function'  : 'logarithmic',
              'bounds'              : (b_min, b_max),
              'control_variable'    : model.beta2,
              'regularization_type' : 'Tikhonov'
            }}
 
-if model.MPI_rank != 0:
-  parameters['krylov_solver']['report'] = False
 
 F = solvers.SteadySolver(model, config)
 if i != 0: 
   File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
-  config['velocity']['approximation'] = 'stokes'
+  File(dir_b + str(i-1) + '/T.xml')     >> model.T0
+  config['velocity']['T0'] = model.T0
+  #config['velocity']['approximation'] = 'stokes'
 F.solve()
 
 params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']         = 0.5
+params['relaxation_parameter']         = 1.0
 config['velocity']['viscosity_mode']   = 'linear'
+config['velocity']['b_linear']         = model.eta
 config['enthalpy']['on']               = False
 config['surface_climate']['on']        = False
 config['coupled']['on']                = False
 config['velocity']['use_T0']           = False
 
-File(out_dir + 'beta2_0.pvd') << model.beta2
-File(out_dir + 'U_ob.pvd')    << interpolate(U_ob, model.Q)
-
 A = solvers.AdjointSolver(model, config)
-A.set_target_velocity(U = U_ob)
+A.set_target_velocity(u=u, v=v)
 if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
 A.solve()
-    
+
+File(out_dir + 'T.xml')       << model.T
 File(out_dir + 'S.xml')       << model.S
 File(out_dir + 'B.xml')       << model.B
 File(out_dir + 'u.xml')       << project(model.u, model.Q)
@@ -191,7 +188,6 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << project(model.w, model.Q)
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-File(out_dir + 'ff.pvd')      << model.ff
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
