@@ -21,7 +21,7 @@ out_dir = dir_b + str(i) + '/'
 
 set_log_active(True)
 
-thklim = 200.0
+thklim = 10.0
 
 measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
@@ -80,7 +80,7 @@ beta_0 = Beta_0(element = model.Q.ufl_element())
 nonlin_solver_params = default_nonlin_solver_params()
 nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.9
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
+nonlin_solver_params['newton_solver']['maximum_iterations']      = 10
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
 nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
 nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
@@ -108,7 +108,7 @@ config = { 'mode'                         : 'steady',
              'viscosity_mode'      : 'full',
              'b_linear'            : None,
              'use_T0'              : True,
-             'T0'                  : model.T_w - 50.0,
+             'T0'                  : model.T_w - 10.0,
              'A0'                  : 1e-16,
              'beta2'               : beta_0,
              'r'                   : 1.0,
@@ -157,17 +157,17 @@ config = { 'mode'                         : 'steady',
              'regularization_type' : 'Tikhonov'
            }}
 
-
-F = solvers.SteadySolver(model, config)
-if i != 0: 
+if i !=0:
+  #config['velocity']['approximation']   = 'stokes'
+  config['velocity']['use_T0']           = False
   File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
-  File(dir_b + str(i-1) + '/T.xml')     >> model.T0
-  config['velocity']['T0'] = model.T0
-  #config['velocity']['approximation'] = 'stokes'
+  File(dir_b + str(i-1) + '/T.xml')     >> model.T
+F = solvers.SteadySolver(model, config)
 F.solve()
 
 params = config['velocity']['newton_params']['newton_solver']
 params['relaxation_parameter']         = 1.0
+params['maximum_iterations']           = 3
 config['velocity']['viscosity_mode']   = 'linear'
 config['velocity']['b_linear']         = model.eta
 config['enthalpy']['on']               = False
@@ -187,6 +187,7 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << project(model.w, model.Q)
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
+File(out_dir + 'U_ob.pvd')    << project(sqrt(u**2 + v**2), model.Q)
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
