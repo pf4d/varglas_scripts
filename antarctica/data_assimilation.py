@@ -177,7 +177,6 @@ config['velocity']['use_T0']           = False
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
-if i != 0: File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
 A.solve()
 
 File(out_dir + 'T.xml')       << model.T
@@ -194,7 +193,7 @@ File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
 ## save the state of the model :
 #if i !=0: rw = 'a'
 #else:     rw = 'w'
-#f = HDF5File(out_dir + '3D_5H_stokes.h5', rw)
+#f = HDF5File(mesh.mpi_comm(), out_dir + '3D_5H_stokes.h5', rw)
 #f.write(model.mesh,  'mesh')
 #f.write(model.beta2, 'beta2')
 #f.write(model.Mb,    'Mb')
