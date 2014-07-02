@@ -27,7 +27,7 @@ measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_100H()
+mesh = MeshFactory.get_antarctica_3D_50H()
 
 dm  = DataInput(None, measures, mesh=mesh)
 db1 = DataInput(None, bedmap1,  mesh=mesh)
