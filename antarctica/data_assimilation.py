@@ -21,7 +21,7 @@ out_dir = dir_b + str(i) + '/'
 
 set_log_active(True)
 
-thklim = 10.0
+thklim = 100.0
 
 measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
@@ -34,9 +34,8 @@ db1 = DataInput(None, bedmap1,  mesh=mesh)
 db2 = DataInput(None, bedmap2,  mesh=mesh)
 
 db2.data['B'] = db2.data['S'] - db2.data['H']
-
-#db2.set_data_val('H',   32767, thklim)
-#db2.set_data_val('S',   32767, 0.0)
+db2.set_data_val('H', 32767, thklim)
+db2.data['S'] = db2.data['B'] + db2.data['H']
 
 H      = db2.get_nearest_expression("H")
 S      = db2.get_nearest_expression("S")
@@ -48,6 +47,7 @@ q_geo  = db1.get_nearest_expression("q_geo")
 adot   = db1.get_nearest_expression("adot")
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
+U_ob   = dm.get_nearest_expression("U_ob")
 
 model = model.Model()
 model.set_mesh(mesh)
@@ -55,13 +55,13 @@ model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
-File(out_dir + 'U_ob.pvd') << interpolate(H, model.Q)
+File(out_dir + 'H.pvd') << interpolate(H, model.Q)
 
 # constraints on optimization for beta2 :
 class Bounds_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = 1e-8
+      values[0] = 2 * DOLFIN_EPS
     else:
       values[0] = 20.0
 
@@ -69,11 +69,11 @@ class Bounds_max(Expression):
 class Beta_0(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = 1e-11
+      values[0] = DOLFIN_EPS
     else:
-      values[0] = 0.5
+      values[0] = DOLFIN_EPS
 
-b_min  = interpolate(Constant(DOLFIN_EPS), model.Q)
+b_min  = interpolate(Constant(0.0), model.Q)
 b_max  = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
 beta_0 = Beta_0(element = model.Q.ufl_element())
 
@@ -82,7 +82,7 @@ beta_0 = Beta_0(element = model.Q.ufl_element())
 nonlin_solver_params = default_nonlin_solver_params()
 nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
+nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
 nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
 nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
@@ -101,7 +101,7 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'inner_tol'           : 0.0,
-             'max_iter'            : 2
+             'max_iter'            : 1
            },
            'velocity' : 
            { 
@@ -184,13 +184,12 @@ A.solve()
 File(out_dir + 'T.xml')       << model.T
 File(out_dir + 'S.xml')       << model.S
 File(out_dir + 'B.xml')       << model.B
-File(out_dir + 'u.xml')       << project(model.u, model.Q)
-File(out_dir + 'v.xml')       << project(model.v, model.Q)
-File(out_dir + 'w.xml')       << project(model.w, model.Q)
+File(out_dir + 'u.xml')       << project(model.u, model.Q) 
+File(out_dir + 'v.xml')       << project(model.v, model.Q) 
+File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-File(out_dir + 'U_ob.pvd')    << project(sqrt(model.u_o**2 + model.v_o**2), 
-                                         model.Q)
+File(out_dir + 'U_ob.pvd')    << interpolate(U_ob, model.Q)
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
