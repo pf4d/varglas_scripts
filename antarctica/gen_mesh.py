@@ -26,7 +26,7 @@ db2.data['ref'] = db2.data['H'] / gS_n
 # generate the contour :
 m = MeshGenerator(db2, 'mesh', '')
 
-m.create_contour('H', zero_cntr=350.0, skip_pts=500)
+m.create_contour('mask', zero_cntr=1, skip_pts=2)
 m.eliminate_intersections(dist=40)
 #m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
@@ -39,11 +39,11 @@ m.close_file()
 thklim = 100.0
 db2.set_data_min('ref', boundary=thklim, val=thklim)
 
-# plot to check :
-imshow(db2.data['ref'][::-1,:])
-colorbar()
-tight_layout()
-show()
+## plot to check :
+#imshow(db2.data['mask'][::-1,:])
+#colorbar()
+#tight_layout()
+#show()
 
 ref_bm = MeshRefiner(db2, 'ref', gmsh_file_name='mesh')
 
@@ -64,7 +64,7 @@ ref_bm = MeshRefiner(db2, 'ref', gmsh_file_name='mesh')
 
 #===============================================================================
 # refine on thickness :
-a,aid = ref_bm.add_static_attractor(300)
+a,aid = ref_bm.add_static_attractor(400)
 #H     = dbm.data['H']
 #a,aid = ref_bm.add_linear_attractor(0, H.min(), H.max(), inv=False, 
 #                                    hard_cut=False)
