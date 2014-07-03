@@ -5,22 +5,28 @@ from pylab                     import *
 
 #===============================================================================
 # data preparation :
-
 thklim = 0.0
 
 # create meshgrid for contour :
 bedmap2 = DataFactory.get_bedmap2()
 
 # process the data :
-dbm = DataInput(None, bedmap2, gen_space=False)
-dbm.set_data_val("H", 32767, thklim)
+db2 = DataInput(None, bedmap2, gen_space=False)
+db2.set_data_val("H", 32767, thklim)
+db2.set_data_val('S', 32767, 0.0)
 
+db2.data['B'] = db2.data['S'] - db2.data['H']
+
+gradS = gradient(db2.data['S'])
+gS_n  = sqrt(gradS[0]**2 + gradS[1]**2) + 1
+
+db2.data['ref'] = db2.data['H'] / gS_n
 
 #===============================================================================
 # generate the contour :
-m = MeshGenerator(dbm, 'mesh', '')
+m = MeshGenerator(db2, 'mesh', '')
 
-m.create_contour('H',    zero_cntr=200.0, skip_pts=2)
+m.create_contour('mask', zero_cntr=1, skip_pts=2)
 m.eliminate_intersections(dist=40)
 #m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
@@ -30,14 +36,16 @@ m.close_file()
 
 #===============================================================================
 # refine :
-dbm.set_data_min('H', boundary=thklim, val=2000.0)
+thklim = 100.0
+db2.set_data_min('ref', boundary=thklim, val=thklim)
 
 ## plot to check :
-#imshow(dbm.data['H'][::-1,:])
+#imshow(db2.data['mask'][::-1,:])
 #colorbar()
+#tight_layout()
 #show()
 
-ref_bm = MeshRefiner(dbm, 'H', gmsh_file_name='mesh')   # thickness
+ref_bm = MeshRefiner(db2, 'ref', gmsh_file_name='mesh')
 
 
 #===============================================================================
@@ -56,7 +64,7 @@ ref_bm = MeshRefiner(dbm, 'H', gmsh_file_name='mesh')   # thickness
 
 #===============================================================================
 # refine on thickness :
-a,aid = ref_bm.add_static_attractor(100)
+a,aid = ref_bm.add_static_attractor(400)
 #H     = dbm.data['H']
 #a,aid = ref_bm.add_linear_attractor(0, H.min(), H.max(), inv=False, 
 #                                    hard_cut=False)
