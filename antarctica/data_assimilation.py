@@ -21,13 +21,13 @@ out_dir = dir_b + str(i) + '/'
 
 set_log_active(True)
 
-thklim = 100.0
+thklim = 1.0
 
 measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_gradS()
+mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
 
 dm  = DataInput(None, measures, mesh=mesh)
 db1 = DataInput(None, bedmap1,  mesh=mesh)
@@ -43,11 +43,9 @@ B      = db2.get_nearest_expression("B")
 M      = db2.get_nearest_expression("mask")
 T_s    = db1.get_nearest_expression("srfTemp")
 q_geo  = db1.get_nearest_expression("q_geo")
-#q_geo = Expression('0.042*60*60*24*365', element=model.Q.ufl_element())
 adot   = db1.get_nearest_expression("adot")
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
-U_ob   = dm.get_nearest_expression("U_ob")
 
 model = model.Model()
 model.set_mesh(mesh)
@@ -55,15 +53,13 @@ model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
-File(out_dir + 'H.pvd') << interpolate(H, model.Q)
-
 # constraints on optimization for beta2 :
 class Bounds_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = 2 * DOLFIN_EPS
     else:
-      values[0] = 20.0
+      values[0] = 1000.0
 
 # initial friction coef :
 class Beta_0(Expression):
@@ -71,7 +67,7 @@ class Beta_0(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = DOLFIN_EPS
     else:
-      values[0] = DOLFIN_EPS
+      values[0] = 1
 
 b_min  = interpolate(Constant(0.0), model.Q)
 b_max  = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
@@ -151,7 +147,7 @@ config = { 'mode'                         : 'steady',
            },
            'adjoint' :
            { 
-             'alpha'               : H**2,
+             'alpha'               : 0.0,#H**2,
              'max_fun'             : 10,
              'objective_function'  : 'logarithmic',
              'bounds'              : (b_min, b_max),
@@ -164,6 +160,7 @@ if i !=0:
   config['velocity']['use_T0']           = False
   File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
   File(dir_b + str(i-1) + '/T.xml')     >> model.T
+
 F = solvers.SteadySolver(model, config)
 F.solve()
 
@@ -189,7 +186,6 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-File(out_dir + 'U_ob.pvd')    << interpolate(U_ob, model.Q)
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
