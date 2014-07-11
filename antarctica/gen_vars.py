@@ -41,6 +41,7 @@ model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
+model.calculate_boundaries()
 model.initialize_variables()
 
 # save the mesh and subdomains :
@@ -49,15 +50,15 @@ File(out_dir + 'flat_mesh.xml')  << model.flat_mesh
 File(out_dir + 'ff.xml')         << model.ff
 File(out_dir + 'ff_flat.xml')    << model.ff_flat
 
-# save the state of the model :
-File(out_dir + 'H.xml')     << H
-File(out_dir + 'S.xml')     << model.S
-File(out_dir + 'B.xml')     << model.B
-File(out_dir + 'T_s.xml')   << T_s
-File(out_dir + 'q_geo.xml') << q_geo
-File(out_dir + 'adot.xml')  << adot
-File(out_dir + 'u_obs.xml') << u
-File(out_dir + 'v_obs.xml') << v
+## save the state of the model :
+#File(out_dir + 'H.xml')     << H
+#File(out_dir + 'S.xml')     << model.S
+#File(out_dir + 'B.xml')     << model.B
+#File(out_dir + 'T_s.xml')   << T_s
+#File(out_dir + 'q_geo.xml') << q_geo
+#File(out_dir + 'adot.xml')  << adot
+#File(out_dir + 'u_obs.xml') << u
+#File(out_dir + 'v_obs.xml') << v
 
 
 

@@ -47,10 +47,18 @@ adot   = db1.get_nearest_expression("adot")
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
 
+# load the mesh and subdomains :
+mesh      = Mesh(in_dir + 'mesh.xml')
+flat_mesh = Mesh(in_dir + 'flat_mesh.xml')
+ff        = MeshFunction('size_t', mesh,      in_dir + 'ff.xml')
+ff_flat   = MeshFunction('size_t', flat_mesh, in_dir + 'ff_flat.xml')
+
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B, mask=M, deform=True)
 model.set_parameters(pc.IceParameters())
+model.set_subdomain(mesh, flat_mesh, ff, ff_flat)
+#model.calculate_boundaries()
 model.initialize_variables()
 
 # constraints on optimization for beta2 :
@@ -67,7 +75,7 @@ class Beta_0(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = DOLFIN_EPS
     else:
-      values[0] = 1
+      values[0] = 0.5
 
 b_min  = interpolate(Constant(0.0), model.Q)
 b_max  = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
