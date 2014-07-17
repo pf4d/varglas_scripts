@@ -13,7 +13,7 @@ set_log_active(True)
 
 thklim = 1.0
 
-measures  = DataFactory.get_ant_measures(res=900)
+measures  = DataFactory.get_ant_measures(res=900)  # res is 900 or 450
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
@@ -27,15 +27,15 @@ db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
 db2.data['S'] = db2.data['B'] + db2.data['H']
 
-H     = db2.get_interpolation("H")
 S     = db2.get_spline_expression("S")
 B     = db2.get_spline_expression("B")
 M     = db2.get_nearest_expression("mask")
-T_s   = db1.get_interpolation("srfTemp")
-q_geo = db1.get_interpolation("q_geo")
-adot  = db1.get_interpolation("adot")
-u     = dm.get_interpolation("vx")
-v     = dm.get_interpolation("vy")
+#H     = db2.get_interpolation("H")
+#T_s   = db1.get_interpolation("srfTemp")
+#q_geo = db1.get_interpolation("q_geo")
+#adot  = db1.get_interpolation("adot")
+#u     = dm.get_interpolation("vx")
+#v     = dm.get_interpolation("vy")
 
 model = model.Model()
 model.set_mesh(mesh)

@@ -18,6 +18,7 @@ dir_b = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
+in_dir  = 'vars/'
 
 set_log_active(True)
 
@@ -28,6 +29,7 @@ bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
 mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+#mesh = MeshFactory.get_antarctica_3D_gradS_crude()
 
 dm  = DataInput(None, measures, mesh=mesh)
 db1 = DataInput(None, bedmap1,  mesh=mesh)
@@ -47,18 +49,11 @@ adot   = db1.get_nearest_expression("adot")
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
 
-# load the mesh and subdomains :
-mesh      = Mesh(in_dir + 'mesh.xml')
-flat_mesh = Mesh(in_dir + 'flat_mesh.xml')
-ff        = MeshFunction('size_t', mesh,      in_dir + 'ff.xml')
-ff_flat   = MeshFunction('size_t', flat_mesh, in_dir + 'ff_flat.xml')
-
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B, mask=M, deform=True)
+model.set_geometry(S, B,deform=True)
 model.set_parameters(pc.IceParameters())
-model.set_subdomain(mesh, flat_mesh, ff, ff_flat)
-#model.calculate_boundaries()
+model.calculate_boundaries(mask=M, adot=adot)
 model.initialize_variables()
 
 # constraints on optimization for beta2 :
@@ -67,7 +62,7 @@ class Bounds_max(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = 2 * DOLFIN_EPS
     else:
-      values[0] = 1000.0
+      values[0] = 100000.0
 
 # initial friction coef :
 class Beta_0(Expression):
@@ -75,12 +70,11 @@ class Beta_0(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = DOLFIN_EPS
     else:
-      values[0] = 0.5
+      values[0] = 4
 
 b_min  = interpolate(Constant(0.0), model.Q)
 b_max  = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
 beta_0 = Beta_0(element = model.Q.ufl_element())
-
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
@@ -120,7 +114,8 @@ config = { 'mode'                         : 'steady',
              'r'                   : 1.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
-             'boundaries'          : None
+             'boundaries'          : None,
+             'log'                 : True
            },
            'enthalpy' : 
            { 
@@ -128,7 +123,8 @@ config = { 'mode'                         : 'steady',
              'use_surface_climate' : False,
              'T_surface'           : T_s,
              'q_geo'               : q_geo,
-             'lateral_boundaries'  : None
+             'lateral_boundaries'  : None,
+             'log'                 : False
            },
            'free_surface' :
            { 
@@ -141,8 +137,8 @@ config = { 'mode'                         : 'steady',
            'age' : 
            { 
              'on'                  : False,
-             'use_smb_for_ela'     : False,
-             'ela'                 : None,
+             'use_smb_for_ela'     : True,
+             'ela'                 : 750,
            },
            'surface_climate' : 
            { 
@@ -156,7 +152,7 @@ config = { 'mode'                         : 'steady',
            'adjoint' :
            { 
              'alpha'               : 0.0,#H**2,
-             'max_fun'             : 10,
+             'max_fun'             : 20,
              'objective_function'  : 'logarithmic',
              'bounds'              : (b_min, b_max),
              'control_variable'    : model.beta2,
