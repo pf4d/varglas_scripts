@@ -31,10 +31,10 @@ measure = DataFactory.get_ant_measures()
 
 # process the data :
 dbm = DataInput(None, measure, gen_space=False)
-#dbm.set_data_max('U_ob', boundary=50.0, val=50.0)
-dbm.set_data_min('U_ob', boundary=49.9, val=20000.0)
+#dbm.set_data_max('U_ob', boundary=50.0, val=5000.0)
+#dbm.set_data_min('U_ob', boundary=49.9, val=20000.0)
 
-#dbm.data['U_ob'] = dbm.data['U_ob'] + 1
+#dbm.data['U_ob'] = log(dbm.data['U_ob'] + 1)
 
 
 #===============================================================================
@@ -77,8 +77,8 @@ ref_bm = MeshRefiner(dbm, 'U_ob', gmsh_file_name='mesh')
 
 #===============================================================================
 # refine on thickness :
-a,aid = ref_bm.add_static_attractor(10, inv=False)
-#a,aid = ref_bm.add_linear_attractor(log(1), 30000, 300000, inv=True) 
+#a,aid = ref_bm.add_static_attractor()
+a,aid = ref_bm.add_linear_attractor(log(1), 5000, 20000, inv=True) 
 ref_bm.set_background_field(aid)
 
 
