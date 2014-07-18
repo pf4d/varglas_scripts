@@ -46,6 +46,7 @@ M      = db2.get_nearest_expression("mask")
 T_s    = db1.get_nearest_expression("srfTemp")
 q_geo  = db1.get_nearest_expression("q_geo")
 adot   = db1.get_nearest_expression("adot")
+U_ob   = dm.get_projection("U_ob", near=True)
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
 
@@ -111,7 +112,9 @@ config = { 'mode'                         : 'steady',
              'T0'                  : model.T_w - 10.0,
              'A0'                  : 1e-16,
              'beta2'               : beta_0,
-             'r'                   : 1.0,
+             'init_beta_from_U_ob' : True,
+             'U_ob'                : U_ob,
+             'r'                   : 0.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
              'boundaries'          : None,
@@ -151,9 +154,11 @@ config = { 'mode'                         : 'steady',
            },
            'adjoint' :
            { 
-             'alpha'               : 0.0,#H**2,
+             'alpha'               : 1e-7,
+             'gamma1'              : 1.0,
+             'gamma2'              : 100.0,
              'max_fun'             : 20,
-             'objective_function'  : 'logarithmic',
+             'objective_function'  : 'log_lin_hybrid',
              'bounds'              : (b_min, b_max),
              'control_variable'    : model.beta2,
              'regularization_type' : 'Tikhonov'
@@ -162,10 +167,10 @@ config = { 'mode'                         : 'steady',
 if i !=0:
   #config['velocity']['approximation']   = 'stokes'
   config['velocity']['use_T0']           = False
-  File(dir_b + str(i-1) + '/beta2.xml') >> model.beta2
   File(dir_b + str(i-1) + '/T.xml')     >> model.T
 
 F = solvers.SteadySolver(model, config)
+File(out_dir + 'beta_0.pvd') << model.beta2
 F.solve()
 
 params = config['velocity']['newton_params']['newton_solver']
