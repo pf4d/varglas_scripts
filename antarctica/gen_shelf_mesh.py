@@ -32,26 +32,12 @@ colorbar()
 tight_layout()
 show()
 
-#===============================================================================
-# data preparation :
-thklim = 0.0
-
-# create meshgrid for contour :
-measure = DataFactory.get_ant_measures()
-
-# process the data :
-dbm = DataInput(measure, gen_space=False)
-#dbm.set_data_max('U_ob', boundary=50.0, val=5000.0)
-#dbm.set_data_min('U_ob', boundary=49.9, val=20000.0)
-
-#dbm.data['U_ob'] = log(dbm.data['U_ob'] + 1)
-
 
 #===============================================================================
 # generate the contour :
 m = MeshGenerator(db2, 'mesh', '')
 
-m.create_contour('mask', zero_cntr=1, skip_pts=20)
+m.create_contour('mask', zero_cntr=1, skip_pts=2)
 m.eliminate_intersections(dist=40)
 m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
@@ -61,40 +47,21 @@ m.close_file()
 
 #===============================================================================
 # refine :
-#thklim = 100.0
-#db2.set_data_min('ref', boundary=thklim, val=thklim)
+thklim = 100.0
+db2.set_data_min('H', boundary=thklim, val=thklim)
 
-## plot to check :
-#imshow(dbm.data['U_ob'][::-1,:])
-#colorbar()
-#tight_layout()
-#show()
-
-ref_bm = MeshRefiner(dbm, 'U_ob', gmsh_file_name='mesh')
-
-
-#===============================================================================
-## refine on velocity and divide using inverse option :
-#lmax = 70000
-#lmin = 2000
-#
-#a1,a1id = ref_sr.add_linear_attractor(log(1.0), lmin, lmax, inv=True)
-#a2,a2id = ref_sr.add_linear_attractor(log(1.0), lmin, lmax, inv=False)
-#
-#m1  = ref_sr.add_min_field([a1.op, a2.op])
-#ref_sr.set_background_field(mid)
+ref_b2 = MeshRefiner(db2, 'H', gmsh_file_name='mesh')
 
 
 #===============================================================================
 # refine on thickness :
-#a,aid = ref_bm.add_static_attractor()
-a,aid = ref_bm.add_linear_attractor(log(1), 5000, 20000, inv=True) 
-ref_bm.set_background_field(aid)
+a,aid = ref_b2.add_static_attractor(10)
+ref_b2.set_background_field(aid)
 
 
 #===============================================================================
 # finish stuff up :
-ref_bm.finish(gui=False)
+ref_b2.finish(gui=False)
 
 
 
