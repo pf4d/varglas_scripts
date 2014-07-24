@@ -12,8 +12,8 @@ thklim = 0.0
 bamber   = DataFactory.get_bamber(thklim = thklim)
 searise  = DataFactory.get_searise(thklim = thklim)
 
-dsr  = DataInput(None, searise, gen_space=False)
-dbm  = DataInput(None, bamber,  gen_space=False)
+dsr  = DataInput(searise, gen_space=False)
+dbm  = DataInput(bamber,  gen_space=False)
 
 
 #===============================================================================

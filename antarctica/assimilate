@@ -4,6 +4,8 @@
 # second arg : number of processors
 # third arg  : output directory
 
+orte-clean;
+
 for ((i=0; i <= $1; i++)); do
   mkdir -p $3/0$i;
   rm -rf $3/0$i/*.*;

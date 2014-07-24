@@ -31,9 +31,9 @@ bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
 #mesh = MeshFactory.get_antarctica_3D_gradS_crude()
 
-dm  = DataInput(None, measures, mesh=mesh)
-db1 = DataInput(None, bedmap1,  mesh=mesh)
-db2 = DataInput(None, bedmap2,  mesh=mesh)
+dm  = DataInput(measures, mesh=mesh)
+db1 = DataInput(bedmap1,  mesh=mesh)
+db2 = DataInput(bedmap2,  mesh=mesh)
 
 db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
@@ -73,9 +73,9 @@ class Beta_0(Expression):
     else:
       values[0] = 4
 
-b_min  = interpolate(Constant(0.0), model.Q)
-b_max  = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
-beta_0 = Beta_0(element = model.Q.ufl_element())
+beta_min = interpolate(Constant(0.0), model.Q)
+beta_max = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
+beta_0   = Beta_0(element = model.Q.ufl_element())
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
@@ -156,10 +156,10 @@ config = { 'mode'                         : 'steady',
            { 
              'alpha'               : 1e-7,
              'gamma1'              : 1.0,
-             'gamma2'              : 100.0,
+             'gamma2'              : 10.0,
              'max_fun'             : 20,
              'objective_function'  : 'log_lin_hybrid',
-             'bounds'              : (b_min, b_max),
+             'bounds'              : (beta_min, beta_max),
              'control_variable'    : model.beta2,
              'regularization_type' : 'Tikhonov'
            }}
@@ -173,15 +173,25 @@ F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta_0.pvd') << model.beta2
 F.solve()
 
+b_shf = project(model.b, model.Q)
+b_gnd = b_shf.copy()
+model.print_min_max(b_shf, 'b')
+
 params = config['velocity']['newton_params']['newton_solver']
 params['relaxation_parameter']         = 1.0
-params['maximum_iterations']           = 3
+params['maximum_iterations']           = 16
+#config['velocity']['viscosity_mode']   = 'shelf_control'
 config['velocity']['viscosity_mode']   = 'linear'
 config['velocity']['b_linear']         = model.eta
+config['velocity']['b_linear_shf']     = b_shf
+config['velocity']['b_linear_gnd']     = b_gnd
 config['enthalpy']['on']               = False
 config['surface_climate']['on']        = False
 config['coupled']['on']                = False
 config['velocity']['use_T0']           = False
+#config['adjoint']['alpha']             = [1e-7, 0]
+#config['adjoint']['bounds']            = [(beta_min, beta_max), (0, 1e16)]
+#config['adjoint']['control_variable']  = [model.beta2, b_shf]
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
@@ -195,6 +205,9 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
+File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
+#File(out_dir + 'b_shf.pvd')   << model.b_shf
+#File(out_dir + 'b_gnd.pvd')   << model.b_shf
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
