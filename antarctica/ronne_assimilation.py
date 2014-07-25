@@ -28,7 +28,7 @@ measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_ronne_3D_10H()
+mesh = MeshFactory.get_ronne_3D_50H()
 
 dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
@@ -155,14 +155,18 @@ F.solve()
 b_shf = project(model.b, model.Q)
 b_gnd = b_shf.copy()
 model.print_min_max(b_shf, 'b')
-b_min = b_shf.vector().min() - 1e5
-b_max = b_shf.vector().max() + 1e5
+b_min = b_shf.vector().min()
+b_max = b_shf.vector().max()
+
+model.b = project(model.b, model.Q)
 
 params = config['velocity']['newton_params']['newton_solver']
 params['relaxation_parameter']         = 0.6
 params['maximum_iterations']           = 10
-config['velocity']['viscosity_mode']   = 'shelf_control'
+#config['velocity']['viscosity_mode']   = 'shelf_control'
 #config['velocity']['viscosity_mode']   = 'linear'
+config['velocity']['viscosity_mode']   = 'b_control'
+config['velocity']['b']                = model.b
 config['velocity']['b_linear']         = model.eta
 config['velocity']['b_linear_shf']     = b_shf
 config['velocity']['b_linear_gnd']     = b_gnd
@@ -187,8 +191,8 @@ File(out_dir + 'w.xml')       << model.w
 File(out_dir + 'beta2.xml')   << model.beta2
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
 File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
-File(out_dir + 'b_shf.pvd')   << model.b_shf
-File(out_dir + 'b_gnd.pvd')   << model.b_shf
+#File(out_dir + 'b_shf.pvd')   << model.b_shf
+#File(out_dir + 'b_gnd.pvd')   << model.b_shf
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
