@@ -96,7 +96,9 @@ config = { 'mode'                         : 'steady',
              'r'                   : 0.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
-             'boundaries'          : None,
+             'boundaries'          : None,#'user_defined',
+             'u_lat_boundary'      : u,
+             'v_lat_boundary'      : v,
              'log'                 : True
            },
            'enthalpy' : 
@@ -136,7 +138,7 @@ config = { 'mode'                         : 'steady',
              'alpha'               : 1e-7,
              'gamma1'              : 1.0,
              'gamma2'              : 10.0,
-             'max_fun'             : 20,
+             'max_fun'             : 10000,
              'objective_function'  : 'log_lin_hybrid',
              'bounds'              : (0, 0),
              'control_variable'    : model.beta2,
@@ -155,14 +157,14 @@ F.solve()
 b_shf = project(model.b, model.Q)
 b_gnd = b_shf.copy()
 model.print_min_max(b_shf, 'b')
-b_min = b_shf.vector().min()
-b_max = b_shf.vector().max()
+b_min = b_shf.vector().min()/3.0
+b_max = b_shf.vector().max()*3.0
 
 model.b = project(model.b, model.Q)
 
 params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']         = 0.6
-params['maximum_iterations']           = 10
+params['relaxation_parameter']         = 0.5
+params['maximum_iterations']           = 16
 #config['velocity']['viscosity_mode']   = 'shelf_control'
 #config['velocity']['viscosity_mode']   = 'linear'
 config['velocity']['viscosity_mode']   = 'b_control'
