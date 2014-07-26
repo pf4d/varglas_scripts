@@ -57,7 +57,7 @@ model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(mask=M, adot=adot)
 model.initialize_variables()
 
-# constraints on optimization for beta2 :
+# constraints on optimization for beta :
 class Bounds_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
@@ -100,7 +100,7 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'inner_tol'           : 0.0,
-             'max_iter'            : 1
+             'max_iter'            : 5
            },
            'velocity' : 
            { 
@@ -109,15 +109,17 @@ config = { 'mode'                         : 'steady',
              'viscosity_mode'      : 'full',
              'b_linear'            : None,
              'use_T0'              : True,
-             'T0'                  : model.T_w - 10.0,
+             'T0'                  : model.T_w - 15.0,
              'A0'                  : 1e-16,
-             'beta2'               : beta_0,
+             'beta'                : beta_0,
              'init_beta_from_U_ob' : True,
              'U_ob'                : U_ob,
              'r'                   : 0.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
-             'boundaries'          : None,
+             'boundaries'          : None,#'user_defined',
+             'u_lat_boundary'      : u,
+             'v_lat_boundary'      : v,
              'log'                 : True
            },
            'enthalpy' : 
@@ -160,7 +162,7 @@ config = { 'mode'                         : 'steady',
              'max_fun'             : 20,
              'objective_function'  : 'log_lin_hybrid',
              'bounds'              : (beta_min, beta_max),
-             'control_variable'    : model.beta2,
+             'control_variable'    : model.beta,
              'regularization_type' : 'Tikhonov'
            }}
 
@@ -170,18 +172,27 @@ if i !=0:
   File(dir_b + str(i-1) + '/T.xml')     >> model.T
 
 F = solvers.SteadySolver(model, config)
-File(out_dir + 'beta_0.pvd') << model.beta2
+File(out_dir + 'beta_0.pvd') << model.beta
 F.solve()
+
+File(out_dir + 'U_ob.pvd') << U_ob
+File(out_dir + 'ff.pvd')   << model.ff
 
 b_shf = project(model.b, model.Q)
 b_gnd = b_shf.copy()
 model.print_min_max(b_shf, 'b')
+b_min = b_shf.vector().min()/10.0
+b_max = b_shf.vector().max()*10.0
+
+model.b = project(model.b, model.Q)
 
 params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']         = 1.0
+params['relaxation_parameter']         = 0.5
 params['maximum_iterations']           = 16
-#config['velocity']['viscosity_mode']   = 'shelf_control'
-config['velocity']['viscosity_mode']   = 'linear'
+config['velocity']['viscosity_mode']   = 'shelf_control'
+#config['velocity']['viscosity_mode']   = 'linear'
+#config['velocity']['viscosity_mode']   = 'b_control'
+config['velocity']['b']                = model.b
 config['velocity']['b_linear']         = model.eta
 config['velocity']['b_linear_shf']     = b_shf
 config['velocity']['b_linear_gnd']     = b_gnd
@@ -189,9 +200,9 @@ config['enthalpy']['on']               = False
 config['surface_climate']['on']        = False
 config['coupled']['on']                = False
 config['velocity']['use_T0']           = False
-#config['adjoint']['alpha']             = [1e-7, 0]
-#config['adjoint']['bounds']            = [(beta_min, beta_max), (0, 1e16)]
-#config['adjoint']['control_variable']  = [model.beta2, b_shf]
+config['adjoint']['alpha']             = [1e-7, 0]
+config['adjoint']['bounds']            = [(beta_min, beta_max), (b_min, b_max)]
+config['adjoint']['control_variable']  = [model.beta, b_shf]
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
@@ -203,11 +214,10 @@ File(out_dir + 'B.xml')       << model.B
 File(out_dir + 'u.xml')       << project(model.u, model.Q) 
 File(out_dir + 'v.xml')       << project(model.v, model.Q) 
 File(out_dir + 'w.xml')       << model.w 
-File(out_dir + 'beta2.xml')   << model.beta2
+File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
 File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
-#File(out_dir + 'b_shf.pvd')   << model.b_shf
-#File(out_dir + 'b_gnd.pvd')   << model.b_shf
+File(out_dir + 'b_shf.pvd')   << model.b_shf
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
@@ -216,7 +226,7 @@ File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
 #else:     rw = 'w'
 #f = HDF5File(mesh.mpi_comm(), out_dir + '3D_5H_stokes.h5', rw)
 #f.write(model.mesh,  'mesh')
-#f.write(model.beta2, 'beta2')
+#f.write(model.beta,  'beta')
 #f.write(model.Mb,    'Mb')
 #f.write(model.T,     'T')
 #f.write(model.S,     'S')
