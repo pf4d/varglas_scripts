@@ -56,6 +56,25 @@ model.calculate_boundaries(mask=M, adot=adot)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
+# constraints on optimization for beta :
+class Bounds_max(Expression):
+  def eval(self, values, x):
+    if M(x[0], x[1], x[2]) > 0:
+      values[0] = 2 * DOLFIN_EPS
+    else:
+      values[0] = 100000.0
+
+# initial friction coef :
+class Beta_0(Expression):
+  def eval(self, values, x):
+    if M(x[0], x[1], x[2]) > 0:
+      values[0] = DOLFIN_EPS
+    else:
+      values[0] = 4
+
+beta_min = interpolate(Constant(0.0), model.Q)
+beta_max = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
+
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
 nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
@@ -79,7 +98,7 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'inner_tol'           : 0.0,
-             'max_iter'            : 5
+             'max_iter'            : 2
            },
            'velocity' : 
            { 
@@ -165,6 +184,8 @@ b_max = b_shf.vector().max()*10.0
 
 model.b = project(model.b, model.Q)
 
+File(out_dir + 'b_0.pvd') << model.b
+
 params = config['velocity']['newton_params']['newton_solver']
 params['relaxation_parameter']         = 0.5
 params['maximum_iterations']           = 16
@@ -179,9 +200,9 @@ config['enthalpy']['on']               = False
 config['surface_climate']['on']        = False
 config['coupled']['on']                = False
 config['velocity']['use_T0']           = False
-config['adjoint']['alpha']             = 0
-config['adjoint']['bounds']            = (b_min, b_max)
-config['adjoint']['control_variable']  = b_shf
+config['adjoint']['alpha']             = [1e-7, 0]
+config['adjoint']['bounds']            = [(beta_min, beta_max), (b_min, b_max)]
+config['adjoint']['control_variable']  = [model.beta, b_shf]
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
@@ -196,7 +217,7 @@ File(out_dir + 'w.xml')       << model.w
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
 File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
-File(out_dir + 'b_shf.pvd')   << b_shf
+File(out_dir + 'b_shf.pvd')   << model.b_shf
 #File(out_dir + 'b_gnd.pvd')   << model.b_shf
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh

@@ -58,24 +58,15 @@ model.calculate_boundaries(mask=M, adot=adot)
 model.initialize_variables()
 
 # constraints on optimization for beta :
-class Bounds_max(Expression):
+class Beta_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = 2 * DOLFIN_EPS
+      values[0] = 0.0
     else:
-      values[0] = 100000.0
-
-# initial friction coef :
-class Beta_0(Expression):
-  def eval(self, values, x):
-    if M(x[0], x[1], x[2]) > 0:
-      values[0] = DOLFIN_EPS
-    else:
-      values[0] = 4
+      values[0] = 6000.0
 
 beta_min = interpolate(Constant(0.0), model.Q)
-beta_max = interpolate(Bounds_max(element = model.Q.ufl_element()), model.Q)
-beta_0   = Beta_0(element = model.Q.ufl_element())
+beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
@@ -100,7 +91,7 @@ config = { 'mode'                         : 'steady',
            { 
              'on'                  : True,
              'inner_tol'           : 0.0,
-             'max_iter'            : 5
+             'max_iter'            : 1
            },
            'velocity' : 
            { 
@@ -111,7 +102,7 @@ config = { 'mode'                         : 'steady',
              'use_T0'              : True,
              'T0'                  : model.T_w - 15.0,
              'A0'                  : 1e-16,
-             'beta'                : beta_0,
+             'beta'                : None,
              'init_beta_from_U_ob' : True,
              'U_ob'                : U_ob,
              'r'                   : 0.0,
@@ -129,7 +120,7 @@ config = { 'mode'                         : 'steady',
              'T_surface'           : T_s,
              'q_geo'               : q_geo,
              'lateral_boundaries'  : None,
-             'log'                 : False
+             'log'                 : True 
            },
            'free_surface' :
            { 
@@ -156,53 +147,70 @@ config = { 'mode'                         : 'steady',
            },
            'adjoint' :
            { 
-             'alpha'               : 1e-7,
+             'alpha'               : 0.0,#1e-7,
              'gamma1'              : 1.0,
-             'gamma2'              : 10.0,
+             'gamma2'              : 100.0,
              'max_fun'             : 20,
-             'objective_function'  : 'log_lin_hybrid',
+             'objective_function'  : 'logarithmic',#'log_lin_hybrid',
              'bounds'              : (beta_min, beta_max),
              'control_variable'    : model.beta,
              'regularization_type' : 'Tikhonov'
            }}
 
-if i !=0:
-  #config['velocity']['approximation']   = 'stokes'
-  config['velocity']['use_T0']           = False
-  File(dir_b + str(i-1) + '/T.xml')     >> model.T
+if i != 0:
+  #config['velocity']['approximation']       = 'stokes'
+  config['velocity']['init_beta_from_U_ob'] = False
+  config['velocity']['beta']                = dir_b + str(i-1) + '/beta.xml'
+  config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
 
 F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta_0.pvd') << model.beta
+File(out_dir + 'ff.pvd')     << model.ff
 F.solve()
-
-File(out_dir + 'U_ob.pvd') << U_ob
-File(out_dir + 'ff.pvd')   << model.ff
 
 b_shf = project(model.b, model.Q)
 b_gnd = b_shf.copy()
 model.print_min_max(b_shf, 'b')
-b_min = b_shf.vector().min()/10.0
-b_max = b_shf.vector().max()*10.0
+#b_min = b_shf.vector().min()/10.0
+#b_max = b_shf.vector().max()*10.0
+b_max = 1e16
+b_min = 0.0
 
 model.b = project(model.b, model.Q)
 
+File(out_dir + 'b_0.pvd') << b_shf
+
 params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']         = 0.5
-params['maximum_iterations']           = 16
-config['velocity']['viscosity_mode']   = 'shelf_control'
-#config['velocity']['viscosity_mode']   = 'linear'
-#config['velocity']['viscosity_mode']   = 'b_control'
-config['velocity']['b']                = model.b
-config['velocity']['b_linear']         = model.eta
-config['velocity']['b_linear_shf']     = b_shf
-config['velocity']['b_linear_gnd']     = b_gnd
-config['enthalpy']['on']               = False
-config['surface_climate']['on']        = False
-config['coupled']['on']                = False
-config['velocity']['use_T0']           = False
-config['adjoint']['alpha']             = [1e-7, 0]
-config['adjoint']['bounds']            = [(beta_min, beta_max), (b_min, b_max)]
-config['adjoint']['control_variable']  = [model.beta, b_shf]
+params['relaxation_parameter']            = 0.4
+params['maximum_iterations']              = 25
+#config['velocity']['viscosity_mode']      = 'shelf_control'
+config['velocity']['viscosity_mode']      = 'linear'
+#config['velocity']['viscosity_mode']      = 'b_control'
+config['velocity']['init_beta_from_U_ob'] = False
+config['velocity']['beta']                = model.beta
+config['velocity']['b']                   = model.b
+config['velocity']['b_linear']            = model.eta
+config['velocity']['b_linear_shf']        = b_shf
+config['velocity']['b_linear_gnd']        = b_gnd
+config['enthalpy']['on']                  = False
+config['surface_climate']['on']           = False
+config['coupled']['on']                   = False
+config['velocity']['use_T0']              = False
+
+if i == 0:
+  config['adjoint']['alpha']             = 0
+  config['adjoint']['bounds']            = (beta_min, beta_max)
+  config['adjoint']['control_variable']  = model.beta
+
+else:
+  config['velocity']['viscosity_mode']   = 'shelf_control'
+  config['adjoint']['alpha']             = 0
+  config['adjoint']['bounds']            = (b_min, b_max)
+  config['adjoint']['control_variable']  = b_shf
+
+#config['adjoint']['alpha']             = [1e-7, 0]
+#config['adjoint']['bounds']            = [(beta_min, beta_max), (b_min, b_max)]
+#config['adjoint']['control_variable']  = [model.beta, b_shf]
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
@@ -216,8 +224,12 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
-File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
+#File(out_dir + 'b_shf.xml')   << model.b_shf
+#File(out_dir + 'b_gnd.xml')   << model.b_gnd
+
+#File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
 File(out_dir + 'b_shf.pvd')   << model.b_shf
+File(out_dir + 'b_gnd.pvd')   << model.b_gnd
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #

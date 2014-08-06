@@ -13,7 +13,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 out_dir = './stress_balance_stokes_high/'
-in_dir  = './results_high_stokes/04/'
+in_dir  = './test/00/'
 
 set_log_active(True)
 
@@ -23,7 +23,6 @@ thklim = 200.0
 bamber   = DataFactory.get_bamber(thklim = thklim)
 
 # define the meshes :
-#mesh     = Mesh('meshes/greenland_3D_5H.xml')
 mesh     = MeshFactory.get_greenland_detailed()
 
 # create data objects to use with varglas :
@@ -41,14 +40,18 @@ model.calculate_boundaries()
 model.initialize_variables()
 parameters['form_compiler']['quadrature_degree'] = 2
 
-File(in_dir + 'u.xml')     >>  model.u
-File(in_dir + 'v.xml')     >>  model.v
-File(in_dir + 'w.xml')     >>  model.w
-File(in_dir + 'beta2.xml') >>  model.beta2
-File(in_dir + 'eta.xml')   >>  model.eta
+File(in_dir + 'u.xml')    >>  model.u
+File(in_dir + 'v.xml')    >>  model.v
+File(in_dir + 'w.xml')    >>  model.w
+File(in_dir + 'beta.xml') >>  model.beta
+File(in_dir + 'eta.xml')  >>  model.eta
 
-config = {'output_path' : out_dir}
-
+config = {'output_path'     : out_dir,
+          'log'             : True,
+          'solver_params'   : 
+          {
+            'linear_solver' : 'mumps'
+          }}
 F = solvers.StokesBalanceSolver(model, config)
 F.solve()
 
@@ -61,15 +64,15 @@ F.solve()
 #
 ## functionality of HDF5 not completed by fenics devs :
 #f = HDF5File(out_dir + '3D_5H_stokes.h5', 'w')
-#f.write(model.mesh,  'mesh')
-#f.write(model.beta2, 'beta2')
-#f.write(model.T,     'T')
-#f.write(model.S,     'S')
-#f.write(model.B,     'B')
-#f.write(model.u,     'u')
-#f.write(model.v,     'v')
-#f.write(model.w,     'w')
-#f.write(model.eta,   'eta')
+#f.write(model.mesh, 'mesh')
+#f.write(model.beta, 'beta')
+#f.write(model.T,    'T')
+#f.write(model.S,    'S')
+#f.write(model.B,    'B')
+#f.write(model.u,    'u')
+#f.write(model.v,    'v')
+#f.write(model.w,    'w')
+#f.write(model.eta,  'eta')
 
 
 #===============================================================================
