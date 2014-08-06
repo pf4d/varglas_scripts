@@ -63,7 +63,7 @@ class Beta_max(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = 0.0
     else:
-      values[0] = 6000.0
+      values[0] = 100000.0
 
 beta_min = interpolate(Constant(0.0), model.Q)
 beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
@@ -132,7 +132,7 @@ config = { 'mode'                         : 'steady',
            },  
            'age' : 
            { 
-             'on'                  : False,
+             'on'                  : True,
              'use_smb_for_ela'     : True,
              'ela'                 : 750,
            },
@@ -181,7 +181,7 @@ model.b = project(model.b, model.Q)
 File(out_dir + 'b_0.pvd') << b_shf
 
 params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']            = 0.4
+params['relaxation_parameter']            = 1.0
 params['maximum_iterations']              = 25
 #config['velocity']['viscosity_mode']      = 'shelf_control'
 config['velocity']['viscosity_mode']      = 'linear'
@@ -224,12 +224,13 @@ File(out_dir + 'v.xml')       << project(model.v, model.Q)
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
+File(out_dir + 'age.xml')     << model.age
 #File(out_dir + 'b_shf.xml')   << model.b_shf
 #File(out_dir + 'b_gnd.xml')   << model.b_gnd
 
 #File(out_dir + 'b.pvd')       << project(model.b,   model.Q)
-File(out_dir + 'b_shf.pvd')   << model.b_shf
-File(out_dir + 'b_gnd.pvd')   << model.b_gnd
+#File(out_dir + 'b_shf.pvd')   << model.b_shf
+#File(out_dir + 'b_gnd.pvd')   << model.b_gnd
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #

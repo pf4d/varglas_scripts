@@ -12,7 +12,7 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir = './stress_balance_stokes_high/'
+out_dir = './stress_balance/'
 in_dir  = './test/00/'
 
 set_log_active(True)
