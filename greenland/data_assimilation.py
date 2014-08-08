@@ -74,8 +74,8 @@ nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
 nonlin_solver_params['newton_solver']['absolute_tolerance']      = 1e2
 nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
-nonlin_solver_params['newton_solver']['linear_solver']           = 'gmres'
-nonlin_solver_params['newton_solver']['preconditioner']          = 'hypre_amg'
+nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
+nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
 parameters['form_compiler']['quadrature_degree']                 = 2
 
 config = { 'mode'                         : 'steady',
@@ -152,12 +152,13 @@ config = { 'mode'                         : 'steady',
              'regularization_type' : 'Tikhonov'
            }}
 
-F = solvers.SteadySolver(model,config)
 if i != 0: 
-  #config['velocity']['approximation']       = 'stokes'
+  config['velocity']['approximation']       = 'stokes'
   config['velocity']['init_beta_from_U_ob'] = False
   config['velocity']['beta']                = dir_b + str(i-1) + '/beta.xml'
-  config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
+  #config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
+
+F = solvers.SteadySolver(model,config)
 File(out_dir + 'beta_0.pvd') << model.beta
 F.solve()
 
@@ -182,6 +183,8 @@ File(out_dir + 'B.xml')      << model.B
 File(out_dir + 'u.xml')      << project(model.u, model.Q)
 File(out_dir + 'v.xml')      << project(model.v, model.Q)
 File(out_dir + 'w.xml')      << project(model.w, model.Q)
+File(out_dir + 'P.xml')      << model.P
+File(out_dir + 'T.xml')      << model.T
 File(out_dir + 'beta.xml')   << model.beta
 File(out_dir + 'eta.xml')    << project(model.eta, model.Q)
 

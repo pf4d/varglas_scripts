@@ -1,3 +1,9 @@
+# beta:         F =   2504037402158.4854,  Total time to compute: 01:03:21
+# beta^2:       F =   1714728897787.7820,  Total time to compute: 01:16:09
+# r=1:          F =   2646114341918.4277,  Total time to compute: 01:15:44
+# r=1, beta^2:  F =   5170367358780.6270,  Total time to compute: 01:17:37
+
+
 import sys
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
@@ -63,7 +69,7 @@ class Beta_max(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = 0.0
     else:
-      values[0] = 100000.0
+      values[0] = 10000000
 
 beta_min = interpolate(Constant(0.0), model.Q)
 beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
@@ -105,7 +111,7 @@ config = { 'mode'                         : 'steady',
              'beta'                : None,
              'init_beta_from_U_ob' : True,
              'U_ob'                : U_ob,
-             'r'                   : 0.0,
+             'r'                   : 1.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
              'boundaries'          : None,#'user_defined',

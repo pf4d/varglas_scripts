@@ -20,21 +20,21 @@ set_log_active(True)
 thklim = 200.0
 
 # collect the raw data :
-bamber   = DataFactory.get_bamber(thklim = thklim)
+bamber = DataFactory.get_bamber(thklim = thklim)
 
 # define the meshes :
-mesh     = MeshFactory.get_greenland_detailed()
+mesh = MeshFactory.get_greenland_detailed()
 
 # create data objects to use with varglas :
-dbm     = DataInput(bamber, mesh=mesh)
+dbm  = DataInput(bamber, mesh=mesh)
 
 # get the expressions used by varglas :
-Surface = dbm.get_spline_expression('H')
-Bed     = dbm.get_spline_expression('B')
+S    = dbm.get_spline_expression('S')
+B    = dbm.get_spline_expression('B')
 
 model = model.Model(out_dir = out_dir)
 model.set_mesh(mesh)
-model.set_geometry(Surface, Bed, deform=True)
+model.set_geometry(S, B, deform=True)
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries()
 model.initialize_variables()
