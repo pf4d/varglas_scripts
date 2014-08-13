@@ -1,4 +1,4 @@
-# beta:         F =   2504037402158.4854,  Total time to compute: 01:03:21
+# beta:         F =   1292801664727.8921,  Total time to compute: 01:03:21
 # beta^2:       F =   1714728897787.7820,  Total time to compute: 01:16:09
 # r=1:          F =   2646114341918.4277,  Total time to compute: 01:15:44
 # r=1, beta^2:  F =   5170367358780.6270,  Total time to compute: 01:17:37
@@ -69,7 +69,7 @@ class Beta_max(Expression):
     if M(x[0], x[1], x[2]) > 0:
       values[0] = 0.0
     else:
-      values[0] = 10000000
+      values[0] = 4000
 
 beta_min = interpolate(Constant(0.0), model.Q)
 beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
@@ -106,12 +106,12 @@ config = { 'mode'                         : 'steady',
              'viscosity_mode'      : 'full',
              'b_linear'            : None,
              'use_T0'              : True,
-             'T0'                  : model.T_w - 15.0,
+             'T0'                  : model.T_w - 30.0,
              'A0'                  : 1e-16,
              'beta'                : None,
              'init_beta_from_U_ob' : True,
              'U_ob'                : U_ob,
-             'r'                   : 1.0,
+             'r'                   : 0.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
              'boundaries'          : None,#'user_defined',
@@ -203,16 +203,17 @@ config['surface_climate']['on']           = False
 config['coupled']['on']                   = False
 config['velocity']['use_T0']              = False
 
-if i == 0:
-  config['adjoint']['alpha']             = 0
-  config['adjoint']['bounds']            = (beta_min, beta_max)
-  config['adjoint']['control_variable']  = model.beta
-
-else:
+if i == 1:
+  params['relaxation_parameter']         = 0.4
   config['velocity']['viscosity_mode']   = 'shelf_control'
   config['adjoint']['alpha']             = 0
   config['adjoint']['bounds']            = (b_min, b_max)
   config['adjoint']['control_variable']  = b_shf
+
+else:
+  config['adjoint']['alpha']             = 0
+  config['adjoint']['bounds']            = (beta_min, beta_max)
+  config['adjoint']['control_variable']  = model.beta
 
 #config['adjoint']['alpha']             = [1e-7, 0]
 #config['adjoint']['bounds']            = [(beta_min, beta_max), (b_min, b_max)]

@@ -183,7 +183,7 @@ File(out_dir + 'B.xml')      << model.B
 File(out_dir + 'u.xml')      << project(model.u, model.Q)
 File(out_dir + 'v.xml')      << project(model.v, model.Q)
 File(out_dir + 'w.xml')      << project(model.w, model.Q)
-File(out_dir + 'P.xml')      << model.P
+File(out_dir + 'P.xml')      << project(model.P, model.Q)
 File(out_dir + 'T.xml')      << model.T
 File(out_dir + 'beta.xml')   << model.beta
 File(out_dir + 'eta.xml')    << project(model.eta, model.Q)
