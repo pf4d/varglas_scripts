@@ -156,7 +156,7 @@ if i != 0:
   config['velocity']['approximation']       = 'stokes'
   config['velocity']['init_beta_from_U_ob'] = False
   config['velocity']['beta']                = dir_b + str(i-1) + '/beta.xml'
-  #config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
+  config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
 
 F = solvers.SteadySolver(model,config)
 File(out_dir + 'beta_0.pvd') << model.beta
