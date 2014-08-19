@@ -99,11 +99,12 @@ config = { 'mode'                         : 'steady',
              'init_beta_from_U_ob' : True,
              'U_ob'                : U_ob,
              'viscosity_mode'      : 'full',
-             'b_linear'            : None,
+             'eta'                 : None,
              'use_T0'              : True,
+             'use_beta0'           : False,
              'T0'                  : 268.0,
              'A0'                  : None,
-             'beta'                : 0.5,
+             'beta0'               : 0.5,
              'r'                   : 1.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
@@ -168,11 +169,12 @@ params['relative_tolerance']           = 1e-3
 params['absolute_tolerance']           = 0.0
 params['maximum_iterations']           = 12
 config['velocity']['viscosity_mode']   = 'linear'
-config['velocity']['b_linear']         = model.eta
+config['velocity']['eta']              = model.eta
 config['enthalpy']['on']               = False
 config['surface_climate']['on']        = False
 config['coupled']['on']                = False
 config['velocity']['use_T0']           = False
+config['velocity']['use_beta0']        = False
 
 A = solvers.AdjointSolver(model,config)
 A.set_target_velocity(u=u, v=v)

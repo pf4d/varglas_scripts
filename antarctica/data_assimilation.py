@@ -76,7 +76,7 @@ beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
+nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.8
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
 nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
@@ -139,7 +139,7 @@ config = { 'mode'                         : 'steady',
            },  
            'age' : 
            { 
-             'on'                  : True,
+             'on'                  : False,
              'use_smb_for_ela'     : True,
              'ela'                 : None,
            },
@@ -170,7 +170,6 @@ if i > 0:
   config['velocity']['use_T0']              = True
   config['velocity']['beta0']               = dir_b + str(i-1) + '/beta.xml'
   config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
-  config['velocity']['eta']                 = dir_b + str(i-1) + '/eta.xml'
 
 F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta_0.pvd') << model.beta
@@ -193,27 +192,27 @@ if i % 2 == 0:
   config['adjoint']['control_variable']  = model.beta
 
 else:
-  b_shf   = Function(model.Q)
-  File(dir_b + str(i-1) + '/b.xml') >> b_shf 
-  b_gnd   = b_shf.copy()
+  config['velocity']['use_T0']           = True
+  config['velocity']['use_beta0']        = True
+  #config['velocity']['T0']               = model.T
+  config['velocity']['beta0']            = model.beta
+  #File(dir_b + str(i-1) + '/b_shf.xml') >> model.b_shf
+  #File(dir_b + str(i-1) + '/b_gnd.xml') >> model.b_gnd
   b_max   = 1e16
   b_min   = 0.0
-  model.b = b_shf
-  model.print_min_max(model.b, 'b')
-  File(out_dir + 'b_0.pvd') << model.b
-  params['relaxation_parameter']         = 0.5
+  b       = project(model.b)
+  model.print_min_max(b, 'b')
+  params['relaxation_parameter']         = 0.4
   config['velocity']['viscosity_mode']   = 'b_control'
-  config['velocity']['b_shf']            = b_shf
-  config['velocity']['b_gnd']            = b_gnd
+  config['velocity']['b_shf']            = b
+  config['velocity']['b_gnd']            = b.copy()
   config['adjoint']['alpha']             = 0
   config['adjoint']['bounds']            = (b_min, b_max)
-  config['adjoint']['control_variable']  = b_shf
+  config['adjoint']['control_variable']  = b
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
 A.solve()
-
-b = project(model.b_shf, model.Q)
 
 File(out_dir + 'T.xml')       << model.T
 File(out_dir + 'S.xml')       << model.S
@@ -224,8 +223,8 @@ File(out_dir + 'w.xml')       << model.w
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'eta.xml')     << project(model.eta, model.Q)
 File(out_dir + 'age.xml')     << model.age
-File(out_dir + 'b.xml')       << b
-File(out_dir + 'b.pvd')       << b
+File(out_dir + 'b_shf.xml')   << project(model.b_shf, model.Q)
+File(out_dir + 'b_gnd.xml')   << project(model.b_gnd, model.Q)
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
