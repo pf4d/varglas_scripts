@@ -4,7 +4,8 @@ import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
-from varglas.helper               import default_nonlin_solver_params
+from varglas.helper               import default_nonlin_solver_params, \
+                                         default_config
 from varglas.utilities            import DataInput, DataOutput
 from fenics                       import *
 from time                         import time
@@ -30,7 +31,7 @@ fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
 rignot   = DataFactory.get_gre_rignot_updated()
 
 # define the mesh :
-mesh = MeshFactory.get_greenland_detailed()
+mesh = MeshFactory.get_greenland_detailded()
 
 # create data objects to use with varglas :
 dsr     = DataInput(searise,  mesh=mesh)
@@ -71,140 +72,92 @@ model.initialize_variables()
 nonlin_solver_params = default_nonlin_solver_params()
 nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
 nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['absolute_tolerance']      = 1e2
 nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
 nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
 nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
 parameters['form_compiler']['quadrature_degree']                 = 2
 
-config = { 'mode'                         : 'steady',
-           't_start'                      : None,
-           't_end'                        : None,
-           'time_step'                    : None,
-           'output_path'                  : out_dir,
-           'wall_markers'                 : [],
-           'periodic_boundary_conditions' : False,
-           'log'                          : True,
-           'coupled' : 
-           { 
-             'on'                  : True,
-             'inner_tol'           : 0.0,
-             'max_iter'            : 2
-           },                      
-           'velocity' :            
-           {                       
-             'on'                  : True,
-             'newton_params'       : nonlin_solver_params,
-             'init_beta_from_U_ob' : True,
-             'U_ob'                : U_ob,
-             'viscosity_mode'      : 'full',
-             'eta'                 : None,
-             'use_T0'              : True,
-             'use_beta0'           : False,
-             'T0'                  : 268.0,
-             'A0'                  : None,
-             'beta0'               : 0.5,
-             'r'                   : 1.0,
-             'E'                   : 1.0,
-             'approximation'       : 'fo',
-             'boundaries'          : None,
-             'log'                 : True
-           },
-           'enthalpy' : 
-           { 
-             'on'                  : True,
-             'use_surface_climate' : False,
-             'T_surface'           : T_s,
-             'q_geo'               : q_geo,
-             'lateral_boundaries'  : None,
-             'log'                 : True,
-           },
-           'free_surface' :
-           { 
-             'on'                  : False,
-             'lump_mass_matrix'    : True,
-             'thklim'              : thklim,
-             'use_pdd'             : False,
-             'observed_smb'        : adot,
-           },  
-           'age' : 
-           { 
-             'on'                  : False,
-             'use_smb_for_ela'     : False,
-             'ela'                 : None,
-           },
-           'surface_climate' : 
-           { 
-             'on'                  : False,
-             'T_ma'                : None,
-             'T_ju'                : None,
-             'beta_w'              : None,
-             'sigma'               : None,
-             'precip'              : None
-           },
-           'adjoint' :
-           { 
-             'alpha'               : 0.0,#[H**2],
-             'max_fun'             : 20,
-             'objective_function'  : 'logarithmic',
-             'bounds'              : (0,100),
-             'control_variable'    : model.beta,
-             'regularization_type' : 'Tikhonov'
-           }}
 
-if i != 0: 
-  config['velocity']['approximation']       = 'stokes'
+config = default_config()
+config['output_path']                     = out_dir
+config['coupled']['on']                   = True
+config['coupled']['max_iter']             = 20
+config['velocity']['newton_params']       = nonlin_solver_params
+config['velocity']['viscosity_mode']      = 'full'
+config['velocity']['use_T0']              = True
+config['velocity']['use_beta0']           = False
+config['velocity']['T0']                  = 268.0
+config['velocity']['init_beta_from_U_ob'] = True
+config['velocity']['U_ob']                = U_ob
+config['velocity']['boundaries']          = None#'user_defined',
+config['velocity']['u_lat_boundary']      = u
+config['velocity']['v_lat_boundary']      = v
+config['enthalpy']['on']                  = True
+config['enthalpy']['T_surface']           = T_s
+config['enthalpy']['q_geo']               = q_geo
+config['age']['on']                       = False
+config['age']['use_smb_for_ela']          = True
+config['adjoint']['max_fun']              = 20
+
+
+# use T0 and beta0 from the previous run :
+if i > 0:
+  #if i == 4:
+  #  config['velocity']['approximation']     = 'stokes'
   config['velocity']['init_beta_from_U_ob'] = False
-  config['velocity']['beta']                = dir_b + str(i-1) + '/beta.xml'
+  config['velocity']['use_beta0']           = True
+  config['velocity']['use_T0']              = True
+  config['velocity']['beta0']               = dir_b + str(i-1) + '/beta.xml'
   config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
 
-F = solvers.SteadySolver(model,config)
-File(out_dir + 'beta_0.pvd') << model.beta
+F = solvers.SteadySolver(model, config)
+File(out_dir + 'beta0.pvd') << model.beta
 F.solve()
 
 params = config['velocity']['newton_params']['newton_solver']
-params['relaxation_parameter']         = 1.0
-params['relative_tolerance']           = 1e-3
-params['absolute_tolerance']           = 0.0
-params['maximum_iterations']           = 12
-config['velocity']['viscosity_mode']   = 'linear'
-config['velocity']['eta']              = model.eta
-config['enthalpy']['on']               = False
-config['surface_climate']['on']        = False
-config['coupled']['on']                = False
-config['velocity']['use_T0']           = False
-config['velocity']['use_beta0']        = False
+params['maximum_iterations']              = 25
+params['relaxation_parameter']            = 1.0
+config['velocity']['init_beta_from_U_ob'] = False
+config['enthalpy']['on']                  = False
+config['coupled']['on']                   = False
+config['velocity']['use_T0']              = False
+config['velocity']['use_beta0']           = False
+config['velocity']['viscosity_mode']      = 'linear'
+config['velocity']['eta']                 = model.eta
+config['adjoint']['surface_integral']     = 'grounded'
+config['adjoint']['alpha']                = 0
+config['adjoint']['bounds']               = (0, 8000)
+config['adjoint']['control_variable']     = model.beta
 
 A = solvers.AdjointSolver(model,config)
 A.set_target_velocity(u=u, v=v)
 A.solve()
+
+File(out_dir + 'T.xml')     << model.T
+File(out_dir + 'S.xml')     << model.S
+File(out_dir + 'B.xml')     << model.B
+File(out_dir + 'u.xml')     << project(model.u, model.Q) 
+File(out_dir + 'v.xml')     << project(model.v, model.Q) 
+File(out_dir + 'w.xml')     << model.w 
+File(out_dir + 'beta.xml')  << model.beta
+File(out_dir + 'eta.xml')   << project(model.eta, model.Q)
+
+XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
+
+# save the state of the model :
+if i !=0: rw = 'a'
+else:     rw = 'w'
+f = HDF5File(mesh.mpi_comm(), out_dir + 'floating_shelves_0'+str(i)+'.h5', rw)
+f.write(model.mesh,  'mesh')
+f.write(model.beta,  'beta')
+f.write(model.Mb,    'Mb')
+f.write(model.T,     'T')
+f.write(model.S,     'S')
+f.write(model.B,     'B')
+f.write(model.U,     'U')
+f.write(model.eta,   'eta')
     
-File(out_dir + 'S.xml')      << model.S
-File(out_dir + 'B.xml')      << model.B
-File(out_dir + 'u.xml')      << project(model.u, model.Q)
-File(out_dir + 'v.xml')      << project(model.v, model.Q)
-File(out_dir + 'w.xml')      << project(model.w, model.Q)
-File(out_dir + 'P.xml')      << project(model.P, model.Q)
-File(out_dir + 'T.xml')      << model.T
-File(out_dir + 'beta.xml')   << model.beta
-File(out_dir + 'eta.xml')    << project(model.eta, model.Q)
-
-#XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
-#
-## save the state of the model :
-#if i !=0: rw = 'a'
-#else:     rw = 'w'
-#f = HDF5File(out_dir + '3D_5H_stokes.h5', rw)
-#f.write(model.mesh, 'mesh')
-#f.write(model.beta, 'beta')
-#f.write(model.Mb,   'Mb')
-#f.write(model.T,    'T')
-#f.write(model.S,    'S')
-#f.write(model.B,    'B')
-#f.write(model.U,    'U')
-#f.write(model.eta,  'eta')
-
 tf = time()
 
 # calculate total time to compute

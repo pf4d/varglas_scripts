@@ -4,16 +4,15 @@ import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
-from varglas.helper               import default_nonlin_solver_params
 from varglas.utilities            import DataInput, DataOutput
-from fenics                       import *
+from fenics                       import parameters, set_log_active, File
 from time                         import time
 from termcolor                    import colored, cprint
 
 t0 = time()
 
 out_dir = './stress_balance/'
-in_dir  = './test/00/'
+in_dir  = './test/03/'
 
 set_log_active(True)
 
@@ -52,45 +51,9 @@ config = {'output_path'     : out_dir,
           {
             'linear_solver' : 'mumps'
           }}
+
 F = solvers.StokesBalanceSolver(model, config)
 F.solve()
-
-
-#===============================================================================
-## calculate the cartesian "stokes-balance" stress fields :
-#out  = model.component_stress_stokes_c()
-
-#XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
-#
-## functionality of HDF5 not completed by fenics devs :
-#f = HDF5File(out_dir + '3D_5H_stokes.h5', 'w')
-#f.write(model.mesh, 'mesh')
-#f.write(model.beta, 'beta')
-#f.write(model.T,    'T')
-#f.write(model.S,    'S')
-#f.write(model.B,    'B')
-#f.write(model.u,    'u')
-#f.write(model.v,    'v')
-#f.write(model.w,    'w')
-#f.write(model.eta,  'eta')
-
-
-#===============================================================================
-## calculate the "stress-balance" stress fields :
-#out  = model.component_stress()
-#tau_lon = out[0]
-#tau_lat = out[1]
-#tau_bas = out[2]
-#tau_drv = out[3]
-#
-#tau_drv_p_bas = project(tau_bas + tau_drv)
-#tau_lat_p_lon = project(tau_lat + tau_lon)
-#tau_tot       = project(tau_lat + tau_lon - tau_bas - tau_drv)
-#
-## output "stress-balance" :
-#File(out_dir + 'tau_tot_s.pvd')      << tau_tot
-#File(out_dir + 'tau_lat_p_lon.pvd')  << tau_lat_p_lon
-#File(out_dir + 'tau_drv_p_bas.pvd')  << tau_drv_p_bas
 
 tf = time()
 
