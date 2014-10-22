@@ -1,5 +1,4 @@
-## beta:        F =   2504037402158.4854,  Total time to compute: 01:03:21
-# beta:         F =   1292801664727.8921,  Total time to compute: 01:03:21
+# beta:         F =   2504037402158.4854,  Total time to compute: 01:03:21
 # beta^2:       F =   1714728897787.7820,  Total time to compute: 01:16:09
 # r=1:          F =   2646114341918.4277,  Total time to compute: 01:15:44
 # r=1, beta^2:  F =   5170367358780.6270,  Total time to compute: 01:17:37
@@ -54,7 +53,7 @@ M      = db2.get_nearest_expression("mask")
 T_s    = db1.get_nearest_expression("srfTemp")
 q_geo  = db1.get_nearest_expression("q_geo")
 adot   = db1.get_nearest_expression("adot")
-U_ob   = dm.get_projection("U_ob", near=True)
+#U_ob   = dm.get_projection("U_ob", near=True)
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
 
@@ -64,6 +63,9 @@ model.set_geometry(S, B,deform=True)
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(mask=M, adot=adot)
 model.initialize_variables()
+
+U_ob   = project(as_vector([u,v,0.0]), model.V)
+File(out_dir + 'U_ob.pvd') << U_ob
 
 # constraints on optimization for beta :
 class Beta_max(Expression):
@@ -109,6 +111,7 @@ config['velocity']['use_U0']              = False
 config['velocity']['use_beta0']           = False
 config['velocity']['T0']                  = model.T_w - 30.0
 config['velocity']['init_beta_from_U_ob'] = True
+config['velocity']['init_b_from_U_ob']    = False
 config['velocity']['U_ob']                = U_ob
 config['velocity']['boundaries']          = None#'user_defined',
 config['velocity']['u_lat_boundary']      = u
@@ -118,7 +121,7 @@ config['enthalpy']['T_surface']           = T_s
 config['enthalpy']['q_geo']               = q_geo
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 100
+config['adjoint']['max_fun']              = 200
 
 
 # use T0 and beta0 from the previous run :
@@ -126,7 +129,7 @@ if i > 0:
   config['velocity']['init_beta_from_U_ob'] = False
   config['velocity']['use_beta0']           = True
   config['velocity']['use_T0']              = True
-  config['velocity']['use_U0']              = True
+  config['velocity']['use_U0']              = False
   config['velocity']['beta0']               = dir_b + str(i-1) + '/beta.xml'
   config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
   config['velocity']['u0']                  = dir_b + str(i-1) + '/u.xml'
@@ -137,6 +140,7 @@ F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta0.pvd') << model.beta
 File(out_dir + 'U0.pvd')    << project(as_vector([model.u, model.v, model.w]))
 File(out_dir + 'T0.pvd')    << model.T
+#File(out_dir + 'b0.pvd')    << model.b_shf
 F.solve()
 
 params = config['velocity']['newton_params']['newton_solver']
@@ -159,28 +163,28 @@ if i % 2 == 0:
   config['adjoint']['control_variable']  = model.beta
 
 else:
-  #params['relaxation_parameter']         = 0.6
-  #b = project(model.b_shf)
-  #model.print_min_max(b, 'b')
-  #config['velocity']['viscosity_mode']   = 'b_control'
-  #config['velocity']['b_shf']            = b
-  #config['velocity']['b_gnd']            = b.copy()
-  #b_min, b_max = (0.0, 1e10)
-  #config['adjoint']['surface_integral']  = 'shelves'
-  #config['adjoint']['alpha']             = 0
-  #config['adjoint']['bounds']            = (b_min, b_max)
-  #config['adjoint']['control_variable']  = b
   params['relaxation_parameter']         = 0.6
-  E = model.E
-  model.print_min_max(E, 'E')
-  config['velocity']['viscosity_mode']   = 'E_control'
-  config['velocity']['E_shf']            = E
-  config['velocity']['E_gnd']            = E.copy()
-  E_min, E_max = (1e-16, 100.0)
+  b = project(model.b_shf)
+  model.print_min_max(b, 'b')
+  config['velocity']['viscosity_mode']   = 'b_control'
+  config['velocity']['b_shf']            = b
+  config['velocity']['b_gnd']            = b.copy()
+  b_min, b_max = (0.0, 1e10)
   config['adjoint']['surface_integral']  = 'shelves'
   config['adjoint']['alpha']             = 0
-  config['adjoint']['bounds']            = (E_min, E_max)
-  config['adjoint']['control_variable']  = E
+  config['adjoint']['bounds']            = (b_min, b_max)
+  config['adjoint']['control_variable']  = b
+  #params['relaxation_parameter']         = 0.6
+  #E = model.E
+  #model.print_min_max(E, 'E')
+  #config['velocity']['viscosity_mode']   = 'E_control'
+  #config['velocity']['E_shf']            = E
+  #config['velocity']['E_gnd']            = E.copy()
+  #E_min, E_max = (1e-16, 100.0)
+  #config['adjoint']['surface_integral']  = 'shelves'
+  #config['adjoint']['alpha']             = 0
+  #config['adjoint']['bounds']            = (E_min, E_max)
+  #config['adjoint']['control_variable']  = E
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
