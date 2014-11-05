@@ -121,7 +121,7 @@ config['enthalpy']['T_surface']           = T_s
 config['enthalpy']['q_geo']               = q_geo
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 200
+config['adjoint']['max_fun']              = 75
 
 
 # use T0 and beta0 from the previous run :
@@ -129,7 +129,7 @@ if i > 0:
   config['velocity']['init_beta_from_U_ob'] = False
   config['velocity']['use_beta0']           = True
   config['velocity']['use_T0']              = True
-  config['velocity']['use_U0']              = False
+  config['velocity']['use_U0']              = True
   config['velocity']['beta0']               = dir_b + str(i-1) + '/beta.xml'
   config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
   config['velocity']['u0']                  = dir_b + str(i-1) + '/u.xml'
@@ -163,6 +163,9 @@ if i % 2 == 0:
   config['adjoint']['control_variable']  = model.beta
 
 else:
+  #if i > 2:
+  #  config['velocity']['use_b_shf0']       = True
+  #  config['velocity']['b_shf']            = dir_b + str(i-2) + '/b_shf.xml'
   params['relaxation_parameter']         = 0.6
   b = project(model.b_shf)
   model.print_min_max(b, 'b')
@@ -188,6 +191,10 @@ else:
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
+#uf = dir_b + str(i-1) + '/u.xml'
+#vf = dir_b + str(i-1) + '/v.xml'
+#wf = dir_b + str(i-1) + '/w.xml'
+#A.set_velocity(uf, vf, wf)
 A.solve()
 
 eta   = project(model.eta, model.Q)
@@ -201,6 +208,7 @@ File(out_dir + 'u.xml')       << model.u
 File(out_dir + 'v.xml')       << model.v 
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
+File(out_dir + 'Mb.xml')      << model.Mb
 File(out_dir + 'eta.xml')     << eta
 File(out_dir + 'b_shf.xml')   << b_shf
 File(out_dir + 'b_shf.pvd')   << b_shf
