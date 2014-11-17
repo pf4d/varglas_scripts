@@ -166,28 +166,28 @@ else:
   #if i > 2:
   #  config['velocity']['use_b_shf0']       = True
   #  config['velocity']['b_shf']            = dir_b + str(i-2) + '/b_shf.xml'
-  params['relaxation_parameter']         = 0.6
-  b = project(model.b_shf)
-  model.print_min_max(b, 'b')
-  config['velocity']['viscosity_mode']   = 'b_control'
-  config['velocity']['b_shf']            = b
-  config['velocity']['b_gnd']            = b.copy()
-  b_min, b_max = (0.0, 1e10)
-  config['adjoint']['surface_integral']  = 'shelves'
-  config['adjoint']['alpha']             = 0
-  config['adjoint']['bounds']            = (b_min, b_max)
-  config['adjoint']['control_variable']  = b
   #params['relaxation_parameter']         = 0.6
-  #E = model.E
-  #model.print_min_max(E, 'E')
-  #config['velocity']['viscosity_mode']   = 'E_control'
-  #config['velocity']['E_shf']            = E
-  #config['velocity']['E_gnd']            = E.copy()
-  #E_min, E_max = (1e-16, 100.0)
+  #b = project(model.b_shf)
+  #model.print_min_max(b, 'b')
+  #config['velocity']['viscosity_mode']   = 'b_control'
+  #config['velocity']['b_shf']            = b
+  #config['velocity']['b_gnd']            = b.copy()
+  #b_min, b_max = (0.0, 1e10)
   #config['adjoint']['surface_integral']  = 'shelves'
   #config['adjoint']['alpha']             = 0
-  #config['adjoint']['bounds']            = (E_min, E_max)
-  #config['adjoint']['control_variable']  = E
+  #config['adjoint']['bounds']            = (b_min, b_max)
+  #config['adjoint']['control_variable']  = b
+  params['relaxation_parameter']         = 0.6
+  E = model.E
+  model.print_min_max(E, 'E')
+  config['velocity']['viscosity_mode']   = 'E_control'
+  config['velocity']['E_shf']            = E
+  config['velocity']['E_gnd']            = E.copy()
+  E_min, E_max = (1e-16, 100.0)
+  config['adjoint']['surface_integral']  = 'shelves'
+  config['adjoint']['alpha']             = 0
+  config['adjoint']['bounds']            = (E_min, E_max)
+  config['adjoint']['control_variable']  = E
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)
