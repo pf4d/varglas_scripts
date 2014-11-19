@@ -1,22 +1,13 @@
-import sys
-src_directory = '../../statistical_modeling'
-sys.path.append(src_directory)
-
-import varglas.physical_constants as pc
-import varglas.model              as model
-from src.regstats                 import linRegstats
-from varglas.mesh.mesh_factory    import MeshFactory
-from varglas.data.data_factory    import DataFactory
-from varglas.utilities            import DataInput, DataOutput
-from pylab                        import *
-from fenics                       import *
+from pylab  import *
+from fenics import *
 
 thklim  = 1.0
-out_dir = 'test/bed/'
+out_dir = 'output/'
 
 mesh = Mesh('meshes/bed_mesh.xml')
 Q    = FunctionSpace(mesh, 'CG', 1)
 QB   = FunctionSpace(mesh, 'B',  4)
+W    = Q
 V    = MixedFunctionSpace([Q,Q,Q])
 Q2   = MixedFunctionSpace([Q,Q])
 
@@ -51,36 +42,6 @@ params = {"newton_solver":
           "relative_tolerance"   : 1e-3,
           "absolute_tolerance"   : 1e-16}}
 
-q    = Function(Q+QB)
-q_1  = Function(Q+QB)
-phi  = TestFunction(Q+QB)
-dq   = TrialFunction(Q+QB)
-z    = SpatialCoordinate(mesh)[2]
-
-rhoi = 917.0
-rhow = 1000.0
-g    = 9.8
-dt   = 1.0
-
-Pw   = rhoi*g*H + rhow*g*z
-
-gPx  = project(Pw.dx(0), Q)
-gPy  = project(Pw.dx(1), Q)
-gPz  = project(Pw.dx(2), Q)
-
-gPw  = as_vector([gPx, gPy, 0.0])
-
-gPx_v = gPx.vector().array()
-gPy_v = gPy.vector().array()
-#gPz_v = gPz.vector().array()
-gPn_v = np.sqrt(gPx_v**2 + gPy_v**2)# + gPz_v**2)
-
-gPn   = Function(Q)
-gPn.vector().set_local(gPn_v)
-gPn.vector().apply('insert')
-
-uhat  = -gPw / gPn
-
 class Gamma(SubDomain):
   def inside(self, x, on_boundary):
     return on_boundary
@@ -89,35 +50,76 @@ ff    = FacetFunction('uint', mesh)
 gamma.mark(ff,1)
 ds    = ds[ff]
 
+#===============================================================================
+# calculate direction of flow (down gradient) :
 
-def L(u):
+U    = TrialFunction(W)
+phi  = TestFunction(W)
+Nx   = TrialFunction(W)
+Ny   = TrialFunction(W)
+
+rho   = 917.0                             # density of ice
+g     = 9.8                               # gravitational acceleration
+z     = SpatialCoordinate(mesh)[2]        # z-coordinate of bed
+H     = S - B                             # thickness
+kappa = 0.0                               # smoothing radius
+
+# calculate surface slope and norm :
+dSdx   = project(S.dx(0), W)
+dSdy   = project(S.dx(1), W)
+
+a_dSdx = + Nx * phi * dx \
+         + (kappa*H)**2 * (phi.dx(0)*Nx.dx(0) + phi.dx(1)*Nx.dx(1)) * dx
+L_dSdx = rho * g * H * dSdx * phi * dx \
+
+a_dSdy = + Ny * phi * dx \
+         + (kappa*H)**2 * (phi.dx(0)*Ny.dx(0) + phi.dx(1)*Ny.dx(1)) * dx
+L_dSdy = rho * g * H * dSdy * phi*dx \
+
+Nx = Function(W)
+Ny = Function(W)
+#solve(a_dSdx == L_dSdx, Nx)
+#solve(a_dSdy == L_dSdy, Ny)
+
+#dSdx_v = Nx.vector().array()
+#dSdy_v = Ny.vector().array()
+dSdx_v = dSdx.vector().array()
+dSdy_v = dSdy.vector().array()
+dSn_v  = np.sqrt(dSdx_v**2 + dSdy_v**2 + 1e-16)
+dSdx.vector().set_local(-dSdx_v / dSn_v)
+dSdy.vector().set_local(-dSdy_v / dSn_v)
+dSdx.vector().apply('insert')
+dSdy.vector().apply('insert')
+dS     = as_vector([dSdx, dSdy, 0.0]) # unit normal surface slope
+
+adot_v = adot.vector().array()
+adot_v[adot_v < 0] = 0
+adot.vector().set_local(adot_v)
+adot.vector().apply('insert')
+    
+# SUPG method :
+cellh   = CellSize(mesh)
+phihat  = phi + cellh/2 * dot(dS, grad(phi))
+phihat  = phi + cellh/(2*H) * ((H*dS[0]*phi).dx(0) + (H*dS[1]*phi).dx(1))
+
+def L(u, uhat):
   return div(uhat)*u + dot(grad(u), uhat)
 
-F     = Mb
-qb    = Constant(0.0)
-    
-## SUPG method psihat :
-#vnorm   = sqrt(dot(w, w) + 1e-10)
-#cellh   = CellSize(mesh)
-#phihat  = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
+B = L(U*H, dS) * phihat * dx
+a = adot * phihat * dx
 
-delta = + (uhat[0].dx(0) + uhat[1].dx(1)) * q * phi * dx \
-        + (q.dx(0) * uhat[0] + q.dx(1) * uhat[1]) * phi * dx \
-        + F * phi * dx
-J     = derivative(delta, q, dq)
-
-solve(delta == 0, q, J=J, solver_parameters=params)
-
-q_v = q.vector().array()
-
-print 'q <min,max>:', q_v.min(), q_v.max()
+U = Function(W)
+solve(B == a, U)
 
 
+U_v = U.vector().array()
 
+print 'U <min,max>:', U_v.min(), U_v.max()
 
-File(out_dir + 'q.pvd')    << q
-File(out_dir + 'Pw.pvd')   << project(Pw, Q)
-File(out_dir + 'uhat.pvd') << project(uhat, V)
+File(out_dir + 'U.pvd')    << U
+File(out_dir + 'H.pvd')    << project(H,W)
+File(out_dir + 'adot.pvd') << adot
+#File(out_dir + 'uhat.pvd') << project(uhat, V)
 
 
 

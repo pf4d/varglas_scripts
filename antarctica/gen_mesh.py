@@ -22,15 +22,15 @@ db2 = DataInput(bedmap2, gen_space=False)
 #
 #db2.data['ref'] = db2.data['H'] / gS_n
 
-db2.data['mask'][db2.data['mask'] == 1]   = 100
-db2.data['mask'][db2.data['mask'] == 127] = 0
-db2.data['mask'][db2.data['mask'] == 1]   = 0
+#db2.data['mask'][db2.data['mask'] == 1]   = 100
+#db2.data['mask'][db2.data['mask'] == 127] = 0
+#db2.data['mask'][db2.data['mask'] == 1]   = 0
 
-# plot to check :
-imshow(db2.data['mask'][::-1,:])
-colorbar()
-tight_layout()
-show()
+## plot to check :
+#imshow(db2.data['mask'][::-1,:])
+#colorbar()
+#tight_layout()
+#show()
 
 #===============================================================================
 # data preparation :
@@ -41,19 +41,25 @@ measure = DataFactory.get_ant_measures()
 
 # process the data :
 dbm = DataInput(measure, gen_space=False)
-#dbm.set_data_max('U_ob', boundary=50.0, val=5000.0)
-#dbm.set_data_min('U_ob', boundary=49.9, val=20000.0)
+#dbm.set_data_max('U_ob', boundary=100.0, val=100.0)
+dbm.set_data_min('U_ob', boundary=0.0,   val=0.0)
 
-#dbm.data['U_ob'] = log(dbm.data['U_ob'] + 1)
+dbm.data['U_ob'] = log(dbm.data['U_ob'] + e)
+
+# plot to check :
+imshow(dbm.data['U_ob'][::-1,:])
+colorbar()
+tight_layout()
+show()
 
 
 #===============================================================================
 # generate the contour :
-m = MeshGenerator(db2, 'mesh', '')
+m = MeshGenerator(db2, 'mesh', 'meshes/')
 
 m.create_contour('mask', zero_cntr=1, skip_pts=20)
 m.eliminate_intersections(dist=40)
-m.plot_contour()
+#m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
 m.extrude(h=100000, n_layers=10)
 m.close_file()
@@ -64,13 +70,8 @@ m.close_file()
 #thklim = 100.0
 #db2.set_data_min('ref', boundary=thklim, val=thklim)
 
-## plot to check :
-#imshow(dbm.data['U_ob'][::-1,:])
-#colorbar()
-#tight_layout()
-#show()
-
-ref_bm = MeshRefiner(dbm, 'U_ob', gmsh_file_name='mesh')
+ref_bm = MeshRefiner(dbm, 'U_ob', gmsh_file_name='meshes/mesh')
+#ref_bm = MeshRefiner(db2, 'ref', gmsh_file_name='mesh')
 
 
 #===============================================================================
@@ -88,7 +89,7 @@ ref_bm = MeshRefiner(dbm, 'U_ob', gmsh_file_name='mesh')
 #===============================================================================
 # refine on thickness :
 #a,aid = ref_bm.add_static_attractor()
-a,aid = ref_bm.add_linear_attractor(log(1), 5000, 20000, inv=True) 
+a,aid = ref_bm.add_linear_attractor(1.0, 100000, 500000, inv=True) 
 ref_bm.set_background_field(aid)
 
 
