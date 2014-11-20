@@ -6,7 +6,7 @@ out_dir = 'output/'
 
 mesh = Mesh('meshes/bed_mesh.xml')
 Q    = FunctionSpace(mesh, 'CG', 1)
-QB   = FunctionSpace(mesh, 'B',  4)
+QB   = FunctionSpace(mesh, 'B',  3)
 W    = Q
 V    = MixedFunctionSpace([Q,Q,Q])
 Q2   = MixedFunctionSpace([Q,Q])

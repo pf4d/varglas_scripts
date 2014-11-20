@@ -44,7 +44,9 @@ dbm = DataInput(measure, gen_space=False)
 #dbm.set_data_max('U_ob', boundary=100.0, val=100.0)
 dbm.set_data_min('U_ob', boundary=0.0,   val=0.0)
 
-dbm.data['U_ob'] = log(dbm.data['U_ob'] + e)
+#dbm.data['U_ob'] = log(dbm.data['U_ob'] + e) * 1000
+dbm.data['U_ob'] = (0.1 + 1/(1 + dbm.data['U_ob'])) * 100000
+print dbm.data['U_ob'].min()
 
 # plot to check :
 imshow(dbm.data['U_ob'][::-1,:])
@@ -57,7 +59,7 @@ show()
 # generate the contour :
 m = MeshGenerator(db2, 'mesh', 'meshes/')
 
-m.create_contour('mask', zero_cntr=1, skip_pts=20)
+m.create_contour('mask', zero_cntr=1, skip_pts=5)
 m.eliminate_intersections(dist=40)
 #m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
@@ -88,8 +90,8 @@ ref_bm = MeshRefiner(dbm, 'U_ob', gmsh_file_name='meshes/mesh')
 
 #===============================================================================
 # refine on thickness :
-#a,aid = ref_bm.add_static_attractor()
-a,aid = ref_bm.add_linear_attractor(1.0, 100000, 500000, inv=True) 
+a,aid = ref_bm.add_static_attractor()
+#a,aid = ref_bm.add_linear_attractor(0.0, 50000, 500000, inv=True) 
 ref_bm.set_background_field(aid)
 
 

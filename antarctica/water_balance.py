@@ -63,11 +63,11 @@ Pw    = rhoi*g*H + rhow*g*z               # basal water pressure
 gPx   = project(Pw.dx(0), W)
 gPy   = project(Pw.dx(1), W)
 gPz   = project(Pw.dx(2), W)
-gPw   = as_vector([gPx, gPy, gPz])        # 2D pressure gradient
+gPw   = as_vector([gPx, gPy, 0.0])        # 2D pressure gradient
 gPx_v = gPw[0].vector().array()
 gPy_v = gPw[1].vector().array()
-gPz_v = gPw[2].vector().array()
-gPn_v = np.sqrt(gPx_v**2 + gPy_v**2 + gPz_v**2 + 1e-16)
+#gPz_v = gPw[2].vector().array()
+gPn_v = np.sqrt(gPx_v**2 + gPy_v**2 + 1e-16)
 
 gPn   = Function(W)                       # norm of pressure
 gPn.vector().set_local(gPn_v)
@@ -85,17 +85,19 @@ def L(u, uhat):
   return (uhat[0].dx(0) + uhat[1].dx(1))*u + dot(grad(u), uhat)
 
 # SUPG method phihat :
-h       = 0.0000001
-U       = gPw * h
+h       = 1.0
+np      = 0.02
+U       = 1/np * (h/2)**2 * (gPw / (rhow * g))
 Unorm   = sqrt(dot(U, U) + 1e-16)
 cellh   = CellSize(mesh)
-phihat  = phi + cellh/(2*Unorm)*dot(U, grad(phi))
+#phihat  = phi + cellh/(2*Unorm)*dot(U, grad(phi))
 phihat  = phi + cellh/(2*Unorm)*((h*gPw[0]*phi).dx(0) + (h*gPw[1]*phi).dx(1))
 
-B = L(q,uhat) * phihat * dx
+w = 1/np * (q/2)**2 / (rhow * g)
+B = L(q, uhat) * phihat * dx
 a = Mb * phihat * dx
-q = Function(W)
 
+q = Function(W)
 solve(B == a, q)
 
 
@@ -106,7 +108,7 @@ print 'q <min,max>:', q_v.min(), q_v.max()
 
 File(out_dir + 'q.pvd')    << q
 File(out_dir + 'Pw.pvd')   << project(Pw, Q)
-File(out_dir + 'uhat.pvd') << project(uhat, V)
+File(out_dir + 'U.pvd')    << project(U, V)
 
 
 
