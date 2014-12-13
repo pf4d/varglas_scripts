@@ -7,14 +7,14 @@ from fenics                       import *
 
 
 t    = 1000000.0 / 2
-S0   = 200.0
-bm   = 1000.0
+bm   = 100.0
 xmin = -t
 xmax = t
 ymin = -t
 ymax = t
 
-mesh = Mesh('../meshes/unit_cyl_mesh.xml')
+mesh = Mesh('meshes/unit_cyl_mesh.xml')
+Q    = FunctionSpace(mesh, 'CG', 1)
 
 # width and origin of the domain for deforming x coord :
 width_x  = xmax - xmin
@@ -37,19 +37,24 @@ def gauss(x, y, sigx, sigy):
 
 class Surface(Expression):
   def eval(self,values,x):
-    values[0] = S0 + 1200*gauss(x[0], x[1], t/2, t/2)
+    values[0] = 100 + 3000*gauss(x[0], x[1], t/2, t/2)
 S = Surface(element = Q.ufl_element())
 
 class Bed(Expression):
   def eval(self,values,x):
-    values[0] = S0 - 500.0 \
-                - 1000.0 * gauss(x[0], x[1], t/2, t/2)
+    values[0] = - 400.0 \
+                - 2000.0 * gauss(x[0], x[1], t/2, t/2)
 B = Bed(element = Q.ufl_element())
 
 class Beta(Expression):
   def eval(self, values, x):
-    values[0] = bm * gauss(x[0], x[1], t/2, t/2)
-fric = Beta(element = Q.ufl_element())
+    if sqrt(x[0]**2 + x[1]**2 + x[2]**2) > 2*t - 50000:
+      values[0] = 0.0
+    else:
+      values[0] = bm * gauss(x[0], x[1], t/1.5, t/1.5)
+beta = Beta(element = Q.ufl_element())
+
+File('output/beta.pvd') << interpolate(beta,Q)
 
 model = model.Model()
 model.set_mesh(mesh)
@@ -60,17 +65,19 @@ model.initialize_variables()
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
-nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
+nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.9
+nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-15
+nonlin_solver_params['newton_solver']['maximum_iterations']      = 25
 nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
 nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
 nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
 parameters['form_compiler']['quadrature_degree']                 = 2
 
 config = default_config()
-config['output_path']                     = 'output'
-config['velocity']['newton_params']       = nonlin_solver_params
+config['output_path']                  = 'output/'
+config['velocity']['newton_params']    = nonlin_solver_params
+config['velocity']['approximation']    = 'stokes'
+config['velocity']['beta0']            = beta
 
 F = solvers.SteadySolver(model, config)
 F.solve()
