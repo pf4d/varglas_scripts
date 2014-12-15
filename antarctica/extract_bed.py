@@ -18,7 +18,8 @@ measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+mesh  = Mesh('meshes/mesh.xml')
 
 dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
@@ -32,9 +33,10 @@ H      = db2.get_nearest_expression("H")
 S      = db2.get_nearest_expression("S")
 B      = db2.get_nearest_expression("B")
 M      = db2.get_nearest_expression("mask")
-T_s    = db1.get_nearest_expression("srfTemp")
-q_geo  = db1.get_nearest_expression("q_geo")
-adot   = db1.get_nearest_expression("adot")
+T_s    = db1.get_nearest_expression("temp")
+q_geo  = db1.get_nearest_expression("ghfsr")
+adot   = db1.get_nearest_expression("acca")
+U_ob   = dm.get_projection("U_ob", near=True)
 u      = dm.get_nearest_expression("vx")
 v      = dm.get_nearest_expression("vy")
 
@@ -98,15 +100,15 @@ File('test/bed/adot_s.xml') << adot_s
 
 # cell declustering :
 h_v    = project(CellSize(submesh), Q_b).vector().array()
-A      = sum(h_v)
-wt     = h_v / A
 
+# vectors :
 beta_v = beta_s.vector().array()
 T_v    = T_s.vector().array()
 u_v    = u_s.vector().array()
 v_v    = v_s.vector().array()
 w_v    = w_s.vector().array()
 Mb_v   = Mb_s.vector().array()
+H_v    = H_s.vector().array()
 
 valid  = beta_v >= 0
 beta_v = beta_v[valid]
@@ -115,6 +117,11 @@ u_v    = u_v[valid]
 v_v    = v_v[valid]
 w_v    = w_v[valid]
 Mb_v   = Mb_v[valid]
+H_v    = H_v[valid]
+
+h_v    = h_v[valid]
+A      = sum(h_v)
+wt     = h_v / A
 
 # global means :
 beta_bar = sum(beta_v * h_v) / A
@@ -129,10 +136,11 @@ x2   = T_v
 x3   = u_v
 x4   = v_v
 x5   = w_v
-x6   = np.sqrt(u_v**2 + v_v**2 + w_v**2 + 1e-10)
-x7   = x1 * x5
+x6   = H_v
+x7   = np.sqrt(u_v**2 + v_v**2 + w_v**2 + 1e-10)
+x8   = x6 * x7
 
-i    = argsort(x6)
+i    = argsort(x7)
 x1   = x1[i]
 x2   = x2[i]
 x3   = x3[i]
@@ -140,9 +148,10 @@ x4   = x4[i]
 x5   = x5[i]
 x6   = x6[i]
 x7   = x7[i]
+x8   = x8[i]
 
-X    = array([x6])
-yt   = np.log(beta_v[i] + 1)
+X    = array([x1, x2, x6, x7])
+yt   = beta_v[i]
 
 out  = linRegstats(X, yt, 0.95)
 
@@ -150,16 +159,16 @@ bhat = out['bhat']
 yhat = out['yhat']
 ciy  = out['CIY']
 
-print out['F_pval'], out['pval']
+print "<F_pval, pval>:", out['F_pval'], out['pval']
 
 fig  = figure()
 ax   = fig.add_subplot(111)
 
-ax.plot(x6, yt,     'ko', alpha=0.1)
-ax.plot(x6, yhat,   'r-', lw=2.0)
+ax.plot(x7, yt,     'ko', alpha=0.1)
+ax.plot(x7, yhat,   'r-', lw=2.0)
 #ax.plot(u_v, ciy[0], 'k:', lw=2.0)
 #ax.plot(u_v, ciy[1], 'k:', lw=2.0)
-ax.set_xlabel(r'$x_i$')
+ax.set_xlabel(r'$\Vert \mathbf{U} \Vert$')
 ax.set_ylabel(r'$\beta$')
 grid()
 show()

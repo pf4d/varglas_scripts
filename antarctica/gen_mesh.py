@@ -44,7 +44,6 @@ dbm = DataInput(measure, gen_space=False)
 #dbm.set_data_max('U_ob', boundary=100.0, val=100.0)
 dbm.set_data_min('U_ob', boundary=0.0,   val=0.0)
 
-#dbm.data['U_ob'] = log(dbm.data['U_ob'] + e) * 1000
 dbm.data['U_ob'] = (0.1 + 1/(1 + dbm.data['U_ob'])) * 100000
 print dbm.data['U_ob'].min()
 
@@ -61,7 +60,7 @@ m = MeshGenerator(db2, 'mesh', 'meshes/')
 
 m.create_contour('mask', zero_cntr=1, skip_pts=5)
 m.eliminate_intersections(dist=40)
-#m.plot_contour()
+m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
 m.extrude(h=100000, n_layers=10)
 m.close_file()
