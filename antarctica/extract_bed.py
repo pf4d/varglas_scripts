@@ -1,7 +1,3 @@
-import sys
-src_directory = '../../statistical_modeling'
-sys.path.append(src_directory)
-
 import varglas.physical_constants as pc
 import varglas.model              as model
 from src.regstats                 import linRegstats
@@ -80,7 +76,7 @@ lg.interpolate(beta_s, model.beta)
 lg.interpolate(T_s,    model.T)
 lg.interpolate(S_s,    model.S)
 lg.interpolate(B_s,    model.B)
-lg.interpolate(H_s,    model.H)
+lg.interpolate(H_s,    interpolate(H, model.Q))
 lg.interpolate(u_s,    model.u)
 lg.interpolate(v_s,    model.v)
 lg.interpolate(w_s,    model.w)
@@ -97,81 +93,6 @@ File('test/bed/u_s.xml')    << u_s
 File('test/bed/v_s.xml')    << v_s
 File('test/bed/w_s.xml')    << w_s
 File('test/bed/adot_s.xml') << adot_s
-
-# cell declustering :
-h_v    = project(CellSize(submesh), Q_b).vector().array()
-
-# vectors :
-beta_v = beta_s.vector().array()
-T_v    = T_s.vector().array()
-u_v    = u_s.vector().array()
-v_v    = v_s.vector().array()
-w_v    = w_s.vector().array()
-Mb_v   = Mb_s.vector().array()
-H_v    = H_s.vector().array()
-
-valid  = beta_v >= 0
-beta_v = beta_v[valid]
-T_v    = T_v[valid]
-u_v    = u_v[valid]
-v_v    = v_v[valid]
-w_v    = w_v[valid]
-Mb_v   = Mb_v[valid]
-H_v    = H_v[valid]
-
-h_v    = h_v[valid]
-A      = sum(h_v)
-wt     = h_v / A
-
-# global means :
-beta_bar = sum(beta_v * h_v) / A
-T_bar    = sum(T_v    * h_v) / A
-Mb_bar   = sum(Mb_v   * h_v) / A
-u_bar    = sum(u_v    * h_v) / A
-v_bar    = sum(v_v    * h_v) / A
-w_bar    = sum(w_v    * h_v) / A
-
-x1   = Mb_v
-x2   = T_v
-x3   = u_v
-x4   = v_v
-x5   = w_v
-x6   = H_v
-x7   = np.sqrt(u_v**2 + v_v**2 + w_v**2 + 1e-10)
-x8   = x6 * x7
-
-i    = argsort(x7)
-x1   = x1[i]
-x2   = x2[i]
-x3   = x3[i]
-x4   = x4[i]
-x5   = x5[i]
-x6   = x6[i]
-x7   = x7[i]
-x8   = x8[i]
-
-X    = array([x1, x2, x6, x7])
-yt   = beta_v[i]
-
-out  = linRegstats(X, yt, 0.95)
-
-bhat = out['bhat']
-yhat = out['yhat']
-ciy  = out['CIY']
-
-print "<F_pval, pval>:", out['F_pval'], out['pval']
-
-fig  = figure()
-ax   = fig.add_subplot(111)
-
-ax.plot(x7, yt,     'ko', alpha=0.1)
-ax.plot(x7, yhat,   'r-', lw=2.0)
-#ax.plot(u_v, ciy[0], 'k:', lw=2.0)
-#ax.plot(u_v, ciy[1], 'k:', lw=2.0)
-ax.set_xlabel(r'$\Vert \mathbf{U} \Vert$')
-ax.set_ylabel(r'$\beta$')
-grid()
-show()
 
 
 
