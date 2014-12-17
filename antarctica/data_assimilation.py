@@ -1,9 +1,3 @@
-# beta:         F =   2504037402158.4854,  Total time to compute: 01:03:21
-# beta^2:       F =   1714728897787.7820,  Total time to compute: 01:16:09
-# r=1:          F =   2646114341918.4277,  Total time to compute: 01:15:44
-# r=1, beta^2:  F =   5170367358780.6270,  Total time to compute: 01:17:37
-
-
 import sys
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
@@ -157,7 +151,8 @@ config['coupled']['on']                   = False
 if i % 2 == 0:
   params['relaxation_parameter']         = 1.0
   config['velocity']['viscosity_mode']   = 'linear'
-  config['velocity']['eta']              = model.eta
+  config['velocity']['eta_shf']          = model.eta_shf
+  config['velocity']['eta_gnd']          = model.eta_gnd
   config['adjoint']['surface_integral']  = 'grounded'
   config['adjoint']['alpha']             = 0
   config['adjoint']['bounds']            = (beta_min, beta_max)

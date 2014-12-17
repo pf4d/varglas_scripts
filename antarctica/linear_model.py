@@ -67,29 +67,62 @@ gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
 valid  = intersect1d(where(beta_v > 1e-7)[0], where(U_mag < 800)[0])
 
 x1   = Mb_v[valid]
-x2   = 273.15 - T_v[valid]
-x3   = gradS[valid]
-x4   = abs(B_v[valid])
-x5   = gradB[valid]
-x6   = H_v[valid]
-x7   = u_v[valid]
-x8   = v_v[valid]
-x9   = w_v[valid]
-x10  = U_mag[valid]
-x11  = x5 * x9
+x2   = S_v[valid]
+x3   = 273.15 - T_v[valid]
+x4   = gradS[valid]
+x5   = abs(B_v[valid])
+x6   = gradB[valid]
+x7   = H_v[valid]
+x8   = u_v[valid]
+x9   = v_v[valid]
+x10  = w_v[valid]
+x11  = U_mag[valid]
 
-i    = argsort(x2)
-x1   = x1[i]
-x2   = x2[i]
-x3   = x3[i]
-x4   = x4[i]
-x5   = x5[i]
-x6   = x6[i]
-x7   = x7[i]
-x8   = x8[i]
-x9   = x9[i]
-x10  = x10[i]
-x11  = x11[i]
+names = [r'$M_b$', 
+         r'$S$', 
+         r'$-T$', 
+         r'$\Vert \nabla S \Vert$', 
+         r'$|B|$',
+         r'$\Vert \nabla B \Vert$', 
+         r'$H$',
+         r'$u$', 
+         r'$v$', 
+         r'$w$', 
+         r'$\Vert \mathbf{U} \Vert$']
+
+X    = [x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11]
+
+ii  = [3,4,5,6,[3,4],[3,6],[4,6]]
+ii  = [3,5]
+fig = figure()
+Xt  = []
+
+for k,i in enumerate(ii):
+  
+  ax = fig.add_subplot(330 + k + 1)
+  
+  if type(i) == list:
+    n = ''
+    x = 1.0
+    for j in i:
+      m = j - 1
+      x *= X[m]
+      n += names[m]
+  else:
+    m = i - 1
+    x = X[m]
+    n = names[m]
+
+  Xt.append(x)
+  
+  j = argsort(x)
+  ax.plot(x[j], beta_v[valid][j], 'ko', alpha=0.1)
+  ax.set_xlabel(n)
+  ax.set_ylabel(r'$\beta$')
+  ax.grid()
+
+Xt = array(Xt)
+show()
 
 # cell declustering :
 #h_v    = project(CellSize(submesh), Q_b).vector().array()
@@ -97,25 +130,9 @@ x11  = x11[i]
 #wt     = h_v / A
 #beta_bar = sum(beta_v * h_v) / A
 
-X    = array([x2,x3,x4,x5,x2*x3,x2*x5,x3*x5])
-yt   = sqrt(log(beta_v[valid][i] + 1))
-#yt   = beta_v[valid][i]
+yt   = sqrt(log(beta_v[valid] + 1))
 
-names = [r'$-T$', r'$\Vert \nabla S \Vert$', 
-         r'$|B|$', r'$\Vert \nabla B \Vert$', r'$\Vert \mathbf{U} \Vert$']
-
-fig  = figure()
-for i, (x,n) in enumerate(zip(X,names)):
-  ax = fig.add_subplot(230 + i + 1)
-  j  = argsort(x)
-  ax.plot(x[j], beta_v[valid][j], 'ko', alpha=0.1)
-  ax.set_title(n)
-  ax.set_xlabel(n)
-  ax.set_ylabel(r'$\beta$')
-  ax.grid()
-show()
-
-out  = linRegstats(X, yt, 0.95)
+out  = linRegstats(Xt, yt, 0.95)
 
 bhat = out['bhat']
 yhat = out['yhat']
@@ -126,8 +143,10 @@ print "<F_pval, pval>:", out['F_pval'], out['pval']
 fig  = figure()
 ax   = fig.add_subplot(111)
 
-ax.plot(X[0], yt,     'ko', alpha=0.1)
-ax.plot(X[0], yhat,   'r-', lw=2.0)
+j    = argsort(Xt[0])
+
+ax.plot(Xt[0][j], yt[j],   'ko', alpha=0.1)
+ax.plot(Xt[0][j], yhat[j], 'r-', lw=2.0)
 #ax.plot(u_v, ciy[0], 'k:', lw=2.0)
 #ax.plot(u_v, ciy[1], 'k:', lw=2.0)
 #ax.set_xlabel(r'$\Vert \mathbf{U} \Vert$')
