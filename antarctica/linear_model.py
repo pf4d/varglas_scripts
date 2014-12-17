@@ -7,6 +7,10 @@ from varglas.mesh.mesh_factory    import MeshFactory
 from fenics                       import *
 from pylab                        import *
 
+
+#===============================================================================
+# get the data from the model output on the bed :
+
 mesh  = MeshFactory.get_antarctica_3D_10k()
 
 bmesh   = BoundaryMesh(mesh, 'exterior')
@@ -17,7 +21,7 @@ for c in cells(bmesh):
     pb[c] = 1
 submesh = SubMesh(bmesh, pb, 1)           # subset of surface mesh
 
-Q_b     = FunctionSpace(submesh, 'CG', 1)
+Q_b   = FunctionSpace(submesh, 'CG', 1)
 beta  = Function(Q_b)
 S     = Function(Q_b)
 B     = Function(Q_b)
@@ -78,6 +82,8 @@ x9   = v_v[valid]
 x10  = w_v[valid]
 x11  = U_mag[valid]
 
+#===============================================================================
+# formulte design matrix and do some EDA :
 names = [r'$M_b$', 
          r'$S$', 
          r'$-T$', 
@@ -93,7 +99,6 @@ names = [r'$M_b$',
 X    = [x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11]
 
 ii  = [3,4,5,6,[3,4],[3,6],[4,6]]
-ii  = [3,5]
 fig = figure()
 Xt  = []
 
@@ -120,8 +125,6 @@ for k,i in enumerate(ii):
   ax.set_xlabel(n)
   ax.set_ylabel(r'$\beta$')
   ax.grid()
-
-Xt = array(Xt)
 show()
 
 # cell declustering :
@@ -130,16 +133,24 @@ show()
 #wt     = h_v / A
 #beta_bar = sum(beta_v * h_v) / A
 
-yt   = sqrt(log(beta_v[valid] + 1))
+Xt = array(Xt)                        # design matrix
+yt = sqrt(log(beta_v[valid] + 1))     # lhs
+
+
+#===============================================================================
+# perform regression :
 
 out  = linRegstats(Xt, yt, 0.95)
 
-bhat = out['bhat']
 yhat = out['yhat']
-ciy  = out['CIY']
+bhat = out['bhat']
+cibl = out['CIB'][0]
+cibh = out['CIB'][1]
 
 print "<F_pval, pval>:", out['F_pval'], out['pval']
 
+#===============================================================================
+# plot y, yhat :
 fig  = figure()
 ax   = fig.add_subplot(111)
 
@@ -147,10 +158,25 @@ j    = argsort(Xt[0])
 
 ax.plot(Xt[0][j], yt[j],   'ko', alpha=0.1)
 ax.plot(Xt[0][j], yhat[j], 'r-', lw=2.0)
-#ax.plot(u_v, ciy[0], 'k:', lw=2.0)
-#ax.plot(u_v, ciy[1], 'k:', lw=2.0)
-#ax.set_xlabel(r'$\Vert \mathbf{U} \Vert$')
-#ax.set_ylabel(r'$\beta$')
+ax.set_ylabel(r'$\beta$')
+grid()
+tight_layout()
+show()
+
+#===============================================================================
+# plot parameter values with confidence intervals:
+fig  = figure()
+ax   = fig.add_subplot(111)
+
+j    = argsort(Xt[0])
+
+x    = range(len(ii) + 1)
+
+ax.plot(x, cibh, 'r--', lw=2.0)
+ax.plot(x, bhat, 'k-',  lw=2.0)
+ax.plot(x, cibl, 'r--', lw=2.0)
+ax.set_ylabel(r'$\hat{\beta}_i$')
+ax.set_xlabel(r'$i$')
 grid()
 tight_layout()
 show()
