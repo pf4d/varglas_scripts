@@ -2,10 +2,11 @@ import sys
 src_directory = '../../statistical_modeling'
 sys.path.append(src_directory)
 
-from src.regstats                 import linRegstats
-from varglas.mesh.mesh_factory    import MeshFactory
-from fenics                       import *
-from pylab                        import *
+from scipy.stats               import probplot 
+from src.regstats              import *
+from varglas.mesh.mesh_factory import MeshFactory
+from fenics                    import *
+from pylab                     import *
 
 
 #===============================================================================
@@ -69,6 +70,7 @@ dBdy_v = dBdy.vector().array()
 gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
 
 valid  = intersect1d(where(beta_v > 1e-7)[0], where(U_mag < 800)[0])
+#valid  = intersect1d(valid, where(abs(B_v) > 1.0)[0])
 
 x1   = Mb_v[valid]
 x2   = S_v[valid]
@@ -98,34 +100,38 @@ names = [r'$M_b$',
 
 X    = [x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11]
 
-ii  = [3,4,5,6,[3,4],[3,6],[4,6]]
+ii  = [3,4,5,6,11,[3,4],[3,5],[3,6],[3,11],[4,5],[4,6],[4,11],[5,6],[5,11],[6,11]]
 fig = figure()
 Xt  = []
 
 for k,i in enumerate(ii):
   
-  ax = fig.add_subplot(330 + k + 1)
+  ax = fig.add_subplot(4,4,k+1)
   
   if type(i) == list:
     n = ''
     x = 1.0
     for j in i:
       m = j - 1
-      x *= X[m]
+      x *= log(X[m])
       n += names[m]
   else:
     m = i - 1
-    x = X[m]
+    x = log(X[m] + 1)
     n = names[m]
 
   Xt.append(x)
   
   j = argsort(x)
-  ax.plot(x[j], beta_v[valid][j], 'ko', alpha=0.1)
+  ax.plot(x[j], log(beta_v[valid][j] + 1), 'ko', alpha=0.1)
   ax.set_xlabel(n)
   ax.set_ylabel(r'$\beta$')
   ax.grid()
 show()
+
+
+#===============================================================================
+# perform regression :
 
 # cell declustering :
 #h_v    = project(CellSize(submesh), Q_b).vector().array()
@@ -133,12 +139,8 @@ show()
 #wt     = h_v / A
 #beta_bar = sum(beta_v * h_v) / A
 
-Xt = array(Xt)                        # design matrix
-yt = sqrt(log(beta_v[valid] + 1))     # lhs
-
-
-#===============================================================================
-# perform regression :
+Xt = array(Xt)
+yt = log(beta_v[valid] + 1)
 
 out  = linRegstats(Xt, yt, 0.95)
 
@@ -149,15 +151,39 @@ cibh = out['CIB'][1]
 
 print "<F_pval, pval>:", out['F_pval'], out['pval']
 
+
+# ==============================================================================
+# residual plot and normal quantile plot for residuals :
+fig = figure(figsize=(12,5))
+ax1 = fig.add_subplot(121)
+ax2 = fig.add_subplot(122)
+
+ax1.plot(out['yhat'], out['resid'], 'ko', alpha=0.1)
+ax1.set_xlabel('Predicted Values') 
+ax1.set_ylabel('Residuals') 
+ax1.set_title('Residual Plot') 
+ax1.grid()
+
+# Normal quantile plot of residuals
+p = prbplotObj(ax2)
+probplot(out['resid'], plot=p)
+ax2.set_xlabel('Standard Normal Quantiles') 
+ax2.set_ylabel('Residuals') 
+ax2.set_title('Normal Quantile Plot')
+ax2.grid()
+#savefig('images/resid-NQ.png', dpi=300)
+show()
+
+
 #===============================================================================
 # plot y, yhat :
 fig  = figure()
 ax   = fig.add_subplot(111)
 
-j    = argsort(Xt[0])
+j    = argsort(Xt[11])
 
-ax.plot(Xt[0][j], yt[j],   'ko', alpha=0.1)
-ax.plot(Xt[0][j], yhat[j], 'r-', lw=2.0)
+ax.plot(Xt[11][j], yt[j],   'ko', alpha=0.1)
+ax.plot(Xt[11][j], yhat[j], 'ro', alpha=0.1)
 ax.set_ylabel(r'$\beta$')
 grid()
 tight_layout()
@@ -167,8 +193,6 @@ show()
 # plot parameter values with confidence intervals:
 fig  = figure()
 ax   = fig.add_subplot(111)
-
-j    = argsort(Xt[0])
 
 x    = range(len(ii) + 1)
 
