@@ -1,6 +1,5 @@
 import varglas.physical_constants as pc
 import varglas.model              as model
-from src.regstats                 import linRegstats
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
 from varglas.utilities            import DataInput, DataOutput

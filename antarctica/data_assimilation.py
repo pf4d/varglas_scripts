@@ -84,21 +84,28 @@ b_min    = interpolate(Constant(0.0), model.Q)
 b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 
 # specifify non-linear solver parameters :
-nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
-nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
-nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
-nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
-nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
-parameters['form_compiler']['quadrature_degree']                 = 2
+params = default_nonlin_solver_params()
+params['nonlinear_solver']                          = 'snes'
+params['snes_solver']['error_on_nonconvergence']    = False
+params['snes_solver']['absolute_tolerance']         = 1.0
+params['snes_solver']['relative_tolerance']         = 1e-3
+params['snes_solver']['maximum_iterations']         = 20
+params['snes_solver']['linear_solver']              = 'gmres'
+params['snes_solver']['preconditioner']             = 'amg'
+#params['newton_solver']['relaxation_parameter']     = 0.7
+#params['newton_solver']['relative_tolerance']       = 1e-3
+#params['newton_solver']['maximum_iterations']       = 16
+#params['newton_solver']['error_on_nonconvergence']  = False
+#params['newton_solver']['linear_solver']            = 'mumps'
+#params['newton_solver']['preconditioner']           = 'default'
+parameters['form_compiler']['quadrature_degree']    = 2
 
 
 config = default_config()
 config['output_path']                     = out_dir
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 5
-config['velocity']['newton_params']       = nonlin_solver_params
+config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['use_T0']              = True
@@ -138,25 +145,24 @@ File(out_dir + 'T0.pvd')    << model.T
 #File(out_dir + 'b0.pvd')    << model.b_shf
 F.solve()
 
-params = config['velocity']['newton_params']['newton_solver']
-params['maximum_iterations']              = 25
-config['velocity']['init_beta_from_U_ob'] = False
-config['velocity']['use_T0']              = False
-config['velocity']['use_U0']              = False
-config['velocity']['use_beta0']           = False
-config['velocity']['use_b_shf0']          = False
-config['enthalpy']['on']                  = False
-config['coupled']['on']                   = False
+params['newton_solver']['maximum_iterations'] = 25
+config['velocity']['init_beta_from_U_ob']     = False
+config['velocity']['use_T0']                  = False
+config['velocity']['use_U0']                  = False
+config['velocity']['use_beta0']               = False
+config['velocity']['use_b_shf0']              = False
+config['enthalpy']['on']                      = False
+config['coupled']['on']                       = False
 
 if i % 2 == 0:
-  params['relaxation_parameter']         = 1.0
-  config['velocity']['viscosity_mode']   = 'linear'
-  config['velocity']['eta_shf']          = model.eta_shf
-  config['velocity']['eta_gnd']          = model.eta_gnd
-  config['adjoint']['surface_integral']  = 'grounded'
-  config['adjoint']['alpha']             = 0
-  config['adjoint']['bounds']            = (beta_min, beta_max)
-  config['adjoint']['control_variable']  = model.beta
+  params['newton_solver']['relaxation_parameter']  = 1.0
+  config['velocity']['viscosity_mode']             = 'linear'
+  config['velocity']['eta_shf']                    = model.eta_shf
+  config['velocity']['eta_gnd']                    = model.eta_gnd
+  config['adjoint']['surface_integral']            = 'grounded'
+  config['adjoint']['alpha']                       = 0
+  config['adjoint']['bounds']                      = (beta_min, beta_max)
+  config['adjoint']['control_variable']            = model.beta
 
 else:
   if i > 2:
