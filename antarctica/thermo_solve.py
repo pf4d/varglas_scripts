@@ -48,12 +48,12 @@ model.initialize_variables()
 params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'snes'
 params['snes_solver']['method']                     = 'newtonls'
-params['snes_solver']['line_search']                = 'bt'
+params['snes_solver']['line_search']                = 'basic'
 params['snes_solver']['error_on_nonconvergence']    = False
 params['snes_solver']['absolute_tolerance']         = 1.0
 params['snes_solver']['relative_tolerance']         = 1e-3
 params['snes_solver']['maximum_iterations']         = 20
-params['snes_solver']['linear_solver']              = 'minres'
+params['snes_solver']['linear_solver']              = 'bicgstab'
 params['snes_solver']['preconditioner']             = 'hypre_amg'
 #params['nonlinear_solver']                          = 'newton'
 #params['newton_solver']['relaxation_parameter']     = 1.0
