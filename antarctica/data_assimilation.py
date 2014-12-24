@@ -27,9 +27,9 @@ measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
 #mesh = MeshFactory.get_antarctica_3D_gradS_crude()
-#mesh  = MeshFactory.get_antarctica_3D_10k()
+mesh  = MeshFactory.get_antarctica_3D_10k()
 
 dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
@@ -39,7 +39,6 @@ db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
 db2.data['S'] = db2.data['B'] + db2.data['H']
 
-H      = db2.get_nearest_expression("H")
 S      = db2.get_nearest_expression("S")
 B      = db2.get_nearest_expression("B")
 M      = db2.get_nearest_expression("mask")
@@ -47,8 +46,6 @@ T_s    = db1.get_nearest_expression("temp")
 q_geo  = db1.get_nearest_expression("ghfsr")
 adot   = db1.get_nearest_expression("acca")
 U_ob   = dm.get_projection("U_ob", near=True)
-u      = dm.get_nearest_expression("vx")
-v      = dm.get_nearest_expression("vy")
 
 model = model.Model()
 model.set_mesh(mesh)
@@ -119,9 +116,6 @@ config['velocity']['T0']                  = model.T_w - 30.0
 config['velocity']['init_beta_from_U_ob'] = True
 config['velocity']['init_b_from_U_ob']    = False
 config['velocity']['U_ob']                = U_ob
-config['velocity']['boundaries']          = None#'user_defined',
-config['velocity']['u_lat_boundary']      = u
-config['velocity']['v_lat_boundary']      = v
 config['enthalpy']['on']                  = True
 config['enthalpy']['T_surface']           = T_s
 config['enthalpy']['q_geo']               = model.q_geo
@@ -147,80 +141,82 @@ File(out_dir + 'beta0.pvd') << model.beta
 
 t0 = time()
 F.solve()
-tf = time()
+t1 = time()
 
-#params['newton_solver']['maximum_iterations'] = 25
-#config['velocity']['init_beta_from_U_ob']     = False
-#config['velocity']['use_T0']                  = False
-#config['velocity']['use_U0']                  = False
-#config['velocity']['use_beta0']               = False
-#config['velocity']['use_b_shf0']              = False
-#config['enthalpy']['on']                      = False
-#config['coupled']['on']                       = False
-#
-#if i % 2 == 0:
-#  params['newton_solver']['relaxation_parameter']  = 1.0
-#  config['velocity']['viscosity_mode']             = 'linear'
-#  config['velocity']['eta_shf']                    = model.eta_shf
-#  config['velocity']['eta_gnd']                    = model.eta_gnd
-#  config['adjoint']['surface_integral']            = 'grounded'
-#  config['adjoint']['alpha']                       = 0
-#  config['adjoint']['bounds']                      = (beta_min, beta_max)
-#  config['adjoint']['control_variable']            = model.beta
-#
-#else:
-#  if i > 2:
-#    config['velocity']['use_b_shf0']       = True
-#    config['velocity']['b_shf']            = dir_b + str(i-2) + '/b_shf.xml'
-#  params['relaxation_parameter']         = 0.6
-#  b = project(model.b_shf)
-#  model.print_min_max(b, 'b')
-#  config['velocity']['viscosity_mode']   = 'b_control'
-#  config['velocity']['b_shf']            = b
-#  config['velocity']['b_gnd']            = b.copy()
-#  b_min, b_max = (0.0, 1e10)
-#  config['adjoint']['surface_integral']  = 'shelves'
-#  config['adjoint']['alpha']             = 0
-#  config['adjoint']['bounds']            = (b_min, b_max)
-#  config['adjoint']['control_variable']  = b
-#  #params['relaxation_parameter']         = 0.6
-#  #E = model.E
-#  #model.print_min_max(E, 'E')
-#  #config['velocity']['viscosity_mode']   = 'E_control'
-#  #config['velocity']['E_shf']            = E
-#  #config['velocity']['E_gnd']            = E.copy()
-#  #E_min, E_max = (1e-16, 100.0)
-#  #config['adjoint']['surface_integral']  = 'shelves'
-#  #config['adjoint']['alpha']             = 0
-#  #config['adjoint']['bounds']            = (E_min, E_max)
-#  #config['adjoint']['control_variable']  = E
-#
-#A = solvers.AdjointSolver(model, config)
-#A.set_target_velocity(u=u, v=v)
-##uf = dir_b + str(i-1) + '/u.xml'
-##vf = dir_b + str(i-1) + '/v.xml'
-##wf = dir_b + str(i-1) + '/w.xml'
-##A.set_velocity(uf, vf, wf)
-#A.solve()
-#
-#eta   = project(model.eta, model.Q)
-#b_shf = project(model.b_shf, model.Q)
-#b_gnd = project(model.b_gnd, model.Q)
-#
-#File(out_dir + 'T.xml')       << model.T
-#File(out_dir + 'S.xml')       << model.S
-#File(out_dir + 'B.xml')       << model.B
-#File(out_dir + 'u.xml')       << model.u 
-#File(out_dir + 'v.xml')       << model.v 
-#File(out_dir + 'w.xml')       << model.w 
-#File(out_dir + 'beta.xml')    << model.beta
-#File(out_dir + 'Mb.xml')      << model.Mb
-#File(out_dir + 'eta.xml')     << eta
-#File(out_dir + 'b_shf.xml')   << b_shf
-#File(out_dir + 'b_shf.pvd')   << b_shf
-#File(out_dir + 'b_gnd.xml')   << b_gnd
-#File(out_dir + 'E_shf.xml')   << model.E_shf
-#File(out_dir + 'E_shf.pvd')   << model.E_shf
+params['newton_solver']['maximum_iterations'] = 25
+config['velocity']['init_beta_from_U_ob']     = False
+config['velocity']['use_T0']                  = False
+config['velocity']['use_U0']                  = False
+config['velocity']['use_beta0']               = False
+config['velocity']['use_b_shf0']              = False
+config['enthalpy']['on']                      = False
+config['coupled']['on']                       = False
+
+if i % 2 == 0:
+  params['newton_solver']['relaxation_parameter']  = 1.0
+  config['velocity']['viscosity_mode']             = 'linear'
+  config['velocity']['eta_shf']                    = model.eta_shf
+  config['velocity']['eta_gnd']                    = model.eta_gnd
+  config['adjoint']['surface_integral']            = 'grounded'
+  config['adjoint']['alpha']                       = 0
+  config['adjoint']['bounds']                      = (beta_min, beta_max)
+  config['adjoint']['control_variable']            = model.beta
+
+else:
+  if i > 2:
+    config['velocity']['use_b_shf0']       = True
+    config['velocity']['b_shf']            = dir_b + str(i-2) + '/b_shf.xml'
+  params['relaxation_parameter']         = 0.6
+  b = project(model.b_shf)
+  model.print_min_max(b, 'b')
+  config['velocity']['viscosity_mode']   = 'b_control'
+  config['velocity']['b_shf']            = b
+  config['velocity']['b_gnd']            = b.copy()
+  b_min, b_max = (0.0, 1e10)
+  config['adjoint']['surface_integral']  = 'shelves'
+  config['adjoint']['alpha']             = 0
+  config['adjoint']['bounds']            = (b_min, b_max)
+  config['adjoint']['control_variable']  = b
+  #params['relaxation_parameter']         = 0.6
+  #E = model.E
+  #model.print_min_max(E, 'E')
+  #config['velocity']['viscosity_mode']   = 'E_control'
+  #config['velocity']['E_shf']            = E
+  #config['velocity']['E_gnd']            = E.copy()
+  #E_min, E_max = (1e-16, 100.0)
+  #config['adjoint']['surface_integral']  = 'shelves'
+  #config['adjoint']['alpha']             = 0
+  #config['adjoint']['bounds']            = (E_min, E_max)
+  #config['adjoint']['control_variable']  = E
+
+A = solvers.AdjointSolver(model, config)
+A.set_target_velocity(u=u, v=v)
+#uf = dir_b + str(i-1) + '/u.xml'
+#vf = dir_b + str(i-1) + '/v.xml'
+#wf = dir_b + str(i-1) + '/w.xml'
+#A.set_velocity(uf, vf, wf)
+t2 = time()
+A.solve()
+t3 = time()
+
+eta   = project(model.eta, model.Q)
+b_shf = project(model.b_shf, model.Q)
+b_gnd = project(model.b_gnd, model.Q)
+
+File(out_dir + 'T.xml')       << model.T
+File(out_dir + 'S.xml')       << model.S
+File(out_dir + 'B.xml')       << model.B
+File(out_dir + 'u.xml')       << model.u 
+File(out_dir + 'v.xml')       << model.v 
+File(out_dir + 'w.xml')       << model.w 
+File(out_dir + 'beta.xml')    << model.beta
+File(out_dir + 'Mb.xml')      << model.Mb
+File(out_dir + 'eta.xml')     << eta
+File(out_dir + 'b_shf.xml')   << b_shf
+File(out_dir + 'b_shf.pvd')   << b_shf
+File(out_dir + 'b_gnd.xml')   << b_gnd
+File(out_dir + 'E_shf.xml')   << model.E_shf
+File(out_dir + 'E_shf.pvd')   << model.E_shf
 
 #XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
 #
@@ -240,7 +236,7 @@ tf = time()
 #f.write(model.b_shf, 'b_shf')
 
 # calculate total time to compute
-s = tf - t0
+s = (t1 - t0) + (t3 - t2)
 m = s / 60.0
 h = m / 60.0
 s = s % 60
