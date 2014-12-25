@@ -39,30 +39,30 @@ U_ob   = dm.get_projection("U_ob", near=True)
 
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B,deform=True)
+model.set_geometry(S, B, deform=True)
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(mask=M)
 model.initialize_variables()
 
 # specifify non-linear solver parameters :
 params = default_nonlin_solver_params()
-params['nonlinear_solver']                          = 'snes'
-params['snes_solver']['method']                     = 'newtonls'
-params['snes_solver']['line_search']                = 'basic'
-params['snes_solver']['error_on_nonconvergence']    = False
-params['snes_solver']['absolute_tolerance']         = 1.0
-params['snes_solver']['relative_tolerance']         = 1e-3
-params['snes_solver']['maximum_iterations']         = 20
-params['snes_solver']['linear_solver']              = 'bicgstab'
-params['snes_solver']['preconditioner']             = 'hypre_amg'
-#params['nonlinear_solver']                          = 'newton'
-#params['newton_solver']['relaxation_parameter']     = 1.0
-#params['newton_solver']['relative_tolerance']       = 1e-3
-#params['newton_solver']['maximum_iterations']       = 16
-#params['newton_solver']['error_on_nonconvergence']  = False
-#params['newton_solver']['linear_solver']            = 'bicgstab'
-#params['newton_solver']['preconditioner']           = 'hypre_amg'
-params['newton_solver']['krylov_solver']['monitor_convergence']  = True
+#params['nonlinear_solver']                          = 'snes'
+#params['snes_solver']['method']                     = 'newtonls'
+#params['snes_solver']['line_search']                = 'basic'
+#params['snes_solver']['error_on_nonconvergence']    = False
+#params['snes_solver']['absolute_tolerance']         = 1.0
+#params['snes_solver']['relative_tolerance']         = 1e-3
+#params['snes_solver']['maximum_iterations']         = 20
+#params['snes_solver']['linear_solver']              = 'cg'
+#params['snes_solver']['preconditioner']             = 'hypre_amg'
+params['nonlinear_solver']                          = 'newton'
+params['newton_solver']['relaxation_parameter']     = 1.0
+params['newton_solver']['relative_tolerance']       = 1e-3
+params['newton_solver']['maximum_iterations']       = 100
+params['newton_solver']['error_on_nonconvergence']  = False
+params['newton_solver']['linear_solver']            = 'gmres'
+params['newton_solver']['preconditioner']           = 'hypre_amg'
+#params['newton_solver']['krylov_solver']['monitor_convergence']  = True
 parameters['form_compiler']['quadrature_degree']    = 2
 #parameters['krylov_solver']['monitor_convergence']  = True
 #parameters['lu_solver']['verbose']                  = True

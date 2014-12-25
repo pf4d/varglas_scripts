@@ -26,6 +26,18 @@ FEniCS Newton solver evaluation :
 | 'richardson'  | 11:03       | KSP DIVERGED  | --:--
 | 'bicgstab'    | 00:45       | KSP DIVERGED  | --:--
 
+24 cores, BP momentum with 5 thermomechanically coupled Picard iterations, preconditioner 'hypre_amg', step length 1.0:
+
+
+| Krylov Solver | 538208 nodes  | 759264 nodes  
+|---------------|---------------|---------------
+| 'cg'          | 10:00         | --:--
+| 'gmres'       | --:--         | --:--
+| 'minres'      | --:--         | --:--
+| 'tfqmr'       | --:--         | --:--
+| 'richardson'  | --:--         | --:--
+| 'bicgstab'    | --:--         | --:--
+
 Using the 'mumps' direct solver,
 
 | 33484 nodes | 538208 nodes | 759264 nodes  
@@ -40,12 +52,12 @@ SNES Newton line search ('newtonls') basic solver evaluation :
 
 | Krylov Solver | 33484 nodes | 538208 nodes  | 759264 nodes  
 |---------------|-------------|---------------|---------------
-| 'cg'          | 00:33       | 12:33         | --:--
+| 'cg'          | 00:33       | 12:33         | en:oo
 | 'gmres'       | 00:31       | 01:19:31      | --:--
-| 'minres'      | 00:32       | 12:57         | --:--
+| 'minres'      | 00:32       | 12:57         | 42:18 nc
 | 'tfqmr'       | 00:34       | 02:55:23      | --:--
 | 'richardson'  | 05:17       | 02:10:31      | --:--
-| 'bicgstab'    | 00:36       | --:--         | --:--
+| 'bicgstab'    | 00:36       | 53:21         | --:--
 
 Using the 'mumps' direct solver,
 
@@ -80,14 +92,14 @@ SNES Newton trust region ('newtontr') solver evaluation :
 24 cores, BP momentum with 5 thermomechanically coupled Picard iterations, preconditioner 'hypre_amg':
 
 
-| Krylov Solver | 33484 nodes | 538208 nodes  | 759264 nodes  
-|---------------|-------------|---------------|---------------
-| 'cg'          | --:--       | --:--         | --:--
-| 'gmres'       | --:--       | --:--         | --:--
-| 'minres'      | --:--       | --:--         | --:--
-| 'tfqmr'       | --:--       | --:--         | --:--
-| 'richardson'  | --:--       | --:--         | --:--
-| 'bicgstab'    | --:--       | --:--         | --:--
+| Krylov Solver | 33484 nodes  | 538208 nodes  | 759264 nodes  
+|---------------|--------------|---------------|---------------
+| 'cg'          | KSP DIVERGED | --:--         | --:--
+| 'gmres'       | --:--        | --:--         | --:--
+| 'minres'      | --:--        | --:--         | --:--
+| 'tfqmr'       | --:--        | --:--         | --:--
+| 'richardson'  | --:--        | --:--         | --:--
+| 'bicgstab'    | --:--        | --:--         | --:--
 
 Using the 'mumps' direct solver,
 
@@ -107,8 +119,8 @@ FEniCS Newton solver evaluation :
 
 | Krylov Solver | 33484 nodes | 538208 nodes  | 759264 nodes  
 |---------------|-------------|---------------|---------------
-| 'cg'          | --:--       | --:--         | --:--
-| 'gmres'       | --:--       | --:--         | --:--
+| 'cg'          | KSPsolve()  | en:oo         | --:--
+| 'gmres'       | KSPsolve()  | --:--         | --:--
 | 'minres'      | --:--       | --:--         | --:--
 | 'tfqmr'       | --:--       | --:--         | --:--
 | 'richardson'  | --:--       | --:--         | --:--
@@ -124,7 +136,7 @@ SNES Newton line search ('newtonls') basic solver evaluation :
 |---------------|-------------|--------------|---------------
 | 'cg'          | 00:19       | vv:oo        | --:--
 | 'gmres'       | 00:20       | --:--        | --:--
-| 'minres'      | 00:20       | --:--        | --:--
+| 'minres'      | 00:20       | en:oo        | --:--
 | 'tfqmr'       | 00:22       | --:--        | --:--
 | 'richardson'  | 04:54       | --:--        | --:--
 | 'bicgstab'    | 00:22       | --:--        | --:--
