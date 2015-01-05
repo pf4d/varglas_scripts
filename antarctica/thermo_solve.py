@@ -12,16 +12,15 @@ from termcolor                    import colored, cprint
 
 # get the input args :
 out_dir = 'test_all_procs/'     # directory to save
-
-thklim = 1.0
+thklim  = 1.0
 
 measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
-#mesh = MeshFactory.get_antarctica_3D_gradS_crude()
-#mesh  = MeshFactory.get_antarctica_3D_10k()
+#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+#mesh = MeshFactory.get_antarctica_3D_10k()
+mesh = Mesh('meshes/ant_high.xml')
 
 dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
@@ -31,11 +30,11 @@ db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
 db2.data['S'] = db2.data['B'] + db2.data['H']
 
-S      = db2.get_nearest_expression("S")
-B      = db2.get_nearest_expression("B")
-M      = db2.get_nearest_expression("mask")
-T_s    = db1.get_nearest_expression("temp")
-U_ob   = dm.get_projection("U_ob", near=True)
+S    = db2.get_nearest_expression("S")
+B    = db2.get_nearest_expression("B")
+M    = db2.get_nearest_expression("mask")
+T_s  = db1.get_nearest_expression("temp")
+U_ob = dm.get_projection("U_ob", near=True)
 
 model = model.Model()
 model.set_mesh(mesh)
@@ -44,7 +43,7 @@ model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(mask=M)
 model.initialize_variables()
 
-# specifify non-linear solver parameters :
+# specify non-linear solver parameters :
 params = default_nonlin_solver_params()
 #params['nonlinear_solver']                          = 'snes'
 #params['snes_solver']['method']                     = 'newtonls'
@@ -56,11 +55,11 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['linear_solver']              = 'cg'
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
-params['newton_solver']['relaxation_parameter']     = 1.0
+params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-3
 params['newton_solver']['maximum_iterations']       = 100
 params['newton_solver']['error_on_nonconvergence']  = False
-params['newton_solver']['linear_solver']            = 'gmres'
+params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
 #params['newton_solver']['krylov_solver']['monitor_convergence']  = True
 parameters['form_compiler']['quadrature_degree']    = 2

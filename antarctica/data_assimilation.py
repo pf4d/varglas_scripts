@@ -39,17 +39,19 @@ db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
 db2.data['S'] = db2.data['B'] + db2.data['H']
 
-S      = db2.get_nearest_expression("S")
-B      = db2.get_nearest_expression("B")
-M      = db2.get_nearest_expression("mask")
-T_s    = db1.get_nearest_expression("temp")
-q_geo  = db1.get_nearest_expression("ghfsr")
-adot   = db1.get_nearest_expression("acca")
-U_ob   = dm.get_projection("U_ob", near=True)
+S      = db2.get_expression("S",      near=True)
+B      = db2.get_expression("B",      near=True)
+M      = db2.get_expression("mask",   near=True)
+T_s    = db1.get_expression("temp",   near=True)
+q_geo  = db1.get_expression("ghfsr",  near=True)
+adot   = db1.get_expression("acca",   near=True)
+u      = dm.get_interpolation("vx",   near=True)
+v      = dm.get_interpolation("vy",   near=True)
+U_ob   = dm.get_interpolation("U_ob", near=True)
 
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B,deform=True)
+model.set_geometry(S, B, deform=True)
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(mask=M, adot=adot)
 model.initialize_variables()
@@ -78,25 +80,25 @@ beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
 b_min    = interpolate(Constant(0.0), model.Q)
 b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 
-# specifify non-linear solver parameters :
+# specify non-linear solver parameters :
 params = default_nonlin_solver_params()
-params['nonlinear_solver']                          = 'snes'
-params['snes_solver']['method']                     = 'newtonls'
-params['snes_solver']['line_search']                = 'bt'
-params['snes_solver']['error_on_nonconvergence']    = False
-params['snes_solver']['absolute_tolerance']         = 1.0
-params['snes_solver']['relative_tolerance']         = 1e-3
-params['snes_solver']['maximum_iterations']         = 20
-params['snes_solver']['linear_solver']              = 'gmres'
-params['snes_solver']['preconditioner']             = 'hypre_amg'
-#params['nonlinear_solver']                          = 'newton'
-#params['newton_solver']['relaxation_parameter']     = 1.0
-#params['newton_solver']['relative_tolerance']       = 1e-3
-#params['newton_solver']['maximum_iterations']       = 16
-#params['newton_solver']['error_on_nonconvergence']  = False
-#params['newton_solver']['linear_solver']            = 'bicgstab'
-#params['newton_solver']['preconditioner']           = 'hypre_amg'
-params['newton_solver']['krylov_solver']['monitor_convergence']  = True
+#params['nonlinear_solver']                          = 'snes'
+#params['snes_solver']['method']                     = 'newtonls'
+#params['snes_solver']['line_search']                = 'bt'
+#params['snes_solver']['error_on_nonconvergence']    = False
+#params['snes_solver']['absolute_tolerance']         = 1.0
+#params['snes_solver']['relative_tolerance']         = 1e-3
+#params['snes_solver']['maximum_iterations']         = 20
+#params['snes_solver']['linear_solver']              = 'gmres'
+#params['snes_solver']['preconditioner']             = 'hypre_amg'
+params['nonlinear_solver']                          = 'newton'
+params['newton_solver']['relaxation_parameter']     = 1.0
+params['newton_solver']['relative_tolerance']       = 1e-3
+params['newton_solver']['maximum_iterations']       = 16
+params['newton_solver']['error_on_nonconvergence']  = False
+params['newton_solver']['linear_solver']            = 'cg'
+params['newton_solver']['preconditioner']           = 'hypre_amg'
+#params['newton_solver']['krylov_solver']['monitor_convergence']  = True
 parameters['form_compiler']['quadrature_degree']    = 2
 #parameters['krylov_solver']['monitor_convergence']  = True
 #parameters['lu_solver']['verbose']                  = True
@@ -105,7 +107,7 @@ parameters['form_compiler']['quadrature_degree']    = 2
 config = default_config()
 config['output_path']                     = out_dir
 config['coupled']['on']                   = True
-config['coupled']['max_iter']             = 5
+config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
@@ -164,30 +166,30 @@ if i % 2 == 0:
 
 else:
   if i > 2:
-    config['velocity']['use_b_shf0']       = True
-    config['velocity']['b_shf']            = dir_b + str(i-2) + '/b_shf.xml'
-  params['relaxation_parameter']         = 0.6
+    config['velocity']['use_b_shf0'] = True
+    config['velocity']['b_shf']      = dir_b + str(i-2) + '/b_shf.xml'
+  params['newton_solver']['relaxation_parameter'] = 0.6
   b = project(model.b_shf)
   model.print_min_max(b, 'b')
-  config['velocity']['viscosity_mode']   = 'b_control'
-  config['velocity']['b_shf']            = b
-  config['velocity']['b_gnd']            = b.copy()
+  config['velocity']['viscosity_mode']  = 'b_control'
+  config['velocity']['b_shf']           = b
+  config['velocity']['b_gnd']           = b.copy()
   b_min, b_max = (0.0, 1e10)
-  config['adjoint']['surface_integral']  = 'shelves'
-  config['adjoint']['alpha']             = 0
-  config['adjoint']['bounds']            = (b_min, b_max)
-  config['adjoint']['control_variable']  = b
-  #params['relaxation_parameter']         = 0.6
+  config['adjoint']['surface_integral'] = 'shelves'
+  config['adjoint']['alpha']            = 0
+  config['adjoint']['bounds']           = (b_min, b_max)
+  config['adjoint']['control_variable'] = b
+  #params['newton_solver']['relaxation_parameter'] = 0.6
   #E = model.E
   #model.print_min_max(E, 'E')
-  #config['velocity']['viscosity_mode']   = 'E_control'
-  #config['velocity']['E_shf']            = E
-  #config['velocity']['E_gnd']            = E.copy()
+  #config['velocity']['viscosity_mode']  = 'E_control'
+  #config['velocity']['E_shf']           = E
+  #config['velocity']['E_gnd']           = E.copy()
   #E_min, E_max = (1e-16, 100.0)
-  #config['adjoint']['surface_integral']  = 'shelves'
-  #config['adjoint']['alpha']             = 0
-  #config['adjoint']['bounds']            = (E_min, E_max)
-  #config['adjoint']['control_variable']  = E
+  #config['adjoint']['surface_integral'] = 'shelves'
+  #config['adjoint']['alpha']            = 0
+  #config['adjoint']['bounds']           = (E_min, E_max)
+  #config['adjoint']['control_variable'] = E
 
 A = solvers.AdjointSolver(model, config)
 A.set_target_velocity(u=u, v=v)

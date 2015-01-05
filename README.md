@@ -3,13 +3,38 @@ varglas_scripts
 
 Scripts for the glacier simulator VarGlaS
 
-Precondtioner for krylov solver :
----------------------------------
-The only preconditioner that worked (including no preconditioner) is 'hypre_amg'.
-
-
 24 cores :
 ==========
+
+With pressure boundary properly applied :
+
+FEniCS Newton solver evaluation :
+------------------------------------------------
+
+| Linear Solver | 538208 nodes  | 759264 nodes | 1877040 nodes  |  2549404 nodes  |4135560 nodes
+|---------------|---------------|--------------|----------------|-----------------|--------------
+| 'cg'          | 10:00         | 25:10        | 01:02:56 (23p) |  --:--:-- (23p) |03:08:19 (23p)
+| 'gmres'       | 10:45         | 27:56        | --:--:-- (23p) |  --:--:-- (23p) |--:--:-- (23p)
+| 'minres'      | 10:34         | 25:23        | --:--:-- (23p) |  --:--:-- (23p) |--:--:-- (23p)
+| 'mumps'       | oo:oo         | --:--        | --:--:-- (23p) |  --:--:-- (23p) |--:--:-- (23p)
+
+SNES Newton line search ('newtonls') basic solver evaluation :
+--------------------------------------------------------------
+
+| line search | Linear Solver | preconditioner    | 538208 nodes | 759264 nodes 
+--------------|---------------|-------------------|--------------|--------------
+| 'basic'     | 'cg'          | 'hypre_amg'       | 11:25        | 34:13
+| 'basic'     | 'cg'          | 'hypre_euclid'    | 11:55        | 35:04
+| 'basic'     | 'cg'          | 'hypre_parasails' | 11:33        | --:--
+| 'bt'        | 'cg'          | 'hypre_amg'       | 17:15        | 29:41
+| 'basic'     | 'gmres'       | 'hypre_amg'       | 11:11        | 35:48
+| 'bt'        | 'gmres'       | 'hypre_amg'       | 17:41        | 33:39
+| 'basic'     | 'minres'      | 'hypre_amg'       | 10:45        | 33:32
+| 'bt'        | 'minres'      | 'hypre_amg'       | 16:52        | 29:00
+| 'basic'     | 'mumps'       | NA                | oo:oo        | DIVERGE
+| 'bt'        | 'mumps'       | NA                | oo:oo        | 01:29:22
+
+
 
 FEniCS Newton solver evaluation :
 ------------------------------------------------
@@ -26,23 +51,12 @@ FEniCS Newton solver evaluation :
 | 'richardson'  | 11:03       | KSP DIVERGED  | --:--
 | 'bicgstab'    | 00:45       | KSP DIVERGED  | --:--
 
-24 cores, BP momentum with 5 thermomechanically coupled Picard iterations, preconditioner 'hypre_amg', step length 1.0:
-
-
-| Krylov Solver | 538208 nodes  | 759264 nodes  
-|---------------|---------------|---------------
-| 'cg'          | 10:00         | --:--
-| 'gmres'       | --:--         | --:--
-| 'minres'      | --:--         | --:--
-| 'tfqmr'       | --:--         | --:--
-| 'richardson'  | --:--         | --:--
-| 'bicgstab'    | --:--         | --:--
-
 Using the 'mumps' direct solver,
 
 | 33484 nodes | 538208 nodes | 759264 nodes  
 |-------------|--------------|---------------
 | 00:33       | oo:oo        | oo:oo
+
 
 SNES Newton line search ('newtonls') basic solver evaluation :
 --------------------------------------------------------------
@@ -125,6 +139,18 @@ FEniCS Newton solver evaluation :
 | 'tfqmr'       | --:--       | --:--         | --:--
 | 'richardson'  | --:--       | --:--         | --:--
 | 'bicgstab'    | --:--       | --:--         | --:--
+
+28 cores, BP momentum with 5 thermomechanically coupled Picard iterations, preconditioner 'hypre_amg', step length 1.0:
+
+
+| Krylov Solver | 538208 nodes  | 759264 nodes  
+|---------------|---------------|---------------
+| 'cg'          | --:--         | --:--
+| 'gmres'       | --:--         | --:--
+| 'minres'      | --:--         | --:--
+| 'tfqmr'       | --:--         | --:--
+| 'richardson'  | --:--         | --:--
+| 'bicgstab'    | --:--         | --:--
 
 SNES Newton line search ('newtonls') basic solver evaluation :
 --------------------------------------------------------------
