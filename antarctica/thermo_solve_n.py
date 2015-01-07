@@ -8,11 +8,10 @@ from fenics                       import *
 from time                         import time
 from termcolor                    import colored, cprint
 
-#parameters['allow_extrapolation'] = True
 
 # get the input args :
-out_dir = 'test_all_procs/'     # directory to save
-in_dir  = 'vars/'               # directory with data
+out_dir = 'test_all_procs/'
+in_dir  = 'vars_higher_gradS/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -73,7 +72,7 @@ parameters['form_compiler']['quadrature_degree']    = 2
 config = default_config()
 config['output_path']                     = out_dir
 config['coupled']['on']                   = True
-config['coupled']['max_iter']             = 5
+config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'

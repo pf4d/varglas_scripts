@@ -15,6 +15,8 @@ measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
+#mesh = MeshFactory.get_antarctica_3D_10k()
+#mesh = Mesh('meshes/ant_highest.xml')
 mesh = Mesh('meshes/ant_higher_gradS.xml')
 
 dm = DataInput(measures, mesh=mesh)
