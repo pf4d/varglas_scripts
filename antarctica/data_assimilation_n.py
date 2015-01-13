@@ -10,13 +10,16 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
+#set_log_active(False)
+#set_log_level(PROGRESS)
+
 # get the input args :
 i       = int(sys.argv[2])       # assimilation number
 dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'vars_higher_gradS/'
+in_dir  = 'vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -82,10 +85,7 @@ params['newton_solver']['maximum_iterations']       = 16
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
-#params['newton_solver']['krylov_solver']['monitor_convergence']  = True
 parameters['form_compiler']['quadrature_degree']    = 2
-#parameters['krylov_solver']['monitor_convergence']  = True
-#parameters['lu_solver']['verbose']                  = True
 
 
 config = default_config()
@@ -101,8 +101,10 @@ config['velocity']['use_beta0']           = False
 config['velocity']['T0']                  = model.T_w - 30.0
 config['velocity']['init_beta_from_U_ob'] = True
 config['velocity']['init_b_from_U_ob']    = False
+config['velocity']['vert_solve_method']   = 'mumps'
 config['velocity']['U_ob']                = U_ob
 config['enthalpy']['on']                  = True
+config['enthalpy']['solve_method']        = 'mumps'
 config['enthalpy']['T_surface']           = T_s
 config['enthalpy']['q_geo']               = model.q_geo
 config['age']['on']                       = False
@@ -134,6 +136,7 @@ config['velocity']['use_beta0']               = False
 config['velocity']['use_b_shf0']              = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
+config['log']                                 = False
 
 if i % 2 == 0:
   params['newton_solver']['relaxation_parameter']  = 1.0

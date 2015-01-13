@@ -11,7 +11,7 @@ from termcolor                    import colored, cprint
 
 # get the input args :
 out_dir = 'test_all_procs/'
-in_dir  = 'vars_higher_gradS/'
+in_dir  = 'vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -77,8 +77,10 @@ config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['use_T0']              = True
+config['velocity']['use_beta0']           = False
 config['velocity']['T0']                  = model.T_w - 30.0
-config['velocity']['init_beta_from_U_ob'] = True
+config['velocity']['init_beta_from_U_ob'] = False
+config['velocity']['use_stats_beta']      = True
 config['velocity']['U_ob']                = U_ob
 config['enthalpy']['on']                  = True
 config['enthalpy']['T_surface']           = T_s

@@ -1,6 +1,6 @@
 from varglas.utilities         import DataInput, MeshGenerator, MeshRefiner
 from varglas.data.data_factory import DataFactory
-from varglas.utilities         import DataInput
+from varglas.utilities         import DataInput, print_min_max
 from pylab                     import *
 from scipy.interpolate         import interp2d
 
@@ -32,7 +32,7 @@ interp = interp2d(db2.x, db2.y, db2.data['mask'])
 mask   = interp(dbm.x, dbm.y)
 
 # get dofs for shelves where we restrict the element size :
-slp = gS_n >  50
+slp = gS_n >  30
 shf = mask >= 0.9
 gnd = mask <  0.9
 nan = mask >  10
@@ -40,20 +40,20 @@ nan = mask >  10
 
 #===============================================================================
 # form field from which to refine :
-dbm.data['ref'] = (0.100 + 1/(1 + dbm.data['U_ob'])) * 50000
+dbm.data['ref'] = (0.10 + 1/(1 + dbm.data['U_ob'])) * 48000
 
 # restrict element size on the shelves and outside the domain of the data :
+dbm.data['ref'][slp] = 2000.0
 dbm.data['ref'][shf] = 10000.0
 dbm.data['ref'][nan] = 10000.0
-dbm.data['ref'][slp] = 3000.0
 
-print dbm.data['ref'].min(), dbm.data['ref'].max()
+print_min_max(dbm.data['ref'], 'ref')
 
-# plot to check :
-imshow(dbm.data['ref'][::-1,:])
-colorbar()
-tight_layout()
-show()
+## plot to check :
+#imshow(dbm.data['ref'][::-1,:])
+#colorbar()
+#tight_layout()
+#show()
 
 
 #===============================================================================
@@ -61,7 +61,7 @@ show()
 m = MeshGenerator(db2, 'mesh', 'meshes/')
 
 m.create_contour('mask', zero_cntr=1, skip_pts=5)
-m.eliminate_intersections(dist=40)
+m.eliminate_intersections(dist=200)
 #m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
 m.extrude(h=100000, n_layers=10)

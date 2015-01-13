@@ -15,9 +15,10 @@ measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
+#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+mesh = MeshFactory.get_antarctica_3D_gradS_crude()
 #mesh = MeshFactory.get_antarctica_3D_10k()
-#mesh = Mesh('meshes/ant_highest.xml')
-mesh = Mesh('meshes/ant_higher_gradS.xml')
+#mesh = Mesh('meshes/ant_ultraa_gradS.xml.gz')
 
 dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)
@@ -47,7 +48,7 @@ model.calculate_boundaries(mask=M, adot=adot)
 class Beta_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = 0.0
+      values[0] = DOLFIN_EPS
     else:
       values[0] = 4000
 
@@ -55,9 +56,11 @@ class Beta_max(Expression):
 class B_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = 1e10
+      values[0] = 5e6
     else:
-      values[0] = 0.0
+      values[0] = DOLFIN_EPS
+
+bedMesh  = model.get_bed_mesh()
 
 beta_min = interpolate(Constant(0.0), model.Q)
 beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
@@ -67,14 +70,14 @@ b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 
 adot     = interpolate(adot, model.Q)
 
-XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
+XDMFFile(mesh.mpi_comm(),    out_dir + 'mesh.xdmf')    << model.mesh
+XDMFFile(bedMesh.mpi_comm(), out_dir + 'bedMesh.xdmf') << bedMesh
 
 # save the state of the model :
 f = HDF5File(mesh.mpi_comm(), out_dir + 'vars.h5', 'w')
 f.write(model.ff,     'ff')
 f.write(model.cf,     'cf')
 f.write(model.ff_acc, 'ff_acc')
-f.write(model.mesh,   'mesh')
 f.write(model.S,      'S')
 f.write(model.B,      'B')
 f.write(T_s,          'T_s')
