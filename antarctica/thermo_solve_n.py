@@ -70,21 +70,21 @@ parameters['form_compiler']['quadrature_degree']    = 2
 
 
 config = default_config()
-config['output_path']                     = out_dir
-config['coupled']['on']                   = True
-config['coupled']['max_iter']             = 2
-config['velocity']['newton_params']       = params
-config['velocity']['approximation']       = 'fo'#'stokes'
-config['velocity']['viscosity_mode']      = 'full'
-config['velocity']['use_T0']              = True
-config['velocity']['use_beta0']           = False
-config['velocity']['T0']                  = model.T_w - 30.0
-config['velocity']['init_beta_from_U_ob'] = False
-config['velocity']['use_stats_beta']      = True
-config['velocity']['U_ob']                = U_ob
-config['enthalpy']['on']                  = True
-config['enthalpy']['T_surface']           = T_s
-config['enthalpy']['q_geo']               = model.q_geo
+config['output_path']                      = out_dir
+config['coupled']['on']                    = True
+config['coupled']['max_iter']              = 10
+config['velocity']['newton_params']        = params
+config['velocity']['approximation']        = 'fo'#'stokes'
+config['velocity']['viscosity_mode']       = 'full'
+config['velocity']['use_T0']               = True
+config['velocity']['use_beta0']            = False
+config['velocity']['T0']                   = model.T_w - 30.0
+config['velocity']['init_beta_from_U_ob']  = False
+config['velocity']['init_beta_from_stats'] = True
+config['velocity']['U_ob']                 = U_ob
+config['enthalpy']['on']                   = True
+config['enthalpy']['T_surface']            = T_s
+config['enthalpy']['q_geo']                = model.q_geo
 
 F = solvers.SteadySolver(model, config)
 

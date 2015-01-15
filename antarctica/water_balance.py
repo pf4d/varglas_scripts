@@ -1,37 +1,23 @@
 from pylab  import *
 from fenics import *
 
-thklim  = 1.0
-out_dir = 'output/'
+out_dir  = 'bed/balance_water/'
+in_dir   = 'bed/00/'
 
-mesh = Mesh('meshes/bed_mesh.xml')
-Q    = FunctionSpace(mesh, 'CG', 1)
-QB   = FunctionSpace(mesh, 'B',  4)
-W    = Q
-V    = MixedFunctionSpace([Q,Q,Q])
-Q2   = MixedFunctionSpace([Q,Q])
+mesh   = Mesh(in_dir + 'submesh.xdmf')
+Q      = FunctionSpace(mesh, 'CG', 1)
+QB     = FunctionSpace(mesh, 'B',  3)
+W      = Q
+V      = MixedFunctionSpace([Q,Q,Q])
+Q2     = MixedFunctionSpace([Q,Q])
 
-beta  = Function(Q)
-adot  = Function(Q)
-Mb    = Function(Q)
-T     = Function(Q)
-S     = Function(Q)
-B     = Function(Q)
-H     = Function(Q)
-u     = Function(Q)
-v     = Function(Q)
-w     = Function(Q)
+S      = Function(Q)
+B      = Function(Q)
+Mb     = Function(Q)
 
-File('test/bed/beta_s.xml') >> beta
-File('test/bed/adot_s.xml') >> adot
-File('test/bed/Mb_s.xml')   >> Mb
-File('test/bed/T_s.xml')    >> T
-File('test/bed/S_s.xml')    >> S
-File('test/bed/B_s.xml')    >> B
-File('test/bed/H_s.xml')    >> H
-File('test/bed/u_s.xml')    >> u
-File('test/bed/v_s.xml')    >> v
-File('test/bed/w_s.xml')    >> w
+File(in_dir + 'S_s.xml')    >> S
+File(in_dir + 'B_s.xml')    >> B
+File(in_dir + 'Mb_s.xml')   >> Mb
 
 #parameters['form_compiler']['quadrature_degree'] = 3
 params = {"newton_solver":
@@ -50,12 +36,14 @@ ff    = FacetFunction('uint', mesh)
 gamma.mark(ff,1)
 ds    = ds[ff]
 
+
 #===============================================================================
 # calculate direction of basal water flow (down pressure gradient) :
 
 rhoi  = 917.0                             # density of ice
 rhow  = 1000.0                            # density of water
 g     = 9.8                               # gravitational acceleration
+H     = S - B                             # thickness
 z     = SpatialCoordinate(mesh)[2]        # z-coordinate of bed
       
 Pw    = rhoi*g*H + rhow*g*z               # basal water pressure
@@ -82,7 +70,7 @@ phi  = TestFunction(W)
 dq   = TrialFunction(W)
 
 def L(u, uhat):
-  return (uhat[0].dx(0) + uhat[1].dx(1))*u + dot(grad(u), uhat)
+  return div(uhat)*u + dot(grad(u), uhat)
 
 # SUPG method phihat :
 h       = 1.0
@@ -99,8 +87,6 @@ a = Mb * phihat * dx
 
 q = Function(W)
 solve(B == a, q)
-
-
 
 q_v = q.vector().array()
 

@@ -128,6 +128,15 @@ F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta0.pvd') << model.beta
 F.solve()
 
+File(out_dir + 'T.xml')       << model.T
+File(out_dir + 'S.xml')       << model.S
+File(out_dir + 'B.xml')       << model.B
+File(out_dir + 'u.xml')       << model.u 
+File(out_dir + 'v.xml')       << model.v 
+File(out_dir + 'w.xml')       << model.w 
+File(out_dir + 'beta.xml')    << model.beta
+File(out_dir + 'Mb.xml')      << model.Mb
+
 params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['init_beta_from_U_ob']     = False
 config['velocity']['use_T0']                  = False

@@ -1,61 +1,24 @@
-from pylab                     import *
-from fenics                    import *
-from varglas.mesh.mesh_factory import MeshFactory
-from varglas.data.data_factory import DataFactory
-from varglas.utilities         import DataInput, DataOutput
+from pylab  import *
+from fenics import *
 
-mesh  = MeshFactory.get_antarctica_3D_10k()
+out_dir  = 'bed/balance_velocity/'
+in_dir   = 'bed/00/'
 
-bmesh   = BoundaryMesh(mesh, 'exterior')
-cellmap = bmesh.entity_map(2)
-pb      = CellFunction("size_t", bmesh, 0)
-for c in cells(bmesh):
-  if Facet(mesh, cellmap[c.index()]).normal().z() < 0:
-    pb[c] = 1
-submesh = SubMesh(bmesh, pb, 1)           # subset of surface mesh
-
-out_dir  = 'output/balance_velocity/'
-thklim   = 1.0
-
-measures = DataFactory.get_ant_measures(res=900)
-bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
-bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
-
-dm       = DataInput(measures, mesh=submesh)
-db1      = DataInput(bedmap1,  mesh=submesh)
-db2      = DataInput(bedmap2,  mesh=submesh)
-    
-db2.data['B'] = db2.data['S'] - db2.data['H']
-db2.set_data_val('H', 32767, thklim)
-db2.data['S'] = db2.data['B'] + db2.data['H']
-
-S      = db2.get_projection("S",     near=True)
-B      = db2.get_projection("B",     near=True)
-#M      = db2.get_projection("mask",  near=True)
-#Ts     = db1.get_projection("temp",  near=True)
-#q_geo  = db1.get_projection("ghfsr", near=True)
-adot   = db1.get_projection("acca",  near=True)
-#U_ob   = dm.get_projection("U_ob",   near=True)
-
-Q      = FunctionSpace(submesh, 'CG', 1)
-QB     = FunctionSpace(submesh, 'B',  3)
+mesh   = Mesh(in_dir + 'submesh.xdmf')
+Q      = FunctionSpace(mesh, 'CG', 1)
+QB     = FunctionSpace(mesh, 'B',  3)
 W      = Q
 V      = MixedFunctionSpace([Q,Q,Q])
 Q2     = MixedFunctionSpace([Q,Q])
 
-beta   = Function(Q)
-Mb     = Function(Q)
-Tb     = Function(Q)
-u      = Function(Q)
-v      = Function(Q)
-w      = Function(Q)
+S      = Function(Q)
+B      = Function(Q)
+adot   = Function(Q)
 
-File('test/bed/beta_s.xml') >> beta
-File('test/bed/Mb_s.xml')   >> Mb
-File('test/bed/T_s.xml')    >> Tb
-File('test/bed/u_s.xml')    >> u
-File('test/bed/v_s.xml')    >> v
-File('test/bed/w_s.xml')    >> w
+File(in_dir + 'S_s.xml')    >> S
+File(in_dir + 'B_s.xml')    >> B
+File(in_dir + 'adot_s.xml') >> adot
+
 
 #parameters['form_compiler']['quadrature_degree'] = 3
 params = {"newton_solver":
@@ -114,17 +77,12 @@ dSdx.vector().apply('insert')
 dSdy.vector().apply('insert')
 dS     = as_vector([dSdx, dSdy, 0.0]) # unit normal surface slope
 
-# remove areas with negative accumulation :
-#adot_v = adot.vector().array()
-#adot_v[adot_v < 0] = 0
-#adot.vector().set_local(adot_v)
-#adot.vector().apply('insert')
-    
+
 #===============================================================================
 # calculate balance-velocity :
 
 # SUPG method :
-cellh   = CellSize(submesh)
+cellh   = CellSize(mesh)
 #phihat  = phi + cellh/2 * dot(dS, grad(phi))  # reduce where slope is low 
 phihat  = phi + cellh/(2*H) * ((H*dS[0]*phi).dx(0) + (H*dS[1]*phi).dx(1))
 
@@ -142,11 +100,8 @@ U_v = U.vector().array()
 
 print 'U <min,max>:', U_v.min(), U_v.max()
 
-File('test/bed/Ubar_s.xml') << U
-File(out_dir + 'U.pvd')    << U
-File(out_dir + 'H.pvd')    << project(H,W)
-File(out_dir + 'adot.pvd') << adot
-#File(out_dir + 'uhat.pvd') << project(uhat, V)
+File(out_dir + 'Ubar_s.xml') << U
+File(out_dir + 'Ubar.pvd') << U
 
 
 
