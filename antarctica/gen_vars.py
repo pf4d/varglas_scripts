@@ -9,7 +9,7 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir  = 'vars/'
+out_dir  = 'dump/antarctica/vars/'
 thklim   = 1.0
 measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)

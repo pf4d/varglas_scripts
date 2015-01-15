@@ -10,8 +10,8 @@ from termcolor                    import colored, cprint
 
 
 # get the input args :
-out_dir = 'test_all_procs/'
-in_dir  = 'vars/'
+out_dir = 'dump/antarctica/linear_model/'
+in_dir  = 'dump/antarctica/vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -45,6 +45,8 @@ model.set_subdomains(ff, cf, ff_acc)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
+model.adot = adot
+
 # specify non-linear solver parameters :
 params = default_nonlin_solver_params()
 #params['nonlinear_solver']                          = 'snes'
@@ -59,7 +61,7 @@ params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-3
-params['newton_solver']['maximum_iterations']       = 100
+params['newton_solver']['maximum_iterations']       = 25
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
@@ -71,6 +73,7 @@ parameters['form_compiler']['quadrature_degree']    = 2
 
 config = default_config()
 config['output_path']                      = out_dir
+config['log_history']                      = True
 config['coupled']['on']                    = True
 config['coupled']['max_iter']              = 10
 config['velocity']['newton_params']        = params
@@ -84,13 +87,16 @@ config['velocity']['init_beta_from_stats'] = True
 config['velocity']['U_ob']                 = U_ob
 config['enthalpy']['on']                   = True
 config['enthalpy']['T_surface']            = T_s
-config['enthalpy']['q_geo']                = model.q_geo
+config['enthalpy']['q_geo']                = q_geo
 
 F = solvers.SteadySolver(model, config)
+File(out_dir + 'beta0.pvd') << project(model.beta)
 
 t0 = time()
 F.solve()
 tf = time()
+
+File(out_dir + 'betaf.pvd') << project(model.beta)
 
 # calculate total time to compute
 s = tf - t0

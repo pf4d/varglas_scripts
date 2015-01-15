@@ -8,6 +8,7 @@ from scipy.interpolate         import interp2d
 #===============================================================================
 # data preparation :
 thklim = 0.0
+out_dir = 'dump/antarctica/meshes/'
 
 # get the data :
 measure = DataFactory.get_ant_measures()
@@ -58,7 +59,7 @@ print_min_max(dbm.data['ref'], 'ref')
 
 #===============================================================================
 # generate the contour :
-m = MeshGenerator(db2, 'mesh', 'meshes/')
+m = MeshGenerator(db2, 'mesh', out_dir)
 
 m.create_contour('mask', zero_cntr=1, skip_pts=5)
 m.eliminate_intersections(dist=200)
@@ -70,7 +71,7 @@ m.close_file()
 
 #===============================================================================
 # refine :
-ref_bm = MeshRefiner(dbm, 'ref', gmsh_file_name='meshes/mesh')
+ref_bm = MeshRefiner(dbm, 'ref', gmsh_file_name= out_dir + 'mesh')
 
 a,aid = ref_bm.add_static_attractor()
 ref_bm.set_background_field(aid)
@@ -78,7 +79,7 @@ ref_bm.set_background_field(aid)
 
 #===============================================================================
 # finish stuff up :
-ref_bm.finish(gui=False, out_file_name='meshes/mesh')
+ref_bm.finish(gui=False, out_file_name= out_dir + 'mesh')
 
 
 

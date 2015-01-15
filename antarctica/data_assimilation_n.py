@@ -19,7 +19,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'vars/'
+in_dir  = 'dump/antarctica/vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -128,15 +128,6 @@ F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta0.pvd') << model.beta
 F.solve()
 
-File(out_dir + 'T.xml')       << model.T
-File(out_dir + 'S.xml')       << model.S
-File(out_dir + 'B.xml')       << model.B
-File(out_dir + 'u.xml')       << model.u 
-File(out_dir + 'v.xml')       << model.v 
-File(out_dir + 'w.xml')       << model.w 
-File(out_dir + 'beta.xml')    << model.beta
-File(out_dir + 'Mb.xml')      << model.Mb
-
 params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['init_beta_from_U_ob']     = False
 config['velocity']['use_T0']                  = False
@@ -145,7 +136,6 @@ config['velocity']['use_beta0']               = False
 config['velocity']['use_b_shf0']              = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
-config['log']                                 = False
 
 if i % 2 == 0:
   params['newton_solver']['relaxation_parameter']  = 1.0
@@ -171,7 +161,7 @@ else:
   config['velocity']['b_gnd']           = b_gnd
   b_min, b_max = (0.0, 1e10)
   config['adjoint']['surface_integral'] = 'shelves'
-  config['adjoint']['alpha']            = 0
+  config['adjoint']['alpha']            = 1e-7
   config['adjoint']['bounds']           = (b_min, b_max)
   config['adjoint']['control_variable'] = b_shf
   #params['newton_solver']['relaxation_parameter'] = 0.6

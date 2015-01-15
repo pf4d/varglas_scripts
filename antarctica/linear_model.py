@@ -111,8 +111,8 @@ from pylab                     import *
 #===============================================================================
 # get the data from the model output on the bed :
 
-out_dir  = 'bed/linear_model/'
-in_dir   = 'bed/00/'
+out_dir  = 'dump/antarctica/bed/linear_model/'
+in_dir   = 'dump/antarctica/bed/01/'
 
 mesh  = Mesh(in_dir + 'submesh.xdmf')
 Q     = FunctionSpace(mesh, 'CG', 1)
@@ -141,7 +141,7 @@ File(in_dir + 'Ts_s.xml')   >> Ts
 File(in_dir + 'u_s.xml')    >> u
 File(in_dir + 'v_s.xml')    >> v
 File(in_dir + 'w_s.xml')    >> w
-File('bed/balance_velocity/Ubar_s.xml') >> Ubar
+File('dump/antarctica/bed/balance_velocity/Ubar.xml') >> Ubar
 
 dSdx   = project(S.dx(0), Q)
 dSdy   = project(S.dx(1), Q)
@@ -172,7 +172,6 @@ dBdx_v = dBdx.vector().array()
 dBdy_v = dBdy.vector().array()
 gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
 
-
 valid  = where(beta_v > 1e-10)[0]
 valid  = intersect1d(valid, where(Ubar_v > 0)[0])
 valid  = intersect1d(valid, where(abs(Mb_v) < 40)[0])
@@ -184,15 +183,15 @@ x0   = Mb_v[valid]
 x1   = S_v[valid]
 x2   = Tb_v[valid]
 x3   = Ts_v[valid]
-x4   = log(gradS[valid])
+x4   = gradS[valid]
 x5   = abs(B_v[valid])
-x6   = log(gradB[valid])
+x6   = gradB[valid]
 x7   = H_v[valid]
 x8   = u_v[valid]
 x9   = v_v[valid]
 x10  = w_v[valid]
-x11  = log(U_mag[valid])
-x12  = log(Ubar_v[valid])
+x11  = log(U_mag[valid] + 1)
+x12  = log(Ubar_v[valid] + 1)
 x13  = qgeo_v[valid]
 x14  = adot_v[valid]
 
@@ -218,15 +217,14 @@ X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 y   = log(beta_v[valid] + 100)
 
 ii     = [0,1,2,3,4,5,6,7,11,12,13,14]
-ii     = [1,2,3,4,5,6,7,13,14]
 ii_int = []
 ii_int.extend(ii)
 
-#for i,m in enumerate(ii):
-#  for j,n in enumerate(ii[i+1:]):
-#    ii_int.append([m,n])
+for i,m in enumerate(ii):
+  for j,n in enumerate(ii[i+1:]):
+    ii_int.append([m,n])
 
-#fig = figure()
+fig = figure()
 Xt  = []
 
 for k,i in enumerate(ii_int):
@@ -240,15 +238,15 @@ for k,i in enumerate(ii_int):
   else:
     x = X[i]
     n = names[i]
-    #ax = fig.add_subplot(3,4,k+1)
-    #ax.plot(x, y, 'ko', alpha=0.1)
-    #ax.set_xlabel(n)
-    #ax.set_ylabel(r'$\beta$')
-    #ax.grid()
+    ax = fig.add_subplot(3,4,k+1)
+    ax.plot(x, y, 'ko', alpha=0.1)
+    ax.set_xlabel(n)
+    ax.set_ylabel(r'$\beta$')
+    ax.grid()
 
   Xt.append(x)
   
-#show()
+show()
 
 
 #===============================================================================
@@ -270,7 +268,7 @@ cibh = out['CIB'][1]
 print "<F_pval, pval>:", out['F_pval'], out['pval']
 
 
-# ==============================================================================
+#===============================================================================
 # residual plot and normal quantile plot for residuals :
 fig = figure(figsize=(12,5))
 ax1 = fig.add_subplot(121)
@@ -293,46 +291,46 @@ ax2.grid()
 show()
 
 
-##===============================================================================
-## plot y, yhat :
-#fig = figure()
-#
-#for k,i in enumerate(ii):
-#  
-#  ax = fig.add_subplot(4,3,k+1)
-#  
-#  if type(i) == list:
-#    n = ''
-#    x = 1.0
-#    for j in i:
-#      x *= X[j]
-#      n += names[j]
-#  else:
-#    x = X[i]
-#    n = names[i]
-#
-#  ax.plot(x, y,    'ko', alpha=0.1)
-#  ax.plot(x, yhat, 'ro', alpha=0.1)
-#  ax.set_xlabel(n)
-#  ax.set_ylabel(r'$\beta$')
-#  ax.grid()
-#show()
-#
-##===============================================================================
-## plot parameter values with confidence intervals:
-#fig  = figure()
-#ax   = fig.add_subplot(111)
-#
-#xb   = range(len(ii_int) + 1)
-#
-#ax.plot(xb, cibh, 'r--', lw=2.0)
-#ax.plot(xb, bhat, 'k-',  lw=2.0)
-#ax.plot(xb, cibl, 'r--', lw=2.0)
-#ax.set_ylabel(r'$\hat{\beta}_i$')
-#ax.set_xlabel(r'$i$')
-#grid()
-#tight_layout()
-#show()
+#===============================================================================
+# plot y, yhat :
+fig = figure()
+
+for k,i in enumerate(ii):
+  
+  ax = fig.add_subplot(4,3,k+1)
+  
+  if type(i) == list:
+    n = ''
+    x = 1.0
+    for j in i:
+      x *= X[j]
+      n += names[j]
+  else:
+    x = X[i]
+    n = names[i]
+
+  ax.plot(x, y,    'ko', alpha=0.1)
+  ax.plot(x, yhat, 'ro', alpha=0.1)
+  ax.set_xlabel(n)
+  ax.set_ylabel(r'$\beta$')
+  ax.grid()
+show()
+
+#===============================================================================
+# plot parameter values with confidence intervals:
+fig  = figure()
+ax   = fig.add_subplot(111)
+
+xb   = range(len(ii_int) + 1)
+
+ax.plot(xb, cibh, 'r--', lw=2.0)
+ax.plot(xb, bhat, 'k-',  lw=2.0)
+ax.plot(xb, cibl, 'r--', lw=2.0)
+ax.set_ylabel(r'$\hat{\beta}_i$')
+ax.set_xlabel(r'$i$')
+grid()
+tight_layout()
+show()
 
 
 

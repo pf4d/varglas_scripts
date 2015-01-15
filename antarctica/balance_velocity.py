@@ -1,8 +1,8 @@
 from pylab  import *
 from fenics import *
 
-out_dir  = 'bed/balance_velocity/'
-in_dir   = 'bed/00/'
+out_dir  = 'dump/antarctica/bed/balance_velocity/'
+in_dir   = 'dump/antarctica/bed/01/'
 
 mesh   = Mesh(in_dir + 'submesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
