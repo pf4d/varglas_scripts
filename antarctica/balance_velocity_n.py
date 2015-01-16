@@ -13,9 +13,6 @@ in_dir  = 'dump/antarctica/vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
-ff     = MeshFunction('size_t', mesh)
-cf     = MeshFunction('size_t', mesh)
-ff_acc = MeshFunction('size_t', mesh)
 
 S      = Function(Q)
 B      = Function(Q)
@@ -26,22 +23,16 @@ f = HDF5File(mesh.mpi_comm(), in_dir + 'vars.h5', 'r')
 f.read(S,     'S')
 f.read(B,     'B')
 f.read(adot,  'adot')
-f.read(ff,    'ff')
-f.read(cf,    'cf')
-f.read(ff_acc,'ff_acc')
 
 model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
-model.set_subdomains(ff, cf, ff_acc)
 model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
-model.adot = adot
-
 config = default_config()
 config['output_path']               = out_dir
-config['balance_velocity']['kappa'] = Constant(10.0)
+config['balance_velocity']['kappa'] = 10.0
 config['balance_velocity']['adot']  = adot
 
 F = physics.VelocityBalance(model, config)
