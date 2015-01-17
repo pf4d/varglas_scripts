@@ -19,58 +19,50 @@ dir_b = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
+in_dir  = 'dump/vars/'
 
-thklim = 1.0
+mesh   = Mesh(in_dir + 'mesh.xdmf')
+Q      = FunctionSpace(mesh, 'CG', 1)
+ff     = MeshFunction('size_t', mesh)
+cf     = MeshFunction('size_t', mesh)
+ff_acc = MeshFunction('size_t', mesh)
 
-# collect the raw data :
-searise  = DataFactory.get_searise(thklim = thklim)
-bamber   = DataFactory.get_bamber(thklim = thklim)
-fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
-rignot   = DataFactory.get_gre_rignot_updated()
+S        = Function(Q)
+B        = Function(Q)
+T_s      = Function(Q)
+U_ob     = Function(Q)
+adot     = Function(Q)
+q_geo    = Function(Q)
+beta_min = Function(Q)
+beta_max = Function(Q)
+b_min    = Function(Q)
+b_max    = Function(Q)
+u        = Function(Q)
+v        = Function(Q)
 
-# define the mesh :
-mesh = MeshFactory.get_greenland_detailded()
+f = HDF5File(mesh.mpi_comm(), in_dir + 'vars.h5', 'r')
 
-# create data objects to use with varglas :
-dsr     = DataInput(searise,  mesh=mesh)
-dbm     = DataInput(bamber,   mesh=mesh)
-dfm     = DataInput(fm_qgeo,  mesh=mesh)
-drg     = DataInput(rignot,   mesh=mesh)
-    
-dbm.data['B'] = dbm.data['S'] - dbm.data['H']
-dbm.set_data_val('H', 0.0, thklim)
-dbm.data['S'] = dbm.data['B'] + dbm.data['H']
-
-# change the projection of the measures data to fit with other data :
-drg.change_projection(dsr)
-
-# get the expressions used by varglas :
-S     = dbm.get_expression('S',     near=True)
-B     = dbm.get_expression('B',     near=True)
-T_s   = dsr.get_expression('T',     near=True)
-q_geo = dfm.get_expression('q_geo', near=True)
-adot  = dsr.get_expression('adot',  near=True)
-U_ob  = drg.get_expression('U_ob',  near=True)
-u     = drg.get_expression('vx',    near=True)
-v     = drg.get_expression('vy',    near=True)
-M     = drg.get_expression('mask',  near=True)
+f.read(S,        'S')
+f.read(B,        'B')
+f.read(T_s,      'T_s')
+f.read(U_ob,     'U_ob')
+f.read(q_geo,    'q_geo')
+f.read(adot,     'adot')
+f.read(ff,       'ff')
+f.read(cf,       'cf')
+f.read(ff_acc,   'ff_acc')
+f.read(beta_min, 'beta_min') 
+f.read(beta_max, 'beta_max')
+f.read(b_min,    'b_min')
+f.read(b_max,    'b_max')
+f.read(u,        'u')
+f.read(v,        'v')
 
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B, deform=True)
-model.calculate_boundaries(M, adot=adot)
+model.set_surface_and_bed(S, B)
+model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
-
-# constraints on optimization for beta :
-class Beta_max(Expression):
-  def eval(self, values, x):
-    if M(x[0], x[1], x[2]) > 0:
-      values[0] = DOLFIN_EPS
-    else:
-      values[0] = 4000
-
-beta_min = interpolate(Constant(0.0), model.Q)
-beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()

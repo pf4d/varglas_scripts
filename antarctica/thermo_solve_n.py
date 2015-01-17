@@ -1,5 +1,5 @@
 import varglas.solvers            as solvers
-import varglas.physical_constants as pc
+import varglas.physics            as physics
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.helper               import default_nonlin_solver_params, \
@@ -9,9 +9,11 @@ from time                         import time
 from termcolor                    import colored, cprint
 
 
+t0 = time()
+
 # get the input args :
-out_dir = 'dump/antarctica/linear_model/'
-in_dir  = 'dump/antarctica/vars/'
+out_dir = 'dump/linear_model/'
+in_dir  = 'dump/vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -42,10 +44,7 @@ model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
-model.set_parameters(pc.IceParameters())
 model.initialize_variables()
-
-model.adot = adot
 
 # specify non-linear solver parameters :
 params = default_nonlin_solver_params()
@@ -88,11 +87,17 @@ config['velocity']['U_ob']                 = U_ob
 config['enthalpy']['on']                   = True
 config['enthalpy']['T_surface']            = T_s
 config['enthalpy']['q_geo']                = q_geo
+config['balance_velocity']['kappa']        = 20.0
+config['balance_velocity']['adot']         = adot
 
+# initalize the balance velocity :
+B = physics.VelocityBalance(model, config)
+B.solve()
+
+# solve the BP model :
 F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta0.pvd') << project(model.beta)
 
-t0 = time()
 F.solve()
 tf = time()
 

@@ -8,7 +8,7 @@ from scipy.interpolate         import interp2d
 #===============================================================================
 # data preparation :
 thklim = 0.0
-out_dir = 'dump/antarctica/meshes/'
+out_dir = 'dump/meshes/'
 
 # get the data :
 measure = DataFactory.get_ant_measures()

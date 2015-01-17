@@ -1,5 +1,4 @@
 import varglas.physics            as physics
-import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.helper               import default_config
 from fenics                       import *
@@ -8,8 +7,8 @@ from termcolor                    import colored
 
 
 # get the input args :
-out_dir = 'dump/antarctica/bed/balance_velocity/'
-in_dir  = 'dump/antarctica/vars/'
+out_dir = 'dump/bed/balance_velocity/'
+in_dir  = 'dump/vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -27,7 +26,6 @@ f.read(adot,  'adot')
 model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
-model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
 config = default_config()

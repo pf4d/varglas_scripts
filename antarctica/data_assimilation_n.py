@@ -19,7 +19,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'dump/antarctica/vars/'
+in_dir  = 'dump/vars/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -62,7 +62,6 @@ model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
-model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
 File(out_dir + 'U_ob.pvd') << U_ob

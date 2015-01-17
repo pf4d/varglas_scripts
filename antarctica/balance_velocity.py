@@ -1,8 +1,8 @@
 from pylab  import *
 from fenics import *
 
-out_dir  = 'dump/antarctica/bed/balance_velocity/'
-in_dir   = 'dump/antarctica/bed/01/'
+out_dir  = 'dump/bed/balance_velocity/'
+in_dir   = 'dump/bed/01/'
 
 mesh   = Mesh(in_dir + 'submesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -48,7 +48,7 @@ Ny   = TrialFunction(W)
 rho   = 917.0                             # density of ice
 g     = 9.8                               # gravitational acceleration
 H     = S - B                             # thickness
-kappa = Constant(10.0)                    # smoothing radius
+kappa = Constant(20.0)                    # smoothing radius
 
 # calculate surface slope and norm :
 dSdx   = project(S.dx(0), W)
@@ -101,7 +101,7 @@ U_v = U.vector().array()
 print 'U <min,max>:', U_v.min(), U_v.max()
 
 File(out_dir + 'Ubar_s.xml') << U
-File(out_dir + 'Ubar.pvd') << U
+File(out_dir + 'Ubar_s.pvd') << U
 
 
 

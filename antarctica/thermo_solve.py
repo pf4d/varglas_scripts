@@ -11,7 +11,7 @@ from time                         import time
 from termcolor                    import colored, cprint
 
 # get the input args :
-out_dir = 'test_all_procs/'     # directory to save
+out_dir = 'dump/thermo_solve/'     # directory to save
 thklim  = 1.0
 
 measures  = DataFactory.get_ant_measures(res=900)

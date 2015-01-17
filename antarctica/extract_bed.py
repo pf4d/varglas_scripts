@@ -3,9 +3,9 @@ import varglas.model              as model
 from fenics                       import *
 from pylab                        import *
 
-out_dir = 'dump/antarctica/bed/01/'
-in_dir  = 'dump/antarctica/test/01/'
-var_dir = 'dump/antarctica/vars/'
+out_dir = 'dump/bed/01/'
+in_dir  = 'dump/test/01/'
+var_dir = 'dump/vars/'
 
 mesh   = Mesh(var_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
