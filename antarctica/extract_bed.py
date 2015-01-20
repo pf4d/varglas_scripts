@@ -1,10 +1,9 @@
-import varglas.physical_constants as pc
-import varglas.model              as model
-from fenics                       import *
-from pylab                        import *
+import varglas.model as model
+from fenics          import *
+from pylab           import *
 
-out_dir = 'dump/bed/01/'
-in_dir  = 'dump/test/01/'
+out_dir = 'dump/bed/02/'
+in_dir  = 'dump/test/02/'
 var_dir = 'dump/vars/'
 
 mesh   = Mesh(var_dir + 'mesh.xdmf')
@@ -36,7 +35,6 @@ model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
-model.set_parameters(pc.IceParameters())
 model.initialize_variables()
 
 File(in_dir + 'beta.xml') >> model.beta

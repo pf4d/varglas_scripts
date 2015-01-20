@@ -13,9 +13,10 @@ t0 = time()
 
 # get the input args :
 out_dir = 'dump/linear_model/'
-in_dir  = 'dump/vars/'
+var_dir = 'dump/vars/'
+in_dir  = 'dump/test/02/'
 
-mesh   = Mesh(in_dir + 'mesh.xdmf')
+mesh   = Mesh(var_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
 ff     = MeshFunction('size_t', mesh)
 cf     = MeshFunction('size_t', mesh)
@@ -28,7 +29,7 @@ U_ob   = Function(Q)
 adot   = Function(Q)
 q_geo  = Function(Q)
 
-f = HDF5File(mesh.mpi_comm(), in_dir + 'vars.h5', 'r')
+f = HDF5File(mesh.mpi_comm(), var_dir + 'vars.h5', 'r')
 
 f.read(S,     'S')
 f.read(B,     'B')
@@ -60,7 +61,7 @@ params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-3
-params['newton_solver']['maximum_iterations']       = 25
+params['newton_solver']['maximum_iterations']       = 16
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
@@ -74,21 +75,26 @@ config = default_config()
 config['output_path']                      = out_dir
 config['log_history']                      = True
 config['coupled']['on']                    = True
-config['coupled']['max_iter']              = 10
+config['coupled']['max_iter']              = 3
 config['velocity']['newton_params']        = params
 config['velocity']['approximation']        = 'fo'#'stokes'
 config['velocity']['viscosity_mode']       = 'full'
-config['velocity']['use_T0']               = True
-config['velocity']['use_beta0']            = False
-config['velocity']['T0']                   = model.T_w - 30.0
 config['velocity']['init_beta_from_U_ob']  = False
 config['velocity']['init_beta_from_stats'] = True
 config['velocity']['U_ob']                 = U_ob
 config['enthalpy']['on']                   = True
 config['enthalpy']['T_surface']            = T_s
-config['enthalpy']['q_geo']                = q_geo
+config['enthalpy']['q_geo']                = model.ghf
 config['balance_velocity']['kappa']        = 20.0
 config['balance_velocity']['adot']         = adot
+
+config['velocity']['use_beta0']            = False
+config['velocity']['use_T0']               = True
+config['velocity']['use_U0']               = True
+config['velocity']['T0']                   = in_dir + '/T.xml'
+config['velocity']['u0']                   = in_dir + '/u.xml'
+config['velocity']['v0']                   = in_dir + '/v.xml'
+config['velocity']['w0']                   = in_dir + '/w.xml'
 
 # initalize the balance velocity :
 B = physics.VelocityBalance(model, config)

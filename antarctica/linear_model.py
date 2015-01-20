@@ -112,7 +112,7 @@ from pylab                     import *
 # get the data from the model output on the bed :
 
 out_dir  = 'dump/bed/linear_model/'
-in_dir   = 'dump/bed/01/'
+in_dir   = 'dump/bed/02/'
 
 mesh  = Mesh(in_dir + 'submesh.xdmf')
 Q     = FunctionSpace(mesh, 'CG', 1)
@@ -218,7 +218,7 @@ names = [r'$M_b$',
 X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 y   = log(beta_v[valid] + 100)
 
-ii     = [0,1,2,3,4,5,6,7,12,13,14]
+ii     = [0,1,2,3,4,5,6,7,11,12,14]
 ii_int = []
 ii_int.extend(ii)
 
@@ -226,7 +226,7 @@ for i,m in enumerate(ii):
   for j,n in enumerate(ii[i+1:]):
     ii_int.append([m,n])
 
-#fig = figure()
+fig = figure()
 Xt  = []
 
 for k,i in enumerate(ii_int):
@@ -240,15 +240,15 @@ for k,i in enumerate(ii_int):
   else:
     x = X[i]
     n = names[i]
-    #ax = fig.add_subplot(3,4,k+1)
-    #ax.plot(x, y, 'ko', alpha=0.1)
-    #ax.set_xlabel(n)
-    #ax.set_ylabel(r'$\beta$')
-    #ax.grid()
+    ax = fig.add_subplot(3,4,k+1)
+    ax.plot(x, y, 'ko', alpha=0.1)
+    ax.set_xlabel(n)
+    ax.set_ylabel(r'$\beta$')
+    ax.grid()
 
   Xt.append(x)
   
-#show()
+show()
 
 
 #===============================================================================

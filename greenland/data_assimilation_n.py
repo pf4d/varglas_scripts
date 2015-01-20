@@ -1,6 +1,5 @@
 import sys
 import varglas.solvers            as solvers
-import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory

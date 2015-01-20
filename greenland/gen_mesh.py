@@ -51,11 +51,8 @@ ref = MeshRefiner(drg, 'ref', gmsh_file_name = out_dir + 'mesh')
 a,aid = ref.add_static_attractor()
 ref.set_background_field(aid)
 
-
-#===============================================================================
 # finish stuff up :
 ref.finish(gui=False, out_file_name = out_dir + 'mesh')
-
 
 
 

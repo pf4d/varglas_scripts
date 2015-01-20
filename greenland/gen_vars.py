@@ -18,7 +18,7 @@ fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
 rignot   = DataFactory.get_gre_rignot_updated()
 
 # define the mesh :
-mesh = MeshFactory.get_greenland_detailed()
+mesh = Mesh('dump/meshes/gre_ultra.xml.gz')
 
 # create data objects to use with varglas :
 dsr     = DataInput(searise,  mesh=mesh)
