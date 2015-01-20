@@ -7,7 +7,6 @@ from scipy.interpolate         import interp2d
 
 #===============================================================================
 # data preparation :
-thklim = 0.0
 out_dir = 'dump/meshes/'
 
 # get the data :
@@ -19,7 +18,7 @@ dbm = DataInput(measure, gen_space=False)
 db2 = DataInput(bedmap2, gen_space=False)
 
 dbm.set_data_min('U_ob', boundary=0.0, val=0.0)
-db2.set_data_val("H",    32767,        thklim)
+db2.set_data_val("H",    32767,        0.0)
 db2.set_data_val('S',    32767,        0.0)
 
 # calculate surface gradient :

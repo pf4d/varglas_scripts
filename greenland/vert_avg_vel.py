@@ -1,8 +1,11 @@
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
-from varglas.utilities            import DataInput, DataOutput
+from varglas.io                   import DataInput, DataOutput
+from pylab                        import *
 from fenics                       import *
+from scipy.io                     import loadmat
+from matplotlib.colors            import LogNorm
 
 # set the in/out directory :
 out_dir = 'dump/vert_avg_vel/'
@@ -64,6 +67,15 @@ do     = DataOutput(out_dir)
 do.write_matlab(dbm, ubar, 'ubar')
 do.write_matlab(dbm, vbar, 'vbar')
 do.write_matlab(dbm, beta, 'beta')
+
+u = loadmat(out_dir + 'ubar.mat')['map_data']
+v = loadmat(out_dir + 'vbar.mat')['map_data']
+
+U = np.sqrt(u**2 + v**2 + 1e-16)
+
+imshow(U[::-1,:], norm=LogNorm())
+colorbar()
+show()
 
 
 

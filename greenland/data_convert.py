@@ -1,6 +1,6 @@
 import sys
 from varglas.data.data_factory    import DataFactory
-from varglas.utilities            import DataInput, DataOutput
+from varglas.io                   import DataInput, DataOutput
 
 thklim = 200.0
 

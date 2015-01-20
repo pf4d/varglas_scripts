@@ -1,4 +1,4 @@
-from varglas.utilities         import DataInput, MeshGenerator, MeshRefiner
+from varglas.io                import DataInput, MeshGenerator, MeshRefiner
 from varglas.data.data_factory import DataFactory
 from pylab                     import *
 

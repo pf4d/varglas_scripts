@@ -6,7 +6,6 @@ from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
 from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
-from varglas.utilities            import DataInput, DataOutput
 from fenics                       import *
 from time                         import time
 from termcolor                    import colored, cprint

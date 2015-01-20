@@ -141,7 +141,7 @@ File(in_dir + 'Ts_s.xml')   >> Ts
 File(in_dir + 'u_s.xml')    >> u
 File(in_dir + 'v_s.xml')    >> v
 File(in_dir + 'w_s.xml')    >> w
-File('dump/antarctica/bed/balance_velocity/Ubar_s.xml') >> Ubar
+File('dump/bed/balance_velocity/Ubar_s.xml') >> Ubar
 
 dSdx   = project(S.dx(0), Q)
 dSdy   = project(S.dx(1), Q)
@@ -218,7 +218,7 @@ names = [r'$M_b$',
 X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 y   = log(beta_v[valid] + 100)
 
-ii     = [1,2,3,4,5,6,7,12,13,14]
+ii     = [0,1,2,3,4,5,6,7,12,13,14]
 ii_int = []
 ii_int.extend(ii)
 

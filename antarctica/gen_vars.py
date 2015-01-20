@@ -2,7 +2,7 @@ import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
-from varglas.utilities            import DataInput
+from varglas.io                   import DataInput
 from fenics                       import *
 from time                         import time
 from termcolor                    import colored, cprint
