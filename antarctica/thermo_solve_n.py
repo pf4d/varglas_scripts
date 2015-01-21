@@ -60,7 +60,7 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-3
+params['newton_solver']['relative_tolerance']       = 1e-6
 params['newton_solver']['maximum_iterations']       = 16
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
@@ -75,7 +75,7 @@ config = default_config()
 config['output_path']                      = out_dir
 config['log_history']                      = True
 config['coupled']['on']                    = True
-config['coupled']['max_iter']              = 3
+config['coupled']['max_iter']              = 20
 config['velocity']['newton_params']        = params
 config['velocity']['approximation']        = 'fo'#'stokes'
 config['velocity']['viscosity_mode']       = 'full'
@@ -102,12 +102,8 @@ B.solve()
 
 # solve the BP model :
 F = solvers.SteadySolver(model, config)
-File(out_dir + 'beta0.pvd') << project(model.beta)
-
 F.solve()
 tf = time()
-
-File(out_dir + 'betaf.pvd') << project(model.beta)
 
 # calculate total time to compute
 s = tf - t0

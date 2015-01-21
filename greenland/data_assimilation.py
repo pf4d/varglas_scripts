@@ -1,6 +1,5 @@
 import sys
 import varglas.solvers            as solvers
-import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
@@ -26,7 +25,7 @@ thklim = 1.0
 searise  = DataFactory.get_searise(thklim = thklim)
 bamber   = DataFactory.get_bamber(thklim = thklim)
 fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
-rignot   = DataFactory.get_gre_rignot_updated()
+rignot   = DataFactory.get_gre_rignot()
 
 # define the mesh :
 mesh = MeshFactory.get_greenland_detailded()

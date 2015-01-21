@@ -45,7 +45,7 @@ rhow  = 1000.0                            # density of water
 g     = 9.8                               # gravitational acceleration
 H     = S - B                             # thickness
 z     = SpatialCoordinate(mesh)[2]        # z-coordinate of bed
-      
+ 
 Pw    = rhoi*g*H + rhow*g*z               # basal water pressure
       
 gPx   = project(Pw.dx(0), W)

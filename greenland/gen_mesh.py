@@ -11,7 +11,7 @@ out_dir = 'dump/meshes/'
 
 # collect the raw data :
 bamber   = DataFactory.get_bamber()
-rignot   = DataFactory.get_gre_rignot_updated()
+rignot   = DataFactory.get_gre_rignot()
 
 # create data objects to use with varglas :
 dbm      = DataInput(bamber,  gen_space=False)
@@ -33,9 +33,15 @@ drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 30000
 
 #===============================================================================
 # generate the contour :
+
+# plot to check :
+imshow(dbm.data['H'][::-1,:])
+colorbar()
+tight_layout()
+
 m = MeshGenerator(dbm, 'mesh', out_dir)
 
-m.create_contour('H', zero_cntr=1.0, skip_pts=1)
+m.create_contour('H', zero_cntr=50.0, skip_pts=1)
 m.eliminate_intersections(dist=40)
 m.transform_contour(drg)
 m.plot_contour()

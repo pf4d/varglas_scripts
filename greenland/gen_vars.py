@@ -15,7 +15,7 @@ thklim   = 1.0
 searise  = DataFactory.get_searise(thklim = thklim)
 bamber   = DataFactory.get_bamber(thklim = thklim)
 fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
-rignot   = DataFactory.get_gre_rignot_updated()
+rignot   = DataFactory.get_gre_rignot()
 
 # define the mesh :
 mesh = Mesh('dump/meshes/gre_ultra.xml.gz')
@@ -26,8 +26,10 @@ dbm     = DataInput(bamber,   mesh=mesh)
 dfm     = DataInput(fm_qgeo,  mesh=mesh)
 drg     = DataInput(rignot,   mesh=mesh)
     
-# change the projection of the measures data to fit with other data :
-drg.change_projection(dsr)
+# change the projection of all data to Rignot projection :
+dsr.change_projection(drg)
+dbm.change_projection(drg)
+dfm.change_projection(drg)
 
 # get the expressions used by varglas :
 S     = dbm.get_expression('S',        near=True)
@@ -61,8 +63,6 @@ class B_max(Expression):
     else:
       values[0] = DOLFIN_EPS
 
-bedMesh  = model.get_bed_mesh()
-
 beta_min = interpolate(Constant(0.0), model.Q)
 beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
 
@@ -72,7 +72,6 @@ b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 adot     = interpolate(adot, model.Q)
 
 XDMFFile(mesh.mpi_comm(),    out_dir + 'mesh.xdmf')    << model.mesh
-XDMFFile(bedMesh.mpi_comm(), out_dir + 'bedMesh.xdmf') << bedMesh
 
 # save the state of the model :
 f = HDF5File(mesh.mpi_comm(), out_dir + 'vars.h5', 'w')

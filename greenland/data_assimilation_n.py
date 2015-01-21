@@ -56,6 +56,9 @@ f.read(b_max,    'b_max')
 f.read(u,        'u')
 f.read(v,        'v')
 
+File(out_dir + 'U_ob.pvd') << U_ob
+File(out_dir + 'H.pvd')    << project(S - B)
+
 model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
@@ -63,14 +66,14 @@ model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
 
 # specifify non-linear solver parameters :
-nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
-nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 16
-nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
-nonlin_solver_params['newton_solver']['linear_solver']           = 'cg'
-nonlin_solver_params['newton_solver']['preconditioner']          = 'hypre_amg'
-parameters['form_compiler']['quadrature_degree']                 = 2
+params = default_nonlin_solver_params()
+params['newton_solver']['relaxation_parameter']    = 0.7
+params['newton_solver']['relative_tolerance']      = 1e-3
+params['newton_solver']['maximum_iterations']      = 16
+params['newton_solver']['error_on_nonconvergence'] = False
+params['newton_solver']['linear_solver']           = 'cg'
+params['newton_solver']['preconditioner']          = 'hypre_amg'
+parameters['form_compiler']['quadrature_degree']   = 2
 
 config = default_config()
 config['output_path']                     = out_dir
@@ -106,12 +109,8 @@ if i > 0:
 
 F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta0.pvd') << model.beta
-
-t0 = time()
 F.solve()
-t1 = time()
 
-params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['init_beta_from_U_ob']     = False
 config['velocity']['use_T0']                  = False
 config['velocity']['use_U0']                  = False
@@ -124,7 +123,7 @@ config['velocity']['viscosity_mode']             = 'linear'
 config['velocity']['eta_shf']                    = model.eta_shf
 config['velocity']['eta_gnd']                    = model.eta_gnd
 config['adjoint']['surface_integral']            = 'grounded'
-config['adjoint']['alpha']                       = 0
+config['adjoint']['alpha']                       = 1e-7
 config['adjoint']['bounds']                      = (beta_min, beta_max)
 config['adjoint']['control_variable']            = model.beta
 
@@ -134,9 +133,7 @@ A.set_target_velocity(u=u, v=v)
 #vf = dir_b + str(i-1) + '/v.xml'
 #wf = dir_b + str(i-1) + '/w.xml'
 #A.set_velocity(uf, vf, wf)
-t2 = time()
 A.solve()
-t3 = time()
 
 eta   = project(model.eta, model.Q)
 
@@ -166,7 +163,8 @@ File(out_dir + 'eta.xml')     << eta
 #f.write(model.eta,   'eta')
 
 # calculate total time to compute
-s = (t1 - t0) + (t3 - t2)
+tf = time()
+s = tf - t0
 m = s / 60.0
 h = m / 60.0
 s = s % 60
