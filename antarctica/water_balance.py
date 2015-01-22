@@ -2,7 +2,7 @@ from pylab  import *
 from fenics import *
 
 out_dir  = 'dump/bed/balance_water/'
-in_dir   = 'dump/bed/00/'
+in_dir   = 'dump/bed/02/'
 
 mesh   = Mesh(in_dir + 'submesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -93,7 +93,7 @@ q_v = q.vector().array()
 print 'q <min,max>:', q_v.min(), q_v.max()
 
 File(out_dir + 'q.pvd')    << q
-File(out_dir + 'Pw.pvd')   << project(Pw, Q)
+#File(out_dir + 'Pw.pvd')   << project(Pw, Q)
 File(out_dir + 'U.pvd')    << project(U, V)
 
 
