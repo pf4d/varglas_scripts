@@ -2,106 +2,89 @@ import sys
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
 import varglas.model              as model
-from varglas.mesh.mesh_factory    import MeshFactory
-from varglas.data.data_factory    import DataFactory
 from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
-from varglas.utilities            import DataInput, DataOutput
 from fenics                       import *
 from time                         import time
 from termcolor                    import colored, cprint
 
+t0 = time()
+
+#set_log_active(False)
+#set_log_level(PROGRESS)
+
 # get the input args :
-i = int(sys.argv[2])           # assimilation number
-dir_b = sys.argv[1] + '/0'     # directory to save
+i       = int(sys.argv[2])       # assimilation number
+dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'vars/'
+in_dir  = 'dump/vars/'
 
-set_log_active(True)
+mesh   = Mesh(in_dir + 'mesh.xdmf')
+Q      = FunctionSpace(mesh, 'CG', 1)
+ff     = MeshFunction('size_t', mesh)
+cf     = MeshFunction('size_t', mesh)
+ff_acc = MeshFunction('size_t', mesh)
 
-thklim = 1.0
+S        = Function(Q)
+B        = Function(Q)
+T_s      = Function(Q)
+U_ob     = Function(Q)
+adot     = Function(Q)
+q_geo    = Function(Q)
+beta_min = Function(Q)
+beta_max = Function(Q)
+b_min    = Function(Q)
+b_max    = Function(Q)
+u        = Function(Q)
+v        = Function(Q)
 
-measures  = DataFactory.get_ant_measures(res=900)
-bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
-bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
+f = HDF5File(mesh.mpi_comm(), in_dir + 'vars.h5', 'r')
 
-mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
-#mesh = MeshFactory.get_antarctica_3D_gradS_crude()
-#mesh  = MeshFactory.get_antarctica_3D_10k()
-
-dm  = DataInput(measures, mesh=mesh)
-db1 = DataInput(bedmap1,  mesh=mesh)
-db2 = DataInput(bedmap2,  mesh=mesh)
-    
-db2.data['B'] = db2.data['S'] - db2.data['H']
-db2.set_data_val('H', 32767, thklim)
-db2.data['S'] = db2.data['B'] + db2.data['H']
-
-S      = db2.get_expression("S",      near=True)
-B      = db2.get_expression("B",      near=True)
-M      = db2.get_expression("mask",   near=True)
-T_s    = db1.get_expression("temp",   near=True)
-q_geo  = db1.get_expression("ghfsr",  near=True)
-adot   = db1.get_expression("acca",   near=True)
-u      = dm.get_interpolation("vx",   near=True)
-v      = dm.get_interpolation("vy",   near=True)
-U_ob   = dm.get_interpolation("U_ob", near=True)
+f.read(S,        'S')
+f.read(B,        'B')
+f.read(T_s,      'T_s')
+f.read(U_ob,     'U_ob')
+f.read(q_geo,    'q_geo')
+f.read(adot,     'adot')
+f.read(ff,       'ff')
+f.read(cf,       'cf')
+f.read(ff_acc,   'ff_acc')
+f.read(beta_min, 'beta_min') 
+f.read(beta_max, 'beta_max')
+f.read(b_min,    'b_min')
+f.read(b_max,    'b_max')
+f.read(u,        'u')
+f.read(v,        'v')
 
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B, deform=True)
-model.set_parameters(pc.IceParameters())
-model.calculate_boundaries(mask=M, adot=adot)
+model.set_surface_and_bed(S, B)
+model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
 
 File(out_dir + 'U_ob.pvd') << U_ob
-
-# constraints on optimization for beta :
-class Beta_max(Expression):
-  def eval(self, values, x):
-    if M(x[0], x[1], x[2]) > 0:
-      values[0] = 0.0
-    else:
-      values[0] = 4000
-
-# constraints on optimization for b :
-class B_max(Expression):
-  def eval(self, values, x):
-    if M(x[0], x[1], x[2]) > 0:
-      values[0] = 1e10
-    else:
-      values[0] = 0.0
-
-beta_min = interpolate(Constant(0.0), model.Q)
-beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
-
-b_min    = interpolate(Constant(0.0), model.Q)
-b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 
 # specify non-linear solver parameters :
 params = default_nonlin_solver_params()
 #params['nonlinear_solver']                          = 'snes'
 #params['snes_solver']['method']                     = 'newtonls'
-#params['snes_solver']['line_search']                = 'bt'
+#params['snes_solver']['line_search']                = 'basic'
 #params['snes_solver']['error_on_nonconvergence']    = False
 #params['snes_solver']['absolute_tolerance']         = 1.0
 #params['snes_solver']['relative_tolerance']         = 1e-3
 #params['snes_solver']['maximum_iterations']         = 20
-#params['snes_solver']['linear_solver']              = 'gmres'
+#params['snes_solver']['linear_solver']              = 'cg'
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
-params['newton_solver']['relaxation_parameter']     = 1.0
+params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-3
 params['newton_solver']['maximum_iterations']       = 16
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
-#params['newton_solver']['krylov_solver']['monitor_convergence']  = True
 parameters['form_compiler']['quadrature_degree']    = 2
-#parameters['krylov_solver']['monitor_convergence']  = True
-#parameters['lu_solver']['verbose']                  = True
 
 
 config = default_config()
@@ -117,10 +100,12 @@ config['velocity']['use_beta0']           = False
 config['velocity']['T0']                  = model.T_w - 30.0
 config['velocity']['init_beta_from_U_ob'] = True
 config['velocity']['init_b_from_U_ob']    = False
+config['velocity']['vert_solve_method']   = 'mumps'
 config['velocity']['U_ob']                = U_ob
 config['enthalpy']['on']                  = True
+config['enthalpy']['solve_method']        = 'mumps'
 config['enthalpy']['T_surface']           = T_s
-config['enthalpy']['q_geo']               = model.q_geo
+config['enthalpy']['q_geo']               = model.ghf
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
 config['adjoint']['max_fun']              = 75
@@ -140,10 +125,7 @@ if i > 0:
 
 F = solvers.SteadySolver(model, config)
 File(out_dir + 'beta0.pvd') << model.beta
-
-t0 = time()
 F.solve()
-t1 = time()
 
 params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['init_beta_from_U_ob']     = False
@@ -169,16 +151,18 @@ else:
     config['velocity']['use_b_shf0'] = True
     config['velocity']['b_shf']      = dir_b + str(i-2) + '/b_shf.xml'
   params['newton_solver']['relaxation_parameter'] = 0.6
-  b = project(model.b_shf)
-  model.print_min_max(b, 'b')
+  b_shf = project(model.b_shf)
+  b_gnd = project(model.b_gnd)
+  model.print_min_max(b_shf, 'b_shf')
+  model.print_min_max(b_gnd, 'b_gnd')
   config['velocity']['viscosity_mode']  = 'b_control'
-  config['velocity']['b_shf']           = b
-  config['velocity']['b_gnd']           = b.copy()
+  config['velocity']['b_shf']           = b_shf
+  config['velocity']['b_gnd']           = b_gnd
   b_min, b_max = (0.0, 1e10)
   config['adjoint']['surface_integral'] = 'shelves'
-  config['adjoint']['alpha']            = 0
+  config['adjoint']['alpha']            = 1e-7
   config['adjoint']['bounds']           = (b_min, b_max)
-  config['adjoint']['control_variable'] = b
+  config['adjoint']['control_variable'] = b_shf
   #params['newton_solver']['relaxation_parameter'] = 0.6
   #E = model.E
   #model.print_min_max(E, 'E')
@@ -197,15 +181,15 @@ A.set_target_velocity(u=u, v=v)
 #vf = dir_b + str(i-1) + '/v.xml'
 #wf = dir_b + str(i-1) + '/w.xml'
 #A.set_velocity(uf, vf, wf)
-t2 = time()
 A.solve()
-t3 = time()
 
-eta   = project(model.eta, model.Q)
 b_shf = project(model.b_shf, model.Q)
 b_gnd = project(model.b_gnd, model.Q)
 
+model.calc_eta()
+
 File(out_dir + 'T.xml')       << model.T
+File(out_dir + 'W.xml')       << model.W 
 File(out_dir + 'S.xml')       << model.S
 File(out_dir + 'B.xml')       << model.B
 File(out_dir + 'u.xml')       << model.u 
@@ -213,7 +197,7 @@ File(out_dir + 'v.xml')       << model.v
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'Mb.xml')      << model.Mb
-File(out_dir + 'eta.xml')     << eta
+File(out_dir + 'eta.xml')     << model.eta
 File(out_dir + 'b_shf.xml')   << b_shf
 File(out_dir + 'b_shf.pvd')   << b_shf
 File(out_dir + 'b_gnd.xml')   << b_gnd
@@ -237,8 +221,10 @@ File(out_dir + 'E_shf.pvd')   << model.E_shf
 #f.write(model.b_gnd, 'b_gnd')
 #f.write(model.b_shf, 'b_shf')
 
+tf = time()
+
 # calculate total time to compute
-s = (t1 - t0) + (t3 - t2)
+s = tf - t0
 m = s / 60.0
 h = m / 60.0
 s = s % 60
