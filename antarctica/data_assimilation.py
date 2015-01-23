@@ -105,10 +105,6 @@ model.init_U_ob(u_ob, v_ob)
 
 # use T0 and beta0 from the previous run :
 if i > 0:
-  config['velocity']['use_U0'] = True
-  model.init_U(dir_b + str(i-1) + '/u.xml',
-               dir_b + str(i-1) + '/v.xml',
-               dir_b + str(i-1) + '/w.xml')
   model.init_T(dir_b + str(i-1) + '/T.xml')
   model.init_beta(dir_b + str(i-1) + '/beta.xml')
 else:
