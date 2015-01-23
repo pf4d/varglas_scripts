@@ -98,7 +98,6 @@ config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
 config['adjoint']['max_fun']              = 75
 
-model.init_T(model.T_w - 30.0)
 model.init_q_geo(model.ghf)
 model.init_T_surface(T_s)
 model.init_adot(adot)
@@ -113,6 +112,7 @@ if i > 0:
   model.init_T(dir_b + str(i-1) + '/T.xml')
   model.init_beta(dir_b + str(i-1) + '/beta.xml')
 else:
+  model.init_T(model.T_w - 30.0)
   model.init_beta_SIA()
 
 File(out_dir + 'beta0.pvd') << model.beta
@@ -121,7 +121,6 @@ F = solvers.SteadySolver(model, config)
 F.solve()
 
 params['newton_solver']['maximum_iterations'] = 25
-config['velocity']['init_beta_from_U_ob']     = False
 config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
@@ -165,7 +164,7 @@ else:
   #config['adjoint']['control_variable'] = E
 
 A = solvers.AdjointSolver(model, config)
-A.set_target_velocity(u=u, v=v)
+A.set_target_velocity(u=u_ob, v=v_ob)
 #uf = dir_b + str(i-1) + '/u.xml'
 #vf = dir_b + str(i-1) + '/v.xml'
 #wf = dir_b + str(i-1) + '/w.xml'
