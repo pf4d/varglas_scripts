@@ -4,6 +4,7 @@ import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
+from varglas.io                   import print_min_max
 from fenics                       import *
 from time                         import time
 from termcolor                    import colored, cprint
@@ -30,22 +31,20 @@ ff_acc = MeshFunction('size_t', mesh)
 S        = Function(Q)
 B        = Function(Q)
 T_s      = Function(Q)
-U_ob     = Function(Q)
 adot     = Function(Q)
 q_geo    = Function(Q)
 beta_min = Function(Q)
 beta_max = Function(Q)
 b_min    = Function(Q)
 b_max    = Function(Q)
-u        = Function(Q)
-v        = Function(Q)
+u_ob     = Function(Q)
+v_ob     = Function(Q)
 
 f = HDF5File(mesh.mpi_comm(), in_dir + 'vars.h5', 'r')
 
 f.read(S,        'S')
 f.read(B,        'B')
 f.read(T_s,      'T_s')
-f.read(U_ob,     'U_ob')
 f.read(q_geo,    'q_geo')
 f.read(adot,     'adot')
 f.read(ff,       'ff')
@@ -55,16 +54,14 @@ f.read(beta_min, 'beta_min')
 f.read(beta_max, 'beta_max')
 f.read(b_min,    'b_min')
 f.read(b_max,    'b_max')
-f.read(u,        'u')
-f.read(v,        'v')
+f.read(u_ob,     'u')
+f.read(v_ob,     'v')
 
 model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
-
-File(out_dir + 'U_ob.pvd') << U_ob
 
 # specify non-linear solver parameters :
 params = default_nonlin_solver_params()
@@ -94,45 +91,38 @@ config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
-config['velocity']['use_T0']              = True
-config['velocity']['use_U0']              = False
-config['velocity']['use_beta0']           = False
-config['velocity']['T0']                  = model.T_w - 30.0
-config['velocity']['init_beta_from_U_ob'] = True
-config['velocity']['init_b_from_U_ob']    = False
 config['velocity']['vert_solve_method']   = 'mumps'
-config['velocity']['U_ob']                = U_ob
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'
-config['enthalpy']['T_surface']           = T_s
-config['enthalpy']['q_geo']               = model.ghf
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
 config['adjoint']['max_fun']              = 75
 
+model.init_T(model.T_w - 30.0)
+model.init_q_geo(model.ghf)
+model.init_T_surface(T_s)
+model.init_adot(adot)
+model.init_U_ob(u_ob, v_ob)
 
 # use T0 and beta0 from the previous run :
 if i > 0:
-  config['velocity']['init_beta_from_U_ob'] = False
-  config['velocity']['use_beta0']           = True
-  config['velocity']['use_T0']              = True
-  config['velocity']['use_U0']              = True
-  config['velocity']['beta0']               = dir_b + str(i-1) + '/beta.xml'
-  config['velocity']['T0']                  = dir_b + str(i-1) + '/T.xml'
-  config['velocity']['u0']                  = dir_b + str(i-1) + '/u.xml'
-  config['velocity']['v0']                  = dir_b + str(i-1) + '/v.xml'
-  config['velocity']['w0']                  = dir_b + str(i-1) + '/w.xml'
+  config['velocity']['use_U0'] = True
+  model.init_U(dir_b + str(i-1) + '/u.xml',
+               dir_b + str(i-1) + '/v.xml',
+               dir_b + str(i-1) + '/w.xml')
+  model.init_T(dir_b + str(i-1) + '/T.xml')
+  model.init_beta(dir_b + str(i-1) + '/beta.xml')
+else:
+  model.init_beta_SIA()
+
+File(out_dir + 'beta0.pvd') << model.beta
 
 F = solvers.SteadySolver(model, config)
-File(out_dir + 'beta0.pvd') << model.beta
 F.solve()
 
 params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['init_beta_from_U_ob']     = False
-config['velocity']['use_T0']                  = False
 config['velocity']['use_U0']                  = False
-config['velocity']['use_beta0']               = False
-config['velocity']['use_b_shf0']              = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
 
@@ -148,13 +138,12 @@ if i % 2 == 0:
 
 else:
   if i > 2:
-    config['velocity']['use_b_shf0'] = True
-    config['velocity']['b_shf']      = dir_b + str(i-2) + '/b_shf.xml'
+    model.init_b_shf(dir_b + str(i-2) + '/b_shf.xml')
   params['newton_solver']['relaxation_parameter'] = 0.6
   b_shf = project(model.b_shf)
   b_gnd = project(model.b_gnd)
-  model.print_min_max(b_shf, 'b_shf')
-  model.print_min_max(b_gnd, 'b_gnd')
+  print_min_max(b_shf, 'b_shf')
+  print_min_max(b_gnd, 'b_gnd')
   config['velocity']['viscosity_mode']  = 'b_control'
   config['velocity']['b_shf']           = b_shf
   config['velocity']['b_gnd']           = b_gnd
@@ -186,8 +175,6 @@ A.solve()
 b_shf = project(model.b_shf, model.Q)
 b_gnd = project(model.b_gnd, model.Q)
 
-model.calc_eta()
-
 File(out_dir + 'T.xml')       << model.T
 File(out_dir + 'W.xml')       << model.W 
 File(out_dir + 'S.xml')       << model.S
@@ -199,27 +186,8 @@ File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'Mb.xml')      << model.Mb
 File(out_dir + 'eta.xml')     << model.eta
 File(out_dir + 'b_shf.xml')   << b_shf
-File(out_dir + 'b_shf.pvd')   << b_shf
 File(out_dir + 'b_gnd.xml')   << b_gnd
 File(out_dir + 'E_shf.xml')   << model.E_shf
-File(out_dir + 'E_shf.pvd')   << model.E_shf
-
-#XDMFFile(mesh.mpi_comm(), out_dir + 'mesh.xdmf')   << model.mesh
-#
-## save the state of the model :
-#if i !=0: rw = 'a'
-#else:     rw = 'w'
-#f = HDF5File(mesh.mpi_comm(), out_dir + 'floating_shelves_0'+str(i)+'.h5', rw)
-#f.write(model.mesh,  'mesh')
-#f.write(model.beta,  'beta')
-#f.write(model.Mb,    'Mb')
-#f.write(model.T,     'T')
-#f.write(model.S,     'S')
-#f.write(model.B,     'B')
-#f.write(model.U,     'U')
-#f.write(model.eta,   'eta')
-#f.write(model.b_gnd, 'b_gnd')
-#f.write(model.b_shf, 'b_shf')
 
 tf = time()
 
