@@ -187,7 +187,6 @@ File(out_dir + 'eta.xml')     << model.eta
 File(out_dir + 'b_shf.xml')   << b_shf
 File(out_dir + 'b_gnd.xml')   << b_gnd
 File(out_dir + 'E_shf.xml')   << model.E_shf
-File(out_dir + 'E_gnd.xml')   << model.E_gnd
 
 tf = time()
 
