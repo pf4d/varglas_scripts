@@ -9,7 +9,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 out_dir  = 'dump/vars/'
-thklim   = 1.0
+thklim   = 50.0
 
 # collect the raw data :
 searise  = DataFactory.get_searise(thklim = thklim)

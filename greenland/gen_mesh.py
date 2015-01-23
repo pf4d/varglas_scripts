@@ -34,17 +34,12 @@ drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 30000
 #===============================================================================
 # generate the contour :
 
-# plot to check :
-imshow(dbm.data['H'][::-1,:])
-colorbar()
-tight_layout()
-
 m = MeshGenerator(dbm, 'mesh', out_dir)
 
-m.create_contour('H', zero_cntr=50.0, skip_pts=1)
+m.create_contour('H', zero_cntr=200.0, skip_pts=4)
 m.eliminate_intersections(dist=40)
 m.transform_contour(drg)
-m.plot_contour()
+#m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
 m.extrude(h=100000, n_layers=10)
 m.close_file()
