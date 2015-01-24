@@ -9,7 +9,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 out_dir  = 'dump/vars/'
-thklim   = 50.0
+thklim   = 200.0
 
 # collect the raw data :
 searise  = DataFactory.get_searise(thklim = thklim)
@@ -18,7 +18,7 @@ fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
 rignot   = DataFactory.get_gre_rignot()
 
 # define the mesh :
-mesh = Mesh('dump/meshes/gre_ultra.xml.gz')
+mesh = Mesh('dump/meshes/gre_ultraa.xml.gz')
 
 # create data objects to use with varglas :
 dsr     = DataInput(searise,  mesh=mesh)

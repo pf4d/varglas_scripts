@@ -55,6 +55,8 @@ f.read(b_max,    'b_max')
 f.read(u_ob,     'u')
 f.read(v_ob,     'v')
 
+File(out_dir + 'H.pvd') << project(S - B)
+
 model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)

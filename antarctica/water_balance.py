@@ -40,28 +40,46 @@ ds    = ds[ff]
 #===============================================================================
 # calculate direction of basal water flow (down pressure gradient) :
 
+phi  = TestFunction(W)
+Nx   = TrialFunction(W)
+Ny   = TrialFunction(W)
+
 rhoi  = 917.0                             # density of ice
 rhow  = 1000.0                            # density of water
 g     = 9.8                               # gravitational acceleration
 H     = S - B                             # thickness
 z     = SpatialCoordinate(mesh)[2]        # z-coordinate of bed
+kappa = Constant(20.0)                    # smoothing radius
  
 Pw    = rhoi*g*H + rhow*g*z               # basal water pressure
       
 gPx   = project(Pw.dx(0), W)
 gPy   = project(Pw.dx(1), W)
-gPz   = project(Pw.dx(2), W)
-gPw   = as_vector([gPx, gPy, 0.0])        # 2D pressure gradient
-gPx_v = gPw[0].vector().array()
-gPy_v = gPw[1].vector().array()
-#gPz_v = gPw[2].vector().array()
+
+a_dSdx = + Nx * phi * dx \
+         + (kappa*H)**2 * (phi.dx(0)*Nx.dx(0) + phi.dx(1)*Nx.dx(1)) * dx
+L_dSdx = gPx * phi * dx \
+
+a_dSdy = + Ny * phi * dx \
+         + (kappa*H)**2 * (phi.dx(0)*Ny.dx(0) + phi.dx(1)*Ny.dx(1)) * dx
+L_dSdy = gPy * phi * dx \
+
+Nx = Function(W)
+Ny = Function(W)
+solve(a_dSdx == L_dSdx, Nx)
+solve(a_dSdy == L_dSdy, Ny)
+
+# normalize the direction vector :
+gPx_v = Nx.vector().array()
+gPy_v = Ny.vector().array()
 gPn_v = np.sqrt(gPx_v**2 + gPy_v**2 + 1e-16)
 
-gPn   = Function(W)                       # norm of pressure
-gPn.vector().set_local(gPn_v)
-gPn.vector().apply('insert')
+gPx.vector().set_local(-dPx_v / gPn_v)
+gPy.vector().set_local(-dPy_v / gPn_v)
+gPx.vector().apply('insert')
+gPy.vector().apply('insert')
 
-uhat  = -gPw / gPn                        # flow direction unit vector
+gPw  = as_vector([gPx, gPy, 0.0])        # 2D pressure gradient
 
 #===============================================================================
 
@@ -82,7 +100,7 @@ cellh   = CellSize(mesh)
 phihat  = phi + cellh/(2*Unorm)*((h*gPw[0]*phi).dx(0) + (h*gPw[1]*phi).dx(1))
 
 w = 1/np * (q/2)**2 / (rhow * g)
-B = L(q, uhat) * phihat * dx
+B = L(q, gPw) * phihat * dx
 a = Mb * phihat * dx
 
 q = Function(W)
