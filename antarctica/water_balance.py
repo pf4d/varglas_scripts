@@ -74,12 +74,13 @@ gPx_v = Nx.vector().array()
 gPy_v = Ny.vector().array()
 gPn_v = np.sqrt(gPx_v**2 + gPy_v**2 + 1e-16)
 
-gPx.vector().set_local(-dPx_v / gPn_v)
-gPy.vector().set_local(-dPy_v / gPn_v)
+gPx.vector().set_local(-gPx_v / gPn_v)
+gPy.vector().set_local(-gPy_v / gPn_v)
 gPx.vector().apply('insert')
 gPy.vector().apply('insert')
 
-gPw  = as_vector([gPx, gPy, 0.0])        # 2D pressure gradient
+gPw  = as_vector([Nx,  Ny,  0.0])        # pressure gradient 
+uhat = as_vector([gPx, gPy, 0.0])        # direction of flow, down grad(p)
 
 #===============================================================================
 
@@ -91,16 +92,16 @@ def L(u, uhat):
   return div(uhat)*u + dot(grad(u), uhat)
 
 # SUPG method phihat :
-h       = 1.0
+h       = 1e-4
 np      = 0.02
 U       = 1/np * (h/2)**2 * (gPw / (rhow * g))
 Unorm   = sqrt(dot(U, U) + 1e-16)
 cellh   = CellSize(mesh)
 #phihat  = phi + cellh/(2*Unorm)*dot(U, grad(phi))
-phihat  = phi + cellh/(2*Unorm)*((h*gPw[0]*phi).dx(0) + (h*gPw[1]*phi).dx(1))
+phihat  = phi + cellh/(2*Unorm)*((h*gPx*phi).dx(0) + (h*gPy*phi).dx(1))
 
 w = 1/np * (q/2)**2 / (rhow * g)
-B = L(q, gPw) * phihat * dx
+B = L(q, uhat) * phihat * dx
 a = Mb * phihat * dx
 
 q = Function(W)
@@ -110,9 +111,9 @@ q_v = q.vector().array()
 
 print 'q <min,max>:', q_v.min(), q_v.max()
 
-File(out_dir + 'q.pvd')    << q
-#File(out_dir + 'Pw.pvd')   << project(Pw, Q)
-File(out_dir + 'U.pvd')    << project(U, V)
+File(out_dir + 'q.pvd')   << q
+File(out_dir + 'gPw.pvd') << project(gPw, V)
+File(out_dir + 'U.pvd')   << project(U, V)
 
 
 
