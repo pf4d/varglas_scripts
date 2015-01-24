@@ -11,20 +11,22 @@ out_dir = 'dump/meshes/'
 
 # collect the raw data :
 bamber   = DataFactory.get_bamber()
-rignot   = DataFactory.get_gre_rignot()
-gimp     = DataFactory.get_gre_gimp()
+#rignot   = DataFactory.get_gre_rignot()
+searise  = DataFactory.get_searise()
+#gimp     = DataFactory.get_gre_gimp()
 
 # create data objects to use with varglas :
 dbm      = DataInput(bamber,  gen_space=False)
-drg      = DataInput(rignot,  gen_space=False)
-dgm      = DataInput(gimp,    gen_space=False)
+#drg      = DataInput(rignot,  gen_space=False)
+dsr      = DataInput(searise, gen_space=False)
+#dgm      = DataInput(gimp,    gen_space=False)
 
-drg.set_data_max('U_ob', boundary=1000.0, val=1000.0)
-drg.set_data_min('U_ob', boundary=0.0,    val=0.0)
+dsr.set_data_max('U_ob', boundary=1000.0, val=1000.0)
+dsr.set_data_min('U_ob', boundary=0.0,    val=0.0)
 
 #===============================================================================
 # form field from which to refine :
-drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 30000
+dsr.data['ref'] = (0.05 + 1/(1 + dsr.data['U_ob'])) * 30000
 
 ## plot to check :
 #imshow(drg.data['ref'][::-1,:])
@@ -36,13 +38,13 @@ drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 30000
 #===============================================================================
 # generate the contour :
 
-m = MeshGenerator(dgm, 'mesh', out_dir)
+m = MeshGenerator(dbm, 'mesh', out_dir)
 
-m.create_contour('mask', zero_cntr=0.999, skip_pts=25)
+m.create_contour('H', zero_cntr=200.0, skip_pts=4)
 m.eliminate_intersections(dist=40)
 m.eliminate_intersections(dist=40)
 #m.transform_contour(drg)
-m.plot_contour()
+#m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
 m.extrude(h=100000, n_layers=10)
 m.close_file()
@@ -50,7 +52,7 @@ m.close_file()
 
 #===============================================================================
 # refine :
-ref = MeshRefiner(drg, 'ref', gmsh_file_name = out_dir + 'mesh')
+ref = MeshRefiner(dsr, 'ref', gmsh_file_name = out_dir + 'mesh')
 
 a,aid = ref.add_static_attractor()
 ref.set_background_field(aid)

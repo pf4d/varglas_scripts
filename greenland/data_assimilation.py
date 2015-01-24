@@ -83,6 +83,7 @@ config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['vert_solve_method']   = 'mumps'
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'
+config['enthalpy']['lateral_boundaries']  = 'surface'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
 config['adjoint']['max_fun']              = 75

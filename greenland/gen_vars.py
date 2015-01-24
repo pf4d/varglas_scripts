@@ -9,7 +9,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 out_dir  = 'dump/vars/'
-thklim   = 200.0
+thklim   = 1.0
 
 # collect the raw data :
 searise  = DataFactory.get_searise(thklim = thklim)
@@ -40,12 +40,11 @@ T_s   = dsr.get_interpolation('T',     near=True)
 q_geo = dfm.get_interpolation('q_geo', near=True)
 u     = drg.get_interpolation('vx',    near=True)
 v     = drg.get_interpolation('vy',    near=True)
-U_ob  = drg.get_interpolation('U_ob',  near=True)
 
 model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B, deform=True)
 model.calculate_boundaries(M, adot=adot)
+model.set_geometry(S, B, deform=True)
 
 # constraints on optimization for beta :
 class Beta_max(Expression):
@@ -85,7 +84,6 @@ f.write(q_geo,        'q_geo')
 f.write(adot,         'adot')
 f.write(u,            'u')
 f.write(v,            'v')
-f.write(U_ob,         'U_ob')
 f.write(beta_min,     'beta_min')
 f.write(beta_max,     'beta_max')
 f.write(b_min,        'b_min')
