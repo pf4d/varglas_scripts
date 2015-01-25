@@ -55,8 +55,6 @@ f.read(b_max,    'b_max')
 f.read(u_ob,     'u')
 f.read(v_ob,     'v')
 
-File(out_dir + 'H.pvd') << project(S - B)
-
 model = model.Model()
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
@@ -83,7 +81,6 @@ config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['vert_solve_method']   = 'mumps'
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'
-config['enthalpy']['lateral_boundaries']  = 'surface'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
 config['adjoint']['max_fun']              = 75
