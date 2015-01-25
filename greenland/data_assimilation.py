@@ -135,7 +135,6 @@ File(out_dir + 'v.xml')       << model.v
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'Mb.xml')      << model.Mb
-File(out_dir + 'eta.xml')     << model.eta
 
 tf = time()
 

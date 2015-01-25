@@ -18,8 +18,7 @@ fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
 rignot   = DataFactory.get_gre_rignot()
 
 # define the mesh :
-#mesh = Mesh('dump/meshes/gre_ultraa.xml.gz')
-mesh = MeshFactory.get_greenland_detailed()
+mesh = Mesh('dump/meshes/gre_new.xml.gz')
 
 # create data objects to use with varglas :
 dsr     = DataInput(searise,  mesh=mesh)
@@ -28,10 +27,9 @@ dfm     = DataInput(fm_qgeo,  mesh=mesh)
 drg     = DataInput(rignot,   mesh=mesh)
     
 # change the projection of all data to Rignot projection :
-#dsr.change_projection(drg)
-#dbm.change_projection(drg)
-#dfm.change_projection(drg)
-drg.change_projection(dsr)
+dsr.change_projection(drg)
+dbm.change_projection(drg)
+dfm.change_projection(drg)
 
 # get the expressions used by varglas :
 S     = dbm.get_expression('S',        near=True)
