@@ -92,11 +92,12 @@ config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['vert_solve_method']   = 'mumps'
+config['velocity']['calc_pressure']       = False
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 75
+config['adjoint']['max_fun']              = 15
 
 model.init_q_geo(model.ghf)
 model.init_T_surface(T_s)

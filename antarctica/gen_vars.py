@@ -24,10 +24,6 @@ dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)
 d2 = DataInput(bedmap2,  mesh=mesh)
 
-d2.data['B'] = d2.data['S'] - d2.data['H']
-d2.set_data_val('H', 32767, thklim)
-d2.data['S'] = d2.data['B'] + d2.data['H']
-
 S     = d2.get_expression("S",        near=True)
 B     = d2.get_expression("B",        near=True)
 M     = d2.get_expression("mask",     near=True)
@@ -40,9 +36,9 @@ U_ob  = dm.get_interpolation("U_ob",  near=True)
 
 model = model.Model()
 model.set_mesh(mesh)
+model.calculate_boundaries(mask=M, adot=adot)
 model.set_geometry(S, B, deform=True)
 model.set_parameters(pc.IceParameters())
-model.calculate_boundaries(mask=M, adot=adot)
 
 # constraints on optimization for beta :
 class Beta_max(Expression):
@@ -60,8 +56,6 @@ class B_max(Expression):
     else:
       values[0] = DOLFIN_EPS
 
-bedMesh  = model.get_bed_mesh()
-
 beta_min = interpolate(Constant(0.0), model.Q)
 beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
 
@@ -71,7 +65,6 @@ b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 adot     = interpolate(adot, model.Q)
 
 XDMFFile(mesh.mpi_comm(),    out_dir + 'mesh.xdmf')    << model.mesh
-XDMFFile(bedMesh.mpi_comm(), out_dir + 'bedMesh.xdmf') << bedMesh
 
 # save the state of the model :
 f = HDF5File(mesh.mpi_comm(), out_dir + 'vars.h5', 'w')
