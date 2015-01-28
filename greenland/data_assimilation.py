@@ -79,6 +79,7 @@ config['velocity']['newton_params']       = params
 config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['vert_solve_method']   = 'mumps'
+config['velocity']['calc_pressure']       = False
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'
 config['age']['on']                       = False
