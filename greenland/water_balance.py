@@ -2,7 +2,7 @@ from pylab  import *
 from fenics import *
 
 out_dir  = 'dump/bed/balance_water/'
-in_dir   = 'dump/bed/02/'
+in_dir   = 'dump/bed/01/'
 
 mesh   = Mesh(in_dir + 'submesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)

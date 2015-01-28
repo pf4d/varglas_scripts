@@ -2,8 +2,8 @@ import varglas.model as model
 from fenics          import *
 from pylab           import *
 
-out_dir  = 'dump/bed/03/'
-in_dir   = 'dump/test/03/'
+out_dir  = 'dump/bed/01/'
+in_dir   = 'dump/test/01/'
 var_dir  = 'dump/vars/'
 
 mesh   = Mesh(var_dir + 'mesh.xdmf')

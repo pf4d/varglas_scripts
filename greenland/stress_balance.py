@@ -1,72 +1,60 @@
-import sys
 import varglas.solvers            as solvers
-import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
+from varglas.helper               import default_nonlin_solver_params, \
+                                         default_config
 from varglas.io                   import DataInput, DataOutput
-from fenics                       import parameters, set_log_active, File
-from time                         import time
-from termcolor                    import colored, cprint
+from fenics                       import *
 
-t0 = time()
+set_log_active(False)
 
-out_dir = './stress_balance/'
-in_dir  = './test/03/'
+thklim  = 1.0
+in_dir  = 'dump/test/01/'
+out_dir = 'dump/stress/'
+var_dir = 'dump/vars/'
 
-set_log_active(True)
+mesh   = Mesh(var_dir + 'mesh.xdmf')
+Q      = FunctionSpace(mesh, 'CG', 1)
+ff     = MeshFunction('size_t', mesh)
+cf     = MeshFunction('size_t', mesh)
+ff_acc = MeshFunction('size_t', mesh)
 
-thklim = 200.0
+S      = Function(Q)
+B      = Function(Q)
 
-# collect the raw data :
-bamber = DataFactory.get_bamber(thklim = thklim)
+f = HDF5File(mesh.mpi_comm(), var_dir + 'vars.h5', 'r')
 
-# define the meshes :
-mesh = MeshFactory.get_greenland_detailed()
+f.read(S,       'S')
+f.read(B,       'B')
+f.read(ff,      'ff')
+f.read(cf,      'cf')
+f.read(ff_acc,  'ff_acc')
 
-# create data objects to use with varglas :
-dbm  = DataInput(bamber, mesh=mesh)
-
-# get the expressions used by varglas :
-S    = dbm.get_spline_expression('S')
-B    = dbm.get_spline_expression('B')
-
-model = model.Model(out_dir = out_dir)
+model = model.Model()
 model.set_mesh(mesh)
-model.set_geometry(S, B, deform=True)
-model.set_parameters(pc.IceParameters())
-model.calculate_boundaries()
+model.set_surface_and_bed(S, B)
+model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
-parameters['form_compiler']['quadrature_degree'] = 2
 
-File(in_dir + 'u.xml')    >>  model.u
-File(in_dir + 'v.xml')    >>  model.v
-File(in_dir + 'w.xml')    >>  model.w
-File(in_dir + 'beta.xml') >>  model.beta
-File(in_dir + 'eta.xml')  >>  model.eta
+model.init_beta(in_dir + 'beta.xml')
+model.init_U(in_dir + 'u.xml',
+             in_dir + 'v.xml',
+             in_dir + 'w.xml')
+model.init_T(in_dir + 'T.xml')
+model.init_W(in_dir + 'W.xml')
+model.init_E(1.0)
 
-config = {'output_path'     : out_dir,
-          'log'             : True,
-          'solver_params'   : 
-          {
-            'linear_solver' : 'mumps'
-          }}
+model.calc_eta()
 
-F = solvers.StokesBalanceSolver(model, config)
-F.solve()
+config = default_config()
+config['output_path']                      = out_dir
+config['stokes_balance']['viscosity_mode'] = 'linear'
+config['stokes_balance']['eta']            = model.eta
+config['stokes_balance']['vert_integrate'] = False
 
-tf = time()
+T = solvers.StokesBalanceSolver(model, config)
+T.solve()
 
-# calculate total time to compute
-s = tf - t0
-m = s / 60.0
-h = m / 60.0
-s = s % 60
-m = m % 60
-if model.MPI_rank == 0:
-  s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
-  text = colored(s, 'red', attrs=['bold'])
-  print text
-        
 
 
