@@ -112,7 +112,7 @@ from pylab                     import *
 # get the data from the model output on the bed :
 
 out_dir  = 'dump/bed/linear_model/'
-in_dir   = 'dump/bed/02/'
+in_dir   = 'dump/bed/03/'
 
 mesh  = Mesh(in_dir + 'submesh.xdmf')
 Q     = FunctionSpace(mesh, 'CG', 1)
@@ -143,7 +143,7 @@ File(in_dir + 'u_s.xml')    >> u
 File(in_dir + 'v_s.xml')    >> v
 File(in_dir + 'w_s.xml')    >> w
 File('dump/bed/balance_velocity/Ubar_s.xml') >> Ubar
-File('dump/bed/water_velocity/q.xml')        >> qbar
+File('dump/bed/balance_water/q.xml')         >> qbar
 
 dSdx   = project(S.dx(0), Q)
 dSdy   = project(S.dx(1), Q)
@@ -179,12 +179,12 @@ gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
 
 valid  = where(beta_v > 1e-10)[0]
 valid  = intersect1d(valid, where(Ubar_v > 0)[0])
-valid  = intersect1d(valid, where(abs(Mb_v) < 40)[0])
+#valid  = intersect1d(valid, where(abs(Mb_v) < 40)[0])
 valid  = intersect1d(valid, where(abs(adot_v) < 2)[0])
 
 print "sample size:", len(valid)
 
-x0   = Mb_v[valid]
+x0   = abs(Mb_v[valid])
 x1   = S_v[valid]
 x2   = Tb_v[valid]
 x3   = Ts_v[valid]
@@ -202,7 +202,7 @@ x14  = adot_v[valid]
 
 #===============================================================================
 # formulte design matrix and do some EDA :
-names = [r'$M_b$', 
+names = [r'$|M_b|$', 
          r'$S$', 
          r'$T_B$', 
          r'$T_S$', 
