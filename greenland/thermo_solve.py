@@ -65,7 +65,7 @@ params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-6
-params['newton_solver']['maximum_iterations']       = 16
+params['newton_solver']['maximum_iterations']       = 18
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
@@ -85,15 +85,16 @@ config['velocity']['approximation']        = 'fo'#'stokes'
 config['velocity']['viscosity_mode']       = 'full'
 config['velocity']['vert_solve_method']    = 'mumps'
 config['velocity']['calc_pressure']        = True
+config['velocity']['init_beta_from_stats'] = True
 config['enthalpy']['on']                   = True
 config['enthalpy']['solve_method']         = 'mumps'
-config['velocity']['init_beta_from_stats'] = True
 config['age']['on']                        = False
 config['age']['use_smb_for_ela']           = True
 config['balance_velocity']['kappa']        = 20.0
 config['balance_velocity']['adot']         = adot
 
 model.init_q_geo(model.ghf)
+#model.init_E(1.0)
 model.init_T_surface(T_s)
 model.init_adot(adot)
 model.init_U_ob(u_ob, v_ob)
@@ -101,6 +102,11 @@ model.init_T(in_dir + 'T.xml')
 model.init_W(in_dir + 'W.xml')
 model.init_Ubar(in_dir + 'Ubar.xml')
 model.init_Mb(in_dir + 'Mb.xml')
+model.init_U(in_dir + 'u.xml',
+             in_dir + 'v.xml',
+             in_dir + 'w.xml')
+
+model.init_beta_stats()
 
 # solve the BP model :
 F = solvers.SteadySolver(model, config)

@@ -179,32 +179,30 @@ gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
 
 valid  = where(beta_v > 1e-10)[0]
 valid  = intersect1d(valid, where(Ubar_v > 0)[0])
-#valid  = intersect1d(valid, where(abs(Mb_v) < 40)[0])
+valid  = intersect1d(valid, where(abs(Mb_v) < 40)[0])
 valid  = intersect1d(valid, where(abs(adot_v) < 2)[0])
 
 print "sample size:", len(valid)
 
-x0   = abs(Mb_v[valid])
-x1   = S_v[valid]
-x2   = Tb_v[valid]
-x3   = Ts_v[valid]
-x4   = gradS[valid]
-x5   = abs(B_v[valid])
-x6   = gradB[valid]
-x7   = H_v[valid]
-x8   = u_v[valid]
-x9   = v_v[valid]
-x10  = w_v[valid]
-x11  = log(U_mag[valid] + 1)
-x12  = log(Ubar_v[valid] + 1)
-x13  = qgeo_v[valid]
-x14  = adot_v[valid]
+x0   = S_v[valid]
+x1   = Ts_v[valid]
+x2   = gradS[valid]
+x3   = abs(B_v[valid])
+x4   = gradB[valid]
+x5   = H_v[valid]
+x6   = u_v[valid]
+x7   = v_v[valid]
+x8   = w_v[valid]
+x9   = qgeo_v[valid]
+x10  = adot_v[valid]
+x11  = log(Ubar_v[valid] + 1)
+x12  = Tb_v[valid]
+x13  = abs(Mb_v[valid])
+x14  = log(U_mag[valid] + 1)
 
 #===============================================================================
 # formulte design matrix and do some EDA :
-names = [r'$|M_b|$', 
-         r'$S$', 
-         r'$T_B$', 
+names = [r'$S$', 
          r'$T_S$', 
          r'$\Vert \nabla S \Vert$', 
          r'$|B|$',
@@ -213,15 +211,18 @@ names = [r'$|M_b|$',
          r'$u$', 
          r'$v$', 
          r'$w$', 
-         r'$\Vert \mathbf{U} \Vert$',
-         r'$\Vert \bar{\mathbf{U}} \Vert$',
          r'$Q_{geo}$',
-         r'$\dot{a}$']
+         r'$\dot{a}$',
+         r'$\Vert \bar{\mathbf{U}} \Vert$',
+         r'$T_B$', 
+         r'$|M_B|$', 
+         r'$\Vert \mathbf{U}_B \Vert$']
 
 X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 y   = log(beta_v[valid] + 100)
 
-ii     = [0,1,2,3,4,5,6,7,11,12,14]
+#ii     = [0,1,2,3,4,5,10,11,12,13,14]
+ii     = [0,1,2,3,4,5,10,11,12,13,14]
 ii_int = []
 ii_int.extend(ii)
 
@@ -229,7 +230,7 @@ for i,m in enumerate(ii):
   for j,n in enumerate(ii[i+1:]):
     ii_int.append([m,n])
 
-fig = figure()
+#fig = figure(figsize=(25,10))
 Xt  = []
 
 for k,i in enumerate(ii_int):
@@ -243,15 +244,15 @@ for k,i in enumerate(ii_int):
   else:
     x = X[i]
     n = names[i]
-    ax = fig.add_subplot(3,4,k+1)
-    ax.plot(x, y, 'ko', alpha=0.1)
-    ax.set_xlabel(n)
-    ax.set_ylabel(r'$\beta$')
-    ax.grid()
+    #ax = fig.add_subplot(3,4,k+1)
+    #ax.plot(x, y, 'ko', alpha=0.1)
+    #ax.set_xlabel(n)
+    #ax.set_ylabel(r'$\beta$')
+    #ax.grid()
 
   Xt.append(x)
   
-show()
+#show()
 
 
 #===============================================================================
@@ -283,6 +284,8 @@ ax1.plot(out['yhat'], out['resid'], 'ko', alpha=0.1)
 ax1.set_xlabel('Predicted Values') 
 ax1.set_ylabel('Residuals') 
 ax1.set_title('Residual Plot') 
+#ax1.set_xlim([4, 7.5])
+#ax1.set_ylim([-3,3])
 ax1.grid()
 
 # Normal quantile plot of residuals
@@ -291,14 +294,16 @@ probplot(out['resid'], plot=p)
 ax2.set_xlabel('Standard Normal Quantiles') 
 ax2.set_ylabel('Residuals') 
 ax2.set_title('Normal Quantile Plot')
+ax2.set_xlim([-6,6])
+ax2.set_ylim([-3,3])
 ax2.grid()
-#savefig('images/resid-NQ.png', dpi=300)
-show()
+savefig('../images/linear_model/resid-NQ_' + str(len(ii_int)) + '.png', dpi=100)
+#show()
 
 
 #===============================================================================
 # plot y, yhat :
-fig = figure()
+fig = figure(figsize=(25,15))
 
 for k,i in enumerate(ii):
   
@@ -316,10 +321,12 @@ for k,i in enumerate(ii):
 
   ax.plot(x, y,    'ko', alpha=0.1)
   ax.plot(x, yhat, 'ro', alpha=0.1)
+  ax.set_ylim([4,8])
   ax.set_xlabel(n)
   ax.set_ylabel(r'$\beta$')
   ax.grid()
-show()
+savefig('../images/linear_model/approx_' + str(len(ii_int)) + '.png', dpi=100)
+#show()
 
 #===============================================================================
 # plot parameter values with confidence intervals:
@@ -335,7 +342,7 @@ ax.set_ylabel(r'$\hat{\beta}_i$')
 ax.set_xlabel(r'$i$')
 grid()
 tight_layout()
-show()
+#show()
 
 
 

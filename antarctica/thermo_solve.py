@@ -1,3 +1,5 @@
+# 48 cores : Total time to compute: 03:54:01
+
 import varglas.solvers            as solvers
 import varglas.physics            as physics
 import varglas.model              as model
@@ -12,7 +14,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 # get the input args :
-out_dir = 'dump/linear_model/'
+out_dir = 'dump/linear_model_ind/'
 var_dir = 'dump/vars/'
 in_dir  = 'dump/test/03/'
 
@@ -65,7 +67,7 @@ params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-6
-params['newton_solver']['maximum_iterations']       = 12
+params['newton_solver']['maximum_iterations']       = 17
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
@@ -85,9 +87,9 @@ config['velocity']['approximation']        = 'fo'#'stokes'
 config['velocity']['viscosity_mode']       = 'full'
 config['velocity']['vert_solve_method']    = 'mumps'
 config['velocity']['calc_pressure']        = True
+config['velocity']['init_beta_from_stats'] = True
 config['enthalpy']['on']                   = True
 config['enthalpy']['solve_method']         = 'mumps'
-config['velocity']['init_beta_from_stats'] = True
 config['age']['on']                        = False
 config['age']['use_smb_for_ela']           = True
 config['balance_velocity']['kappa']        = 20.0
