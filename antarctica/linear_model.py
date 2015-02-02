@@ -213,136 +213,141 @@ names = [r'$S$',
          r'$w$', 
          r'$Q_{geo}$',
          r'$\dot{a}$',
-         r'$\Vert \bar{\mathbf{U}} \Vert$',
+         r'$\ln\left(\Vert \bar{\mathbf{U}} \Vert + 1\right)$',
          r'$T_B$', 
          r'$|M_B|$', 
-         r'$\Vert \mathbf{U}_B \Vert$']
+         r'$\ln\left(\Vert \mathbf{U}_B \Vert + 1\right)$']
 
 X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 y   = log(beta_v[valid] + 100)
 
-#ii     = [0,1,2,3,4,5,10,11,12,13,14]
-ii     = [0,1,2,3,4,5,10,11,12,13,14]
-ii_int = []
-ii_int.extend(ii)
+index  = [0,1,2,3,4,5,10,11]#,12,13,14]
 
-for i,m in enumerate(ii):
-  for j,n in enumerate(ii[i+1:]):
-    ii_int.append([m,n])
-
-#fig = figure(figsize=(25,10))
-Xt  = []
-
-for k,i in enumerate(ii_int):
+#for idx in range(1,len(index)+1):
+for idx in [len(index)+1]:
+  ii     = index[:idx]
+  ii_int = []
+  ii_int.extend(ii)
   
-  if type(i) == list:
-    n = ''
-    x = 1.0
-    for j in i:
-      x *= X[j]
-      n += names[j]
-  else:
-    x = X[i]
-    n = names[i]
-    #ax = fig.add_subplot(3,4,k+1)
-    #ax.plot(x, y, 'ko', alpha=0.1)
-    #ax.set_xlabel(n)
-    #ax.set_ylabel(r'$\beta$')
-    #ax.grid()
-
-  Xt.append(x)
+  for i,m in enumerate(ii):
+    for j,n in enumerate(ii[i+1:]):
+      ii_int.append([m,n])
   
-#show()
-
-
-#===============================================================================
-# perform regression :
-
-# cell declustering :
-#h_v    = project(CellSize(submesh), Q).vector().array()
-#A      = sum(h_v)
-#wt     = h_v / A
-#beta_bar = sum(beta_v * h_v) / A
-
-out  = linRegstats(array(Xt), y, 0.95)
-
-yhat = out['yhat']
-bhat = out['bhat']
-cibl = out['CIB'][0]
-cibh = out['CIB'][1]
-
-print "<F_pval, pval>:", out['F_pval'], out['pval']
-
-
-#===============================================================================
-# residual plot and normal quantile plot for residuals :
-fig = figure(figsize=(12,5))
-ax1 = fig.add_subplot(121)
-ax2 = fig.add_subplot(122)
-
-ax1.plot(out['yhat'], out['resid'], 'ko', alpha=0.1)
-ax1.set_xlabel('Predicted Values') 
-ax1.set_ylabel('Residuals') 
-ax1.set_title('Residual Plot') 
-#ax1.set_xlim([4, 7.5])
-#ax1.set_ylim([-3,3])
-ax1.grid()
-
-# Normal quantile plot of residuals
-p = prbplotObj(ax2)
-probplot(out['resid'], plot=p)
-ax2.set_xlabel('Standard Normal Quantiles') 
-ax2.set_ylabel('Residuals') 
-ax2.set_title('Normal Quantile Plot')
-ax2.set_xlim([-6,6])
-ax2.set_ylim([-3,3])
-ax2.grid()
-savefig('../images/linear_model/resid-NQ_' + str(len(ii_int)) + '.png', dpi=100)
-#show()
-
-
-#===============================================================================
-# plot y, yhat :
-fig = figure(figsize=(25,15))
-
-for k,i in enumerate(ii):
+  #fig = figure(figsize=(25,10))
+  Xt  = []
   
-  ax = fig.add_subplot(4,3,k+1)
+  for k,i in enumerate(ii_int):
+    
+    if type(i) == list:
+      n = ''
+      x = 1.0
+      for j in i:
+        x *= X[j]
+        n += names[j]
+    else:
+      x = X[i]
+      n = names[i]
+      #ax = fig.add_subplot(3,4,k+1)
+      #ax.plot(x, y, 'ko', alpha=0.1)
+      #ax.set_xlabel(n)
+      #ax.set_ylabel(r'$\beta$')
+      #ax.grid()
   
-  if type(i) == list:
-    n = ''
-    x = 1.0
-    for j in i:
-      x *= X[j]
-      n += names[j]
-  else:
-    x = X[i]
-    n = names[i]
-
-  ax.plot(x, y,    'ko', alpha=0.1)
-  ax.plot(x, yhat, 'ro', alpha=0.1)
-  ax.set_ylim([4,8])
-  ax.set_xlabel(n)
-  ax.set_ylabel(r'$\beta$')
-  ax.grid()
-savefig('../images/linear_model/approx_' + str(len(ii_int)) + '.png', dpi=100)
-#show()
-
-#===============================================================================
-# plot parameter values with confidence intervals:
-fig  = figure()
-ax   = fig.add_subplot(111)
-
-xb   = range(len(ii_int) + 1)
-
-ax.plot(xb, cibh, 'r--', lw=2.0)
-ax.plot(xb, bhat, 'k-',  lw=2.0)
-ax.plot(xb, cibl, 'r--', lw=2.0)
-ax.set_ylabel(r'$\hat{\beta}_i$')
-ax.set_xlabel(r'$i$')
-grid()
-tight_layout()
-#show()
+    Xt.append(x)
+    
+  #show()
+  
+  
+  #=============================================================================
+  # perform regression :
+  
+  # cell declustering :
+  #h_v    = project(CellSize(submesh), Q).vector().array()
+  #A      = sum(h_v)
+  #wt     = h_v / A
+  #beta_bar = sum(beta_v * h_v) / A
+  
+  out  = linRegstats(array(Xt), y, 0.95)
+  
+  yhat = out['yhat']
+  bhat = out['bhat']
+  cibl = out['CIB'][0]
+  cibh = out['CIB'][1]
+  
+  print "<F_pval, pval>:", out['F_pval'], out['pval']
+  
+  
+  #=============================================================================
+  # residual plot and normal quantile plot for residuals :
+  fig = figure(figsize=(12,5))
+  ax1 = fig.add_subplot(121)
+  ax2 = fig.add_subplot(122)
+  
+  ax1.plot(out['yhat'], out['resid'], 'ko', alpha=0.1)
+  ax1.set_xlabel('Predicted Values') 
+  ax1.set_ylabel('Residuals') 
+  ax1.set_title('Residual Plot') 
+  #ax1.set_xlim([4, 7.5])
+  #ax1.set_ylim([-3,3])
+  ax1.grid()
+  
+  # Normal quantile plot of residuals
+  p = prbplotObj(ax2)
+  probplot(out['resid'], plot=p)
+  ax2.set_xlabel('Standard Normal Quantiles') 
+  ax2.set_ylabel('Residuals') 
+  ax2.set_title('Normal Quantile Plot')
+  #ax2.set_xlim([-6,6])
+  #ax2.set_ylim([-3,3])
+  ax2.grid()
+  fn = '../images/linear_model/antarctica/resid-NQ_' + str(idx) + '.png'
+  savefig(fn, dpi=100)
+  #show()
+  
+  
+  #=============================================================================
+  # plot y, yhat :
+  fig = figure(figsize=(25,15))
+  
+  for k,i in enumerate(ii):
+    
+    ax = fig.add_subplot(4,3,k+1)
+    
+    if type(i) == list:
+      n = ''
+      x = 1.0
+      for j in i:
+        x *= X[j]
+        n += names[j]
+    else:
+      x = X[i]
+      n = names[i]
+  
+    ax.plot(x, y,    'ko', alpha=0.1)
+    ax.plot(x, yhat, 'ro', alpha=0.1)
+    ax.set_ylim([4,8])
+    ax.set_xlabel(n)
+    ax.set_ylabel(r'$\ln(\beta + 100)$')
+    ax.grid()
+  fn = '../images/linear_model/antarctica/approx_' + str(idx) + '.png'
+  savefig(fn, dpi=100)
+  #show()
+  
+  #=============================================================================
+  # plot parameter values with confidence intervals:
+  fig  = figure()
+  ax   = fig.add_subplot(111)
+  
+  xb   = range(len(ii_int) + 1)
+  
+  ax.plot(xb, cibh, 'r--', lw=2.0)
+  ax.plot(xb, bhat, 'k-',  lw=2.0)
+  ax.plot(xb, cibl, 'r--', lw=2.0)
+  ax.set_ylabel(r'$\hat{\beta}_i$')
+  ax.set_xlabel(r'$i$')
+  grid()
+  tight_layout()
+  #show()
 
 
 

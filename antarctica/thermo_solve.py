@@ -14,7 +14,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 # get the input args :
-out_dir = 'dump/linear_model_ind/'
+out_dir = 'dump/linear_model_gre_full/'
 var_dir = 'dump/vars/'
 in_dir  = 'dump/test/03/'
 
@@ -66,8 +66,8 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-6
-params['newton_solver']['maximum_iterations']       = 17
+params['newton_solver']['relative_tolerance']       = 1e-10
+params['newton_solver']['maximum_iterations']       = 30
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
@@ -112,7 +112,7 @@ model.init_beta_stats()
 
 # solve the BP model :
 F = solvers.SteadySolver(model, config)
-File(out_dir + 'beta0.pvd') << model.beta
+File(out_dir + 'beta0.pvd') << model.extrude(model.beta, [3,5], 2)
 F.solve()
 
 # calculate total time to compute

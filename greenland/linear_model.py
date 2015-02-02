@@ -112,7 +112,7 @@ from pylab                     import *
 # get the data from the model output on the bed :
 
 out_dir  = 'dump/bed/linear_model/'
-in_dir   = 'dump/bed/02/'
+in_dir   = 'dump/bed/01/'
 
 mesh  = Mesh(in_dir + 'submesh.xdmf')
 Q     = FunctionSpace(mesh, 'CG', 1)
@@ -143,7 +143,7 @@ File(in_dir + 'u_s.xml')    >> u
 File(in_dir + 'v_s.xml')    >> v
 File(in_dir + 'w_s.xml')    >> w
 File('dump/bed/balance_velocity/Ubar_s.xml') >> Ubar
-File('dump/bed/water_velocity/q.xml')        >> qbar
+File('dump/bed/balance_water/q.xml')         >> qbar
 
 dSdx   = project(S.dx(0), Q)
 dSdy   = project(S.dx(1), Q)
@@ -175,36 +175,34 @@ dBdx_v = dBdx.vector().array()
 dBdy_v = dBdy.vector().array()
 gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
 
-#B_v -= B_v.min()
-
 valid  = where(beta_v > 1e-10)[0]
 valid  = intersect1d(valid, where(Ubar_v > 0)[0])
-valid  = intersect1d(valid, where(abs(Mb_v) < 40)[0])
-valid  = intersect1d(valid, where(abs(adot_v) < 2)[0])
+valid  = intersect1d(valid, where(abs(Mb_v) < 5)[0])
+valid  = intersect1d(valid, where(S_v >= 0)[0])
+valid  = intersect1d(valid, where(H_v >  1)[0])
+#valid  = intersect1d(valid, where(abs(adot_v) < 2)[0])
 
 print "sample size:", len(valid)
 
-x0   = Mb_v[valid]
-x1   = S_v[valid]
-x2   = Tb_v[valid]
-x3   = Ts_v[valid]
-x4   = gradS[valid]
-x5   = abs(B_v[valid])
-x6   = gradB[valid]
-x7   = H_v[valid]
-x8   = u_v[valid]
-x9   = v_v[valid]
-x10  = w_v[valid]
-x11  = log(U_mag[valid] + 1)
-x12  = log(Ubar_v[valid] + 1)
-x13  = qgeo_v[valid]
-x14  = adot_v[valid]
+x0   = S_v[valid]
+x1   = Ts_v[valid]
+x2   = gradS[valid]
+x3   = abs(B_v[valid])
+x4   = gradB[valid]
+x5   = H_v[valid]
+x6   = u_v[valid]
+x7   = v_v[valid]
+x8   = w_v[valid]
+x9   = qgeo_v[valid]
+x10  = adot_v[valid]
+x11  = log(Ubar_v[valid] + 1)
+x12  = Tb_v[valid]
+x13  = abs(Mb_v[valid])
+x14  = log(U_mag[valid] + 1)
 
 #===============================================================================
 # formulte design matrix and do some EDA :
-names = [r'$M_b$', 
-         r'$S$', 
-         r'$T_B$', 
+names = [r'$S$', 
          r'$T_S$', 
          r'$\Vert \nabla S \Vert$', 
          r'$|B|$',
@@ -213,129 +211,143 @@ names = [r'$M_b$',
          r'$u$', 
          r'$v$', 
          r'$w$', 
-         r'$\Vert \mathbf{U} \Vert$',
-         r'$\Vert \bar{\mathbf{U}} \Vert$',
          r'$Q_{geo}$',
-         r'$\dot{a}$']
+         r'$\dot{a}$',
+         r'$\ln\left(\Vert \bar{\mathbf{U}} \Vert + 1\right)$',
+         r'$T_B$', 
+         r'$|M_B|$', 
+         r'$\ln\left(\Vert \mathbf{U}_B \Vert + 1\right)$']
 
 X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 y   = log(beta_v[valid] + 100)
 
-ii     = [0,1,2,3,4,5,6,7,11,12,14]
-ii_int = []
-ii_int.extend(ii)
+index  = [0,1,2,3,4,5,10,11,12,13,14]
 
-for i,m in enumerate(ii):
-  for j,n in enumerate(ii[i+1:]):
-    ii_int.append([m,n])
-
-fig = figure()
-Xt  = []
-
-for k,i in enumerate(ii_int):
+#for idx in [len(index)+1]:
+for idx in range(1,len(index)+1):
+  ii     = index[:idx]
+  ii_int = []
+  ii_int.extend(ii)
   
-  if type(i) == list:
-    n = ''
-    x = 1.0
-    for j in i:
-      x *= X[j]
-      n += names[j]
-  else:
-    x = X[i]
-    n = names[i]
-    ax = fig.add_subplot(3,4,k+1)
-    ax.plot(x, y, 'ko', alpha=0.1)
+  for i,m in enumerate(ii):
+    for j,n in enumerate(ii[i+1:]):
+      ii_int.append([m,n])
+  
+  #fig = figure(figsize=(25,10))
+  Xt  = []
+  
+  for k,i in enumerate(ii_int):
+    
+    if type(i) == list:
+      n = ''
+      x = 1.0
+      for j in i:
+        x *= X[j]
+        n += names[j]
+    else:
+      x = X[i]
+      n = names[i]
+      #ax = fig.add_subplot(3,4,k+1)
+      #ax.plot(x, y, 'ko', alpha=0.1)
+      #ax.set_xlabel(n)
+      #ax.set_ylabel(r'$\beta$')
+      #ax.grid()
+  
+    Xt.append(x)
+    
+  #show()
+  
+  
+  #=============================================================================
+  # perform regression :
+  
+  # cell declustering :
+  #h_v    = project(CellSize(submesh), Q).vector().array()
+  #A      = sum(h_v)
+  #wt     = h_v / A
+  #beta_bar = sum(beta_v * h_v) / A
+  
+  out  = linRegstats(array(Xt), y, 0.95)
+  
+  yhat = out['yhat']
+  bhat = out['bhat']
+  cibl = out['CIB'][0]
+  cibh = out['CIB'][1]
+  
+  print "<F_pval, pval>:", out['F_pval'], out['pval']
+  
+  
+  #=============================================================================
+  # residual plot and normal quantile plot for residuals :
+  fig = figure(figsize=(12,5))
+  ax1 = fig.add_subplot(121)
+  ax2 = fig.add_subplot(122)
+  
+  ax1.plot(out['yhat'], out['resid'], 'ko', alpha=0.1)
+  ax1.set_xlabel('Predicted Values') 
+  ax1.set_ylabel('Residuals') 
+  ax1.set_title('Residual Plot') 
+  #ax1.set_xlim([4, 7.5])
+  #ax1.set_ylim([-3,3])
+  ax1.grid()
+  
+  # Normal quantile plot of residuals
+  p = prbplotObj(ax2)
+  probplot(out['resid'], plot=p)
+  ax2.set_xlabel('Standard Normal Quantiles') 
+  ax2.set_ylabel('Residuals') 
+  ax2.set_title('Normal Quantile Plot')
+  #ax2.set_xlim([-6,6])
+  #ax2.set_ylim([-3,3])
+  ax2.grid()
+  fn = '../images/linear_model/greenland/resid-NQ_' + str(idx) + '.png'
+  savefig(fn, dpi=100)
+  #show()
+  
+  
+  #=============================================================================
+  # plot y, yhat :
+  fig = figure(figsize=(25,15))
+  
+  for k,i in enumerate(ii):
+    
+    ax = fig.add_subplot(4,3,k+1)
+    
+    if type(i) == list:
+      n = ''
+      x = 1.0
+      for j in i:
+        x *= X[j]
+        n += names[j]
+    else:
+      x = X[i]
+      n = names[i]
+  
+    ax.plot(x, y,    'ko', alpha=0.1)
+    ax.plot(x, yhat, 'ro', alpha=0.1)
+    ax.set_ylim([4,8])
     ax.set_xlabel(n)
-    ax.set_ylabel(r'$\beta$')
+    ax.set_ylabel(r'$\ln(\beta + 100)$')
     ax.grid()
-
-  Xt.append(x)
+  fn = '../images/linear_model/greenland/approx_' + str(idx) + '.png'
+  savefig(fn, dpi=100)
+  #show()
   
-show()
-
-
-#===============================================================================
-# perform regression :
-
-# cell declustering :
-#h_v    = project(CellSize(submesh), Q).vector().array()
-#A      = sum(h_v)
-#wt     = h_v / A
-#beta_bar = sum(beta_v * h_v) / A
-
-out  = linRegstats(array(Xt), y, 0.95)
-
-yhat = out['yhat']
-bhat = out['bhat']
-cibl = out['CIB'][0]
-cibh = out['CIB'][1]
-
-print "<F_pval, pval>:", out['F_pval'], out['pval']
-
-
-#===============================================================================
-# residual plot and normal quantile plot for residuals :
-fig = figure(figsize=(12,5))
-ax1 = fig.add_subplot(121)
-ax2 = fig.add_subplot(122)
-
-ax1.plot(out['yhat'], out['resid'], 'ko', alpha=0.1)
-ax1.set_xlabel('Predicted Values') 
-ax1.set_ylabel('Residuals') 
-ax1.set_title('Residual Plot') 
-ax1.grid()
-
-# Normal quantile plot of residuals
-p = prbplotObj(ax2)
-probplot(out['resid'], plot=p)
-ax2.set_xlabel('Standard Normal Quantiles') 
-ax2.set_ylabel('Residuals') 
-ax2.set_title('Normal Quantile Plot')
-ax2.grid()
-#savefig('images/resid-NQ.png', dpi=300)
-show()
-
-
-#===============================================================================
-# plot y, yhat :
-fig = figure()
-
-for k,i in enumerate(ii):
+  #=============================================================================
+  # plot parameter values with confidence intervals:
+  fig  = figure()
+  ax   = fig.add_subplot(111)
   
-  ax = fig.add_subplot(4,3,k+1)
+  xb   = range(len(ii_int) + 1)
   
-  if type(i) == list:
-    n = ''
-    x = 1.0
-    for j in i:
-      x *= X[j]
-      n += names[j]
-  else:
-    x = X[i]
-    n = names[i]
-
-  ax.plot(x, y,    'ko', alpha=0.1)
-  ax.plot(x, yhat, 'ro', alpha=0.1)
-  ax.set_xlabel(n)
-  ax.set_ylabel(r'$\beta$')
-  ax.grid()
-show()
-
-#===============================================================================
-# plot parameter values with confidence intervals:
-fig  = figure()
-ax   = fig.add_subplot(111)
-
-xb   = range(len(ii_int) + 1)
-
-ax.plot(xb, cibh, 'r--', lw=2.0)
-ax.plot(xb, bhat, 'k-',  lw=2.0)
-ax.plot(xb, cibl, 'r--', lw=2.0)
-ax.set_ylabel(r'$\hat{\beta}_i$')
-ax.set_xlabel(r'$i$')
-grid()
-tight_layout()
-show()
+  ax.plot(xb, cibh, 'r--', lw=2.0)
+  ax.plot(xb, bhat, 'k-',  lw=2.0)
+  ax.plot(xb, cibl, 'r--', lw=2.0)
+  ax.set_ylabel(r'$\hat{\beta}_i$')
+  ax.set_xlabel(r'$i$')
+  grid()
+  tight_layout()
+  #show()
 
 
 

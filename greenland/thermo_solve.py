@@ -12,7 +12,7 @@ from termcolor                    import colored, cprint
 t0 = time()
 
 # get the input args :
-out_dir = 'dump/linear_model/'
+out_dir = 'dump/linear_model_ind_ant/'
 var_dir = 'dump/vars/'
 in_dir  = 'dump/test/01/'
 
@@ -99,6 +99,7 @@ model.init_T_surface(T_s)
 model.init_adot(adot)
 model.init_U_ob(u_ob, v_ob)
 model.init_T(in_dir + 'T.xml')
+#model.init_T(model.T_w - 30.0)
 model.init_W(in_dir + 'W.xml')
 model.init_Ubar(in_dir + 'Ubar.xml')
 model.init_Mb(in_dir + 'Mb.xml')
@@ -110,7 +111,7 @@ model.init_beta_stats()
 
 # solve the BP model :
 F = solvers.SteadySolver(model, config)
-File(out_dir + 'beta0.pvd') << model.beta
+File(out_dir + 'beta0.pvd') << model.extrude(model.beta, [3,5], 2)
 F.solve()
 
 # calculate total time to compute
