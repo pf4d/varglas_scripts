@@ -219,9 +219,9 @@ names = [r'$S$',
          r'$\ln\left(\Vert \mathbf{U}_B \Vert + 1\right)$']
 
 X   = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
-y   = log(beta_v[valid] + 100)
+y   = log(beta_v[valid]**2 + 1)
 
-index  = [0,1,2,3,4,5,10,11]#,12,13,14]
+index  = [0,1,2,3,4,5,10,11,12,13,14]
 
 #for idx in range(1,len(index)+1):
 for idx in [len(index)+1]:
@@ -273,8 +273,11 @@ for idx in [len(index)+1]:
   bhat = out['bhat']
   cibl = out['CIB'][0]
   cibh = out['CIB'][1]
+
+  yt = exp(yhat) - 1
   
   print "<F_pval, pval>:", out['F_pval'], out['pval']
+  print "beta <min, max>:", yt.min(), yt.max()
   
   
   #=============================================================================
@@ -325,9 +328,9 @@ for idx in [len(index)+1]:
   
     ax.plot(x, y,    'ko', alpha=0.1)
     ax.plot(x, yhat, 'ro', alpha=0.1)
-    ax.set_ylim([4,8])
+    #ax.set_ylim([4,8])
     ax.set_xlabel(n)
-    ax.set_ylabel(r'$\ln(\beta + 100)$')
+    ax.set_ylabel(r'$\ln(\beta^2 + 1)$')
     ax.grid()
   fn = '../images/linear_model/antarctica/approx_' + str(idx) + '.png'
   savefig(fn, dpi=100)

@@ -57,12 +57,6 @@ f.read(b_max,    'b_max')
 f.read(u_ob,     'u')
 f.read(v_ob,     'v')
 
-model = model.Model()
-model.set_mesh(mesh)
-model.set_surface_and_bed(S, B)
-model.set_subdomains(ff, cf, ff_acc)
-model.initialize_variables()
-
 # specify non-linear solver parameters :
 params = default_nonlin_solver_params()
 #params['nonlinear_solver']                          = 'snes'
@@ -98,6 +92,12 @@ config['enthalpy']['solve_method']        = 'mumps'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
 config['adjoint']['max_fun']              = 15
+
+model = model.Model(config)
+model.set_mesh(mesh)
+model.set_surface_and_bed(S, B)
+model.set_subdomains(ff, cf, ff_acc)
+model.initialize_variables()
 
 model.init_q_geo(model.ghf)
 model.init_T_surface(T_s)
@@ -145,7 +145,7 @@ else:
   config['velocity']['b_gnd']           = b_gnd
   b_min, b_max = (0.0, 1e10)
   config['adjoint']['surface_integral'] = 'shelves'
-  config['adjoint']['alpha']            = 1e-7
+  config['adjoint']['alpha']            = 10*(model.S - model.B)
   config['adjoint']['bounds']           = (b_min, b_max)
   config['adjoint']['control_variable'] = b_shf
   #params['newton_solver']['relaxation_parameter'] = 0.6
