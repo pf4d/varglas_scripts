@@ -4,10 +4,9 @@ import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
-from varglas.io                   import print_min_max
+from varglas.io                   import print_min_max, print_text
 from fenics                       import *
 from time                         import time
-from termcolor                    import colored, cprint
 
 t0 = time()
 
@@ -20,7 +19,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'dump/vars/'
+in_dir  = 'dump/basin_vars_low/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -71,27 +70,29 @@ params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
 params['newton_solver']['relative_tolerance']       = 1e-6
-params['newton_solver']['maximum_iterations']       = 20
+params['newton_solver']['maximum_iterations']       = 30
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
-parameters['form_compiler']['quadrature_degree']    = 2
+parameters['form_compiler']['quadrature_degree'] = 2
+#parameters['form_compiler']['optimize']          = True
+parameters['form_compiler']['cpp_optimize']      = True
 
 
 config = default_config()
 config['output_path']                     = out_dir
+config['model_order']                     = 'BP'
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
-config['velocity']['approximation']       = 'fo'#'stokes'
 config['velocity']['viscosity_mode']      = 'full'
-config['velocity']['vert_solve_method']   = 'mumps'
+config['velocity']['vert_solve_method']   = 'mumps'#'superlu_dist'
 config['velocity']['calc_pressure']       = False
 config['enthalpy']['on']                  = True
-config['enthalpy']['solve_method']        = 'mumps'
+config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 15
+config['adjoint']['max_fun']              = 25
 
 model = model.Model(config)
 model.set_mesh(mesh)
@@ -113,6 +114,7 @@ else:
   model.init_beta_SIA()
 
 File(out_dir + 'beta0.pvd') << model.beta
+File(out_dir + 'U_ob.pvd')  << model.U_ob
 
 F = solvers.SteadySolver(model, config)
 F.solve()
@@ -121,51 +123,52 @@ params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
+config['adjoint']['objective_function']       = 'linear'
 
 if i % 2 == 0:
   params['newton_solver']['relaxation_parameter']  = 1.0
+  params['newton_solver']['relative_tolerance']    = 1e-6
   config['velocity']['viscosity_mode']             = 'linear'
   config['velocity']['eta_shf']                    = model.eta_shf
   config['velocity']['eta_gnd']                    = model.eta_gnd
   config['adjoint']['surface_integral']            = 'grounded'
-  config['adjoint']['alpha']                       = 0
+  config['adjoint']['alpha']                       = 1e-1
   config['adjoint']['bounds']                      = (beta_min, beta_max)
   config['adjoint']['control_variable']            = model.beta
 
 else:
-  if i > 2:
-    model.init_b_shf(dir_b + str(i-2) + '/b_shf.xml')
-  params['newton_solver']['relaxation_parameter'] = 0.6
-  b_shf = project(model.b_shf)
-  b_gnd = project(model.b_gnd)
-  print_min_max(b_shf, 'b_shf')
-  print_min_max(b_gnd, 'b_gnd')
-  config['velocity']['viscosity_mode']  = 'b_control'
-  config['velocity']['b_shf']           = b_shf
-  config['velocity']['b_gnd']           = b_gnd
-  b_min, b_max = (0.0, 1e10)
-  config['adjoint']['surface_integral'] = 'shelves'
-  config['adjoint']['alpha']            = 10*(model.S - model.B)
-  config['adjoint']['bounds']           = (b_min, b_max)
-  config['adjoint']['control_variable'] = b_shf
+  #if i > 2:
+  #  model.init_b_shf(dir_b + str(i-2) + '/b_shf.xml')
   #params['newton_solver']['relaxation_parameter'] = 0.6
-  #E = model.E
-  #model.print_min_max(E, 'E')
-  #config['velocity']['viscosity_mode']  = 'E_control'
-  #config['velocity']['E_shf']           = E
-  #config['velocity']['E_gnd']           = E.copy()
-  #E_min, E_max = (1e-16, 100.0)
+  #params['newton_solver']['relative_tolerance']   = 1e-6
+  #b_shf = project(model.b_shf)
+  #b_gnd = project(model.b_gnd)
+  #print_min_max(b_shf, 'b_shf')
+  #print_min_max(b_gnd, 'b_gnd')
+  #config['velocity']['viscosity_mode']  = 'b_control'
+  #config['velocity']['b_shf']           = b_shf
+  #config['velocity']['b_gnd']           = b_gnd
+  #b_min, b_max = (0.0, 1e10)
   #config['adjoint']['surface_integral'] = 'shelves'
   #config['adjoint']['alpha']            = 0
-  #config['adjoint']['bounds']           = (E_min, E_max)
-  #config['adjoint']['control_variable'] = E
+  #config['adjoint']['bounds']           = (b_min, b_max)
+  #config['adjoint']['control_variable'] = b_shf
+  
+  params['newton_solver']['relaxation_parameter'] = 0.6
+  params['newton_solver']['relative_tolerance']   = 1e-3
+  params['newton_solver']['maximum_iterations']   = 18
+  E = model.E
+  print_min_max(E, 'E')
+  config['velocity']['viscosity_mode']  = 'E_control'
+  config['velocity']['E_shf']           = E
+  config['velocity']['E_gnd']           = E.copy()
+  E_min, E_max = (1e-6, 1.0)
+  config['adjoint']['surface_integral'] = 'shelves'
+  config['adjoint']['alpha']            = 0
+  config['adjoint']['bounds']           = (E_min, E_max)
+  config['adjoint']['control_variable'] = E
 
 A = solvers.AdjointSolver(model, config)
-A.set_target_velocity(u=u_ob, v=v_ob)
-#uf = dir_b + str(i-1) + '/u.xml'
-#vf = dir_b + str(i-1) + '/v.xml'
-#wf = dir_b + str(i-1) + '/w.xml'
-#A.set_velocity(uf, vf, wf)
 A.solve()
 
 b_shf = project(model.b_shf, model.Q)
@@ -187,15 +190,13 @@ File(out_dir + 'E_shf.xml')   << model.E_shf
 tf = time()
 
 # calculate total time to compute
-s = tf - t0
-m = s / 60.0
-h = m / 60.0
-s = s % 60
-m = m % 60
-if model.MPI_rank == 0:
-  s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
-  text = colored(s, 'red', attrs=['bold'])
-  print text
+s   = tf - t0
+m   = s / 60.0
+h   = m / 60.0
+s   = s % 60
+m   = m % 60
+txt = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
+print_text(txt, 'red', 1)
 
 
 

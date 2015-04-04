@@ -63,9 +63,9 @@ model.initialize_variables()
 
 # specifify non-linear solver parameters :
 params = default_nonlin_solver_params()
-params['newton_solver']['relaxation_parameter']    = 0.7
-params['newton_solver']['relative_tolerance']      = 1e-3
-params['newton_solver']['maximum_iterations']      = 16
+params['newton_solver']['relaxation_parameter']    = 0.8
+params['newton_solver']['relative_tolerance']      = 1e-9
+params['newton_solver']['maximum_iterations']      = 30
 params['newton_solver']['error_on_nonconvergence'] = False
 params['newton_solver']['linear_solver']           = 'cg'
 params['newton_solver']['preconditioner']          = 'hypre_amg'
@@ -76,7 +76,7 @@ config['output_path']                     = out_dir
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
-config['velocity']['approximation']       = 'fo'#'stokes'
+config['velocity']['approximation']       = 'fo'
 config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['vert_solve_method']   = 'mumps'
 config['velocity']['calc_pressure']       = False
@@ -84,7 +84,8 @@ config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 75
+config['adjoint']['max_fun']              = 25
+#config['adjoint']['objective_function']   = 'linear'
 
 model.init_q_geo(model.ghf)
 model.init_T_surface(T_s)
@@ -104,18 +105,17 @@ File(out_dir + 'beta0.pvd') << model.beta
 F = solvers.SteadySolver(model, config)
 F.solve()
 
-params['newton_solver']['maximum_iterations'] = 25
-config['velocity']['init_beta_from_U_ob']     = False
-config['velocity']['use_U0']                  = False
-config['enthalpy']['on']                      = False
-config['coupled']['on']                       = False
-
+config['coupled']['on']                          = False
+config['enthalpy']['on']                         = False
 params['newton_solver']['relaxation_parameter']  = 1.0
+params['newton_solver']['maximum_iterations']    = 25
+params['newton_solver']['relative_tolerance']    = 1e-7
 config['velocity']['viscosity_mode']             = 'linear'
 config['velocity']['eta_shf']                    = model.eta_shf
 config['velocity']['eta_gnd']                    = model.eta_gnd
+config['velocity']['use_U0']                     = False
 config['adjoint']['surface_integral']            = 'grounded'
-config['adjoint']['alpha']                       = 0
+config['adjoint']['alpha']                       = 1e-1
 config['adjoint']['bounds']                      = (beta_min, beta_max)
 config['adjoint']['control_variable']            = model.beta
 
