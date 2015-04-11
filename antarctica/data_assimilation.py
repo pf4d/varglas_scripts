@@ -1,3 +1,9 @@
+# Total time to compute SteadySolver: 00:04:03
+# Total time to compute SteadySolver: 00:08:09
+
+# Total time to compute SteadySolver: 00:04:58
+ 
+
 import sys
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
@@ -19,7 +25,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'dump/basin_vars_low/'
+in_dir  = 'dump/basin_vars_crude/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -82,6 +88,7 @@ parameters['form_compiler']['cpp_optimize']      = True
 config = default_config()
 config['output_path']                     = out_dir
 config['model_order']                     = 'BP'
+config['use_dukowicz']                    = True
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
@@ -92,7 +99,7 @@ config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 25
+config['adjoint']['max_fun']              = 2000
 
 model = model.Model(config)
 model.set_mesh(mesh)
@@ -100,10 +107,12 @@ model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
 
+model.init_viscosity_mode('full')
 model.init_q_geo(model.ghf)
 model.init_T_surface(T_s)
 model.init_adot(adot)
 model.init_U_ob(u_ob, v_ob)
+model.init_E(1.0)
 
 # use T0 and beta0 from the previous run :
 if i > 0:
@@ -111,6 +120,7 @@ if i > 0:
   model.init_beta(dir_b + str(i-1) + '/beta.xml')
 else:
   model.init_T(model.T_w - 30.0)
+  #model.init_beta_SIA_new_slide()
   model.init_beta_SIA()
 
 File(out_dir + 'beta0.pvd') << model.beta
@@ -119,54 +129,47 @@ File(out_dir + 'U_ob.pvd')  << model.U_ob
 F = solvers.SteadySolver(model, config)
 F.solve()
 
+#===============================================================================
+# print the time to compute :
+tf = time()
+
+# calculate total time to compute
+s   = tf - t0
+m   = s / 60.0
+h   = m / 60.0
+s   = s % 60
+m   = m % 60
+txt = "Total time to compute SteadySolver: %02d:%02d:%02d" % (h,m,s)
+print_text(txt, 'red', 1)
+#===============================================================================
+
 params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
 config['adjoint']['objective_function']       = 'linear'
+config['log_history']                         = True
 
+# invert for basal friction over grounded ice :
 if i % 2 == 0:
   params['newton_solver']['relaxation_parameter']  = 1.0
-  params['newton_solver']['relative_tolerance']    = 1e-6
-  config['velocity']['viscosity_mode']             = 'linear'
-  config['velocity']['eta_shf']                    = model.eta_shf
-  config['velocity']['eta_gnd']                    = model.eta_gnd
+  params['newton_solver']['relative_tolerance']    = 1e-10
+  params['newton_solver']['maximum_iterations']    = 3
   config['adjoint']['surface_integral']            = 'grounded'
-  config['adjoint']['alpha']                       = 1e-1
+  config['adjoint']['alpha']                       = 0.0
   config['adjoint']['bounds']                      = (beta_min, beta_max)
   config['adjoint']['control_variable']            = model.beta
+  model.init_viscosity_mode('linear')
 
+# invert for enhancement over shelves :
 else:
-  #if i > 2:
-  #  model.init_b_shf(dir_b + str(i-2) + '/b_shf.xml')
-  #params['newton_solver']['relaxation_parameter'] = 0.6
-  #params['newton_solver']['relative_tolerance']   = 1e-6
-  #b_shf = project(model.b_shf)
-  #b_gnd = project(model.b_gnd)
-  #print_min_max(b_shf, 'b_shf')
-  #print_min_max(b_gnd, 'b_gnd')
-  #config['velocity']['viscosity_mode']  = 'b_control'
-  #config['velocity']['b_shf']           = b_shf
-  #config['velocity']['b_gnd']           = b_gnd
-  #b_min, b_max = (0.0, 1e10)
-  #config['adjoint']['surface_integral'] = 'shelves'
-  #config['adjoint']['alpha']            = 0
-  #config['adjoint']['bounds']           = (b_min, b_max)
-  #config['adjoint']['control_variable'] = b_shf
-  
   params['newton_solver']['relaxation_parameter'] = 0.6
   params['newton_solver']['relative_tolerance']   = 1e-3
   params['newton_solver']['maximum_iterations']   = 18
-  E = model.E
-  print_min_max(E, 'E')
-  config['velocity']['viscosity_mode']  = 'E_control'
-  config['velocity']['E_shf']           = E
-  config['velocity']['E_gnd']           = E.copy()
-  E_min, E_max = (1e-6, 1.0)
   config['adjoint']['surface_integral'] = 'shelves'
   config['adjoint']['alpha']            = 0
-  config['adjoint']['bounds']           = (E_min, E_max)
-  config['adjoint']['control_variable'] = E
+  config['adjoint']['bounds']           = (1e-4, 1.0)
+  config['adjoint']['control_variable'] = model.E_shf
 
 A = solvers.AdjointSolver(model, config)
 A.solve()

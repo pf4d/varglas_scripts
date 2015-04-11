@@ -8,16 +8,16 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir  = 'dump/basin_vars_low/'
+out_dir  = 'dump/vars/'
 thklim   = 1.0
 measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
-#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
 #mesh = MeshFactory.get_antarctica_3D_gradS_crude()
 #mesh = MeshFactory.get_antarctica_3D_10k()
-mesh = Mesh('dump/meshes/byrd_basin_mesh_low.xml')
+#mesh = Mesh('dump/meshes/basin_mesh_low.xml')
 
 dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)
@@ -42,9 +42,9 @@ model.set_geometry(S, B, deform=True)
 class Beta_max(Expression):
   def eval(self, values, x):
     if M(x[0], x[1], x[2]) > 0:
-      values[0] = DOLFIN_EPS
+      values[0] = 2*DOLFIN_EPS
     else:
-      values[0] = 4000
+      values[0] = 2000
 
 # constraints on optimization for b :
 class B_max(Expression):

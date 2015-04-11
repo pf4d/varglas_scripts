@@ -8,7 +8,7 @@ from scipy.interpolate         import interp2d
 #===============================================================================
 # data preparation :
 out_dir   = 'dump/meshes/'
-mesh_name = 'basin_mesh'
+mesh_name = 'basin_mesh_low'
 
 # get the data :
 measure = DataFactory.get_ant_measures()
@@ -41,7 +41,7 @@ nan = mask >  10
 
 #===============================================================================
 # form field from which to refine :
-dbm.data['ref'] = (0.05 + 1/(1 + dbm.data['U_ob'])) * 40000
+dbm.data['ref'] = (0.15 + 1/(1 + dbm.data['U_ob'])) * 40000
 
 # restrict element size on the shelves and outside the domain of the data :
 #dbm.data['ref'][slp] = 2000.0

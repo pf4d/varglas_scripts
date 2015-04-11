@@ -15,8 +15,8 @@ measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
-#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
-mesh = MeshFactory.get_antarctica_3D_gradS_crude()
+mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+#mesh = MeshFactory.get_antarctica_3D_gradS_crude()
 #mesh = MeshFactory.get_antarctica_3D_10k()
 #mesh = Mesh('meshes/ant_ultraa_gradS.xml.gz')
 
