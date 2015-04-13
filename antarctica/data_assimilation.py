@@ -61,7 +61,7 @@ f.read(b_min,    'b_min')
 f.read(b_max,    'b_max')
 f.read(u_ob,     'u')
 f.read(v_ob,     'v')
-
+    
 # specify non-linear solver parameters :
 params = default_nonlin_solver_params()
 #params['nonlinear_solver']                          = 'snes'
@@ -75,7 +75,7 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-6
+params['newton_solver']['relative_tolerance']       = 1e-3
 params['newton_solver']['maximum_iterations']       = 30
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
@@ -113,6 +113,10 @@ model.init_T_surface(T_s)
 model.init_adot(adot)
 model.init_U_ob(u_ob, v_ob)
 model.init_E(1.0)
+
+model.T_surface.vector()[model.shf_dofs] = 0.0
+File(out_dir + 'T_test.pvd')       << model.T_surface
+
 
 # use T0 and beta0 from the previous run :
 if i > 0:

@@ -14,10 +14,10 @@ measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+#mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
 #mesh = MeshFactory.get_antarctica_3D_gradS_crude()
 #mesh = MeshFactory.get_antarctica_3D_10k()
-#mesh = Mesh('dump/meshes/basin_mesh_low.xml')
+mesh = Mesh('dump/meshes/basin_mesh_low.xml')
 
 dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)
