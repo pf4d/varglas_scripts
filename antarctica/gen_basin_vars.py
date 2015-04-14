@@ -62,6 +62,8 @@ b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 
 adot     = interpolate(adot, model.Q)
 
+mask     = interpolate(M, model.Q)
+
 XDMFFile(mesh.mpi_comm(),    out_dir + 'mesh.xdmf')    << model.mesh
 
 # save the state of the model :
