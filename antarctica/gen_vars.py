@@ -9,16 +9,13 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir  = 'dump/vars/'
+out_dir  = 'dump/vars_crude/'
 thklim   = 1.0
 measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
-#mesh = MeshFactory.get_antarctica_3D_gradS_crude()
-#mesh = MeshFactory.get_antarctica_3D_10k()
-#mesh = Mesh('meshes/ant_ultraa_gradS.xml.gz')
+mesh = Mesh('dump/meshes/ant_mesh_crude.xml')
 
 dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)
@@ -63,6 +60,7 @@ b_min    = interpolate(Constant(0.0), model.Q)
 b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
 
 adot     = interpolate(adot, model.Q)
+mask     = interpolate(M,    model.Q)
 
 XDMFFile(mesh.mpi_comm(),    out_dir + 'mesh.xdmf')    << model.mesh
 
@@ -76,6 +74,7 @@ f.write(model.B,      'B')
 f.write(T_s,          'T_s')
 f.write(q_geo,        'q_geo')
 f.write(adot,         'adot')
+f.write(mask,         'mask')
 f.write(u,            'u')
 f.write(v,            'v')
 f.write(U_ob,         'U_ob')

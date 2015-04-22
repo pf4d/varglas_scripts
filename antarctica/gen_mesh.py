@@ -1,6 +1,6 @@
-from varglas.utilities         import DataInput, MeshGenerator, MeshRefiner
+from varglas.meshing           import MeshGenerator, MeshRefiner
 from varglas.data.data_factory import DataFactory
-from varglas.utilities         import DataInput, print_min_max
+from varglas.io                import DataInput, print_min_max
 from pylab                     import *
 from scipy.interpolate         import interp2d
 
@@ -40,10 +40,10 @@ nan = mask >  10
 
 #===============================================================================
 # form field from which to refine :
-dbm.data['ref'] = (0.10 + 1/(1 + dbm.data['U_ob'])) * 48000
+dbm.data['ref'] = (0.10 + 1/(1 + dbm.data['U_ob'])) * 100000
 
 # restrict element size on the shelves and outside the domain of the data :
-dbm.data['ref'][slp] = 2000.0
+#dbm.data['ref'][slp] = 2000.0
 dbm.data['ref'][shf] = 10000.0
 dbm.data['ref'][nan] = 10000.0
 

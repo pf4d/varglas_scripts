@@ -1,8 +1,12 @@
-# Total time to compute SteadySolver: 00:04:03
-# Total time to compute SteadySolver: 00:08:09
+# Dukowicz : Total time to compute SteadySolver: 00:07:05 
+# BP :       Total time to compute SteadySolver: 00:13:01
+#            Total time to compute SteadySolver: 00:14:06
+#
+# BP beta0 = 100 :
+# At iterate  239    f=  6.56000D+15    |proj g|=  4.00000D+03
+#   ys=-2.832E+11  -gs= 8.603E+12 BFGS update SKIPPED
 
-# Total time to compute SteadySolver: 00:04:58
- 
+
 
 import sys
 import varglas.solvers            as solvers
@@ -25,7 +29,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'dump/basin_vars_crude/'
+in_dir  = 'dump/vars_crude/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -37,6 +41,7 @@ S        = Function(Q)
 B        = Function(Q)
 T_s      = Function(Q)
 adot     = Function(Q)
+mask     = Function(Q)
 q_geo    = Function(Q)
 beta_min = Function(Q)
 beta_max = Function(Q)
@@ -52,6 +57,7 @@ f.read(B,        'B')
 f.read(T_s,      'T_s')
 f.read(q_geo,    'q_geo')
 f.read(adot,     'adot')
+f.read(mask,     'mask')
 f.read(ff,       'ff')
 f.read(cf,       'cf')
 f.read(ff_acc,   'ff_acc')
@@ -75,7 +81,7 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-3
+params['newton_solver']['relative_tolerance']       = 1e-6
 params['newton_solver']['maximum_iterations']       = 30
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
@@ -88,11 +94,10 @@ parameters['form_compiler']['cpp_optimize']      = True
 config = default_config()
 config['output_path']                     = out_dir
 config['model_order']                     = 'BP'
-config['use_dukowicz']                    = True
+config['use_dukowicz']                    = False
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
-config['velocity']['viscosity_mode']      = 'full'
 config['velocity']['vert_solve_method']   = 'mumps'#'superlu_dist'
 config['velocity']['calc_pressure']       = False
 config['enthalpy']['on']                  = True
@@ -108,15 +113,12 @@ model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
 
 model.init_viscosity_mode('full')
+model.init_mask(mask)
 model.init_q_geo(model.ghf)
 model.init_T_surface(T_s)
 model.init_adot(adot)
 model.init_U_ob(u_ob, v_ob)
 model.init_E(1.0)
-
-model.T_surface.vector()[model.shf_dofs] = 0.0
-File(out_dir + 'T_test.pvd')       << model.T_surface
-
 
 # use T0 and beta0 from the previous run :
 if i > 0:
@@ -124,8 +126,8 @@ if i > 0:
   model.init_beta(dir_b + str(i-1) + '/beta.xml')
 else:
   model.init_T(model.T_w - 30.0)
-  #model.init_beta_SIA_new_slide()
   model.init_beta_SIA()
+  #model.init_beta(100.0)
 
 File(out_dir + 'beta0.pvd') << model.beta
 File(out_dir + 'U_ob.pvd')  << model.U_ob
@@ -152,7 +154,7 @@ config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
 config['adjoint']['objective_function']       = 'linear'
-config['log_history']                         = True
+#config['log_history']                         = True
 
 # invert for basal friction over grounded ice :
 if i % 2 == 0:
@@ -160,6 +162,7 @@ if i % 2 == 0:
   params['newton_solver']['relative_tolerance']    = 1e-10
   params['newton_solver']['maximum_iterations']    = 3
   config['adjoint']['surface_integral']            = 'grounded'
+  #config['adjoint']['alpha']                       = (model.S - model.B)**2
   config['adjoint']['alpha']                       = 0.0
   config['adjoint']['bounds']                      = (beta_min, beta_max)
   config['adjoint']['control_variable']            = model.beta
