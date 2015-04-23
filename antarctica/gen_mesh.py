@@ -40,12 +40,12 @@ nan = mask >  10
 
 #===============================================================================
 # form field from which to refine :
-dbm.data['ref'] = (0.10 + 1/(1 + dbm.data['U_ob'])) * 100000
+dbm.data['ref'] = (0.20 + 1/(1 + dbm.data['U_ob'])) * 100000
 
 # restrict element size on the shelves and outside the domain of the data :
 #dbm.data['ref'][slp] = 2000.0
-dbm.data['ref'][shf] = 10000.0
-dbm.data['ref'][nan] = 10000.0
+dbm.data['ref'][shf] = 50000.0
+dbm.data['ref'][nan] = 50000.0
 
 print_min_max(dbm.data['ref'], 'ref')
 

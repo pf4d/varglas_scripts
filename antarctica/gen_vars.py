@@ -9,13 +9,13 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir  = 'dump/vars_crude/'
+out_dir  = 'dump/vars_crudest/'
 thklim   = 1.0
 measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = Mesh('dump/meshes/ant_mesh_crude.xml')
+mesh = Mesh('dump/meshes/ant_mesh_crudest.xml')
 
 dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)

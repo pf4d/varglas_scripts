@@ -29,7 +29,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'dump/vars_crude/'
+in_dir  = 'dump/vars_crudest/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -81,7 +81,7 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-6
+params['newton_solver']['relative_tolerance']       = 1e-3
 params['newton_solver']['maximum_iterations']       = 30
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
@@ -94,7 +94,7 @@ parameters['form_compiler']['cpp_optimize']      = True
 config = default_config()
 config['output_path']                     = out_dir
 config['model_order']                     = 'BP'
-config['use_dukowicz']                    = False
+config['use_dukowicz']                    = True
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
