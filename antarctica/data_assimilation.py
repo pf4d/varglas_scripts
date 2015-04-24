@@ -88,7 +88,7 @@ params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
 parameters['form_compiler']['quadrature_degree'] = 2
 #parameters['form_compiler']['optimize']          = True
-parameters['form_compiler']['cpp_optimize']      = True
+#parameters['form_compiler']['cpp_optimize']      = True
 
 
 config = default_config()
@@ -159,11 +159,11 @@ config['adjoint']['objective_function']       = 'linear'
 # invert for basal friction over grounded ice :
 if i % 2 == 0:
   params['newton_solver']['relaxation_parameter']  = 1.0
-  params['newton_solver']['relative_tolerance']    = 1e-10
+  #params['newton_solver']['relative_tolerance']    = 1e-10
   params['newton_solver']['maximum_iterations']    = 3
   config['adjoint']['surface_integral']            = 'grounded'
   #config['adjoint']['alpha']                       = (model.S - model.B)**2
-  config['adjoint']['alpha']                       = 0.0
+  config['adjoint']['alpha']                       = 1e-7
   config['adjoint']['bounds']                      = (beta_min, beta_max)
   config['adjoint']['control_variable']            = model.beta
   model.init_viscosity_mode('linear')
