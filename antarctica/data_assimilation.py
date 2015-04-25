@@ -87,14 +87,14 @@ params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
 parameters['form_compiler']['quadrature_degree'] = 2
-#parameters['form_compiler']['optimize']          = True
-#parameters['form_compiler']['cpp_optimize']      = True
+parameters['form_compiler']['optimize']          = True
+parameters['form_compiler']['cpp_optimize']      = True
 
 
 config = default_config()
 config['output_path']                     = out_dir
 config['model_order']                     = 'BP'
-config['use_dukowicz']                    = True
+config['use_dukowicz']                    = False
 config['coupled']['on']                   = True
 config['coupled']['max_iter']             = 2
 config['velocity']['newton_params']       = params
@@ -104,7 +104,7 @@ config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 2000
+config['adjoint']['max_fun']              = 200
 
 model = model.Model(config)
 model.set_mesh(mesh)
@@ -153,19 +153,21 @@ params['newton_solver']['maximum_iterations'] = 25
 config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
-config['adjoint']['objective_function']       = 'linear'
+config['adjoint']['objective_function']       = 'log'
+#config['adjoint']['objective_function']       = 'log_lin_hybrid'
+config['adjoint']['gamma1']                   = 0.1
+config['adjoint']['gamma2']                   = 100
 #config['log_history']                         = True
 
 # invert for basal friction over grounded ice :
 if i % 2 == 0:
-  params['newton_solver']['relaxation_parameter']  = 1.0
-  #params['newton_solver']['relative_tolerance']    = 1e-10
-  params['newton_solver']['maximum_iterations']    = 3
-  config['adjoint']['surface_integral']            = 'grounded'
-  #config['adjoint']['alpha']                       = (model.S - model.B)**2
-  config['adjoint']['alpha']                       = 1e-7
-  config['adjoint']['bounds']                      = (beta_min, beta_max)
-  config['adjoint']['control_variable']            = model.beta
+  params['newton_solver']['relaxation_parameter'] = 1.0
+  #params['newton_solver']['relative_tolerance']   = 1e-10
+  params['newton_solver']['maximum_iterations']   = 3
+  config['adjoint']['surface_integral']           = 'grounded'
+  config['adjoint']['alpha']                      = 1e-7
+  config['adjoint']['bounds']                     = (beta_min, beta_max)
+  config['adjoint']['control_variable']           = model.beta
   model.init_viscosity_mode('linear')
 
 # invert for enhancement over shelves :
@@ -173,10 +175,10 @@ else:
   params['newton_solver']['relaxation_parameter'] = 0.6
   params['newton_solver']['relative_tolerance']   = 1e-3
   params['newton_solver']['maximum_iterations']   = 18
-  config['adjoint']['surface_integral'] = 'shelves'
-  config['adjoint']['alpha']            = 0
-  config['adjoint']['bounds']           = (1e-4, 1.0)
-  config['adjoint']['control_variable'] = model.E_shf
+  config['adjoint']['surface_integral']           = 'shelves'
+  config['adjoint']['alpha']                      = 0
+  config['adjoint']['bounds']                     = (1e-4, 1.0)
+  config['adjoint']['control_variable']           = model.E_shf
 
 A = solvers.AdjointSolver(model, config)
 A.solve()
