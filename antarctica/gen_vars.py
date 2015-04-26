@@ -9,13 +9,13 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir  = 'dump/vars_crudest/'
+out_dir  = 'dump/vars_high/'
 thklim   = 1.0
 measures = DataFactory.get_ant_measures(res=900)
 bedmap1  = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2  = DataFactory.get_bedmap2(thklim=thklim)
 
-mesh = Mesh('dump/meshes/ant_mesh_crudest.xml')
+mesh = Mesh('dump/meshes/ant_mesh_high.xml')
 
 dm = DataInput(measures, mesh=mesh)
 d1 = DataInput(bedmap1,  mesh=mesh)
@@ -37,28 +37,6 @@ model.calculate_boundaries(mask=M, adot=adot)
 model.set_geometry(S, B, deform=True)
 model.set_parameters(pc.IceParameters())
 
-# constraints on optimization for beta :
-class Beta_max(Expression):
-  def eval(self, values, x):
-    if M(x[0], x[1], x[2]) > 0:
-      values[0] = DOLFIN_EPS
-    else:
-      values[0] = 4000
-
-# constraints on optimization for b :
-class B_max(Expression):
-  def eval(self, values, x):
-    if M(x[0], x[1], x[2]) > 0:
-      values[0] = 5e6
-    else:
-      values[0] = DOLFIN_EPS
-
-beta_min = interpolate(Constant(0.0), model.Q)
-beta_max = interpolate(Beta_max(element = model.Q.ufl_element()), model.Q)
-
-b_min    = interpolate(Constant(0.0), model.Q)
-b_max    = interpolate(B_max(element = model.Q.ufl_element()), model.Q)
-
 adot     = interpolate(adot, model.Q)
 mask     = interpolate(M,    model.Q)
 
@@ -78,10 +56,6 @@ f.write(mask,         'mask')
 f.write(u,            'u')
 f.write(v,            'v')
 f.write(U_ob,         'U_ob')
-f.write(beta_min,     'beta_min')
-f.write(beta_max,     'beta_max')
-f.write(b_min,        'b_min')
-f.write(b_max,        'b_max')
 
 tf = time()
 

@@ -1,13 +1,3 @@
-# Dukowicz : Total time to compute SteadySolver: 00:07:05 
-# BP :       Total time to compute SteadySolver: 00:13:01
-#            Total time to compute SteadySolver: 00:14:06
-#
-# BP beta0 = 100 :
-# At iterate  239    f=  6.56000D+15    |proj g|=  4.00000D+03
-#   ys=-2.832E+11  -gs= 8.603E+12 BFGS update SKIPPED
-
-
-
 import sys
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
@@ -29,7 +19,7 @@ dir_b   = sys.argv[1] + '/0'     # directory to save
 
 # set the output directory :
 out_dir = dir_b + str(i) + '/'
-in_dir  = 'dump/vars_crudest/'
+in_dir  = 'dump/vars_high/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -43,10 +33,6 @@ T_s      = Function(Q)
 adot     = Function(Q)
 mask     = Function(Q)
 q_geo    = Function(Q)
-beta_min = Function(Q)
-beta_max = Function(Q)
-b_min    = Function(Q)
-b_max    = Function(Q)
 u_ob     = Function(Q)
 v_ob     = Function(Q)
 
@@ -61,10 +47,6 @@ f.read(mask,     'mask')
 f.read(ff,       'ff')
 f.read(cf,       'cf')
 f.read(ff_acc,   'ff_acc')
-f.read(beta_min, 'beta_min') 
-f.read(beta_max, 'beta_max')
-f.read(b_min,    'b_min')
-f.read(b_max,    'b_max')
 f.read(u_ob,     'u')
 f.read(v_ob,     'v')
     
@@ -87,7 +69,6 @@ params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
 parameters['form_compiler']['quadrature_degree'] = 2
-parameters['form_compiler']['optimize']          = True
 parameters['form_compiler']['cpp_optimize']      = True
 
 
@@ -123,6 +104,7 @@ model.init_E(1.0)
 # use T0 and beta0 from the previous run :
 if i > 0:
   model.init_T(dir_b + str(i-1) + '/T.xml')
+  model.init_W(dir_b + str(i-1) + '/W.xml')
   model.init_beta(dir_b + str(i-1) + '/beta.xml')
 else:
   model.init_T(model.T_w - 30.0)
@@ -136,11 +118,8 @@ F = solvers.SteadySolver(model, config)
 F.solve()
 
 #===============================================================================
-# print the time to compute :
-tf = time()
-
 # calculate total time to compute
-s   = tf - t0
+s   = time() - t0
 m   = s / 60.0
 h   = m / 60.0
 s   = s % 60
@@ -150,13 +129,13 @@ print_text(txt, 'red', 1)
 #===============================================================================
 
 params['newton_solver']['maximum_iterations'] = 25
+config['velocity']['solve_vert_velocity']     = False
 config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
-config['adjoint']['objective_function']       = 'log'
-#config['adjoint']['objective_function']       = 'log_lin_hybrid'
-config['adjoint']['gamma1']                   = 0.1
-config['adjoint']['gamma2']                   = 100
+config['adjoint']['objective_function']       = 'log_lin_hybrid'
+config['adjoint']['gamma1']                   = 0.01
+config['adjoint']['gamma2']                   = 1000
 #config['log_history']                         = True
 
 # invert for basal friction over grounded ice :
@@ -166,7 +145,7 @@ if i % 2 == 0:
   params['newton_solver']['maximum_iterations']   = 3
   config['adjoint']['surface_integral']           = 'grounded'
   config['adjoint']['alpha']                      = 1e-7
-  config['adjoint']['bounds']                     = (beta_min, beta_max)
+  config['adjoint']['bounds']                     = (0.0, 4000)
   config['adjoint']['control_variable']           = model.beta
   model.init_viscosity_mode('linear')
 
@@ -183,9 +162,6 @@ else:
 A = solvers.AdjointSolver(model, config)
 A.solve()
 
-b_shf = project(model.b_shf, model.Q)
-b_gnd = project(model.b_gnd, model.Q)
-
 File(out_dir + 'T.xml')       << model.T
 File(out_dir + 'W.xml')       << model.W 
 File(out_dir + 'S.xml')       << model.S
@@ -195,14 +171,11 @@ File(out_dir + 'v.xml')       << model.v
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'Mb.xml')      << model.Mb
-File(out_dir + 'b_shf.xml')   << b_shf
-File(out_dir + 'b_gnd.xml')   << b_gnd
 File(out_dir + 'E_shf.xml')   << model.E_shf
-
-tf = time()
+File(out_dir + 'E_gnd.xml')   << model.E_gnd
 
 # calculate total time to compute
-s   = tf - t0
+s   = time() - t0
 m   = s / 60.0
 h   = m / 60.0
 s   = s % 60
