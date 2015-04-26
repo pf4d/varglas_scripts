@@ -26,7 +26,7 @@ drg.set_data_min('U_ob', boundary=0.0,    val=0.0)
 
 #===============================================================================
 # form field from which to refine :
-drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 30000
+drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 50000
 
 ## plot to check :
 #imshow(drg.data['ref'][::-1,:])
