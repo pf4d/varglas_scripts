@@ -63,7 +63,7 @@ params = default_nonlin_solver_params()
 #params['snes_solver']['preconditioner']             = 'hypre_amg'
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-3
+params['newton_solver']['relative_tolerance']       = 1e-6
 params['newton_solver']['maximum_iterations']       = 30
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
@@ -85,7 +85,7 @@ config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
 config['age']['on']                       = False
 config['age']['use_smb_for_ela']          = True
-config['adjoint']['max_fun']              = 200
+config['adjoint']['max_fun']              = 300
 
 model = model.Model(config)
 model.set_mesh(mesh)
@@ -101,11 +101,12 @@ model.init_adot(adot)
 model.init_U_ob(u_ob, v_ob)
 model.init_E(1.0)
 
-# use T0 and beta0 from the previous run :
+# use variables from the previous run :
 if i > 0:
-  model.init_T(dir_b + str(i-1) + '/T.xml')
-  model.init_W(dir_b + str(i-1) + '/W.xml')
-  model.init_beta(dir_b + str(i-1) + '/beta.xml')
+  model.init_T(dir_b + str(i-1) + '/T.xml')             # temp
+  model.init_W(dir_b + str(i-1) + '/W.xml')             # water
+  model.init_beta(dir_b + str(i-1) + '/beta.xml')       # friction
+  model.init_E_shf(dir_b + str(i-1) + 'E_shf.xml')      # enhancement
 else:
   model.init_T(model.T_w - 30.0)
   model.init_beta_SIA()
@@ -133,31 +134,35 @@ config['velocity']['solve_vert_velocity']     = False
 config['velocity']['use_U0']                  = False
 config['enthalpy']['on']                      = False
 config['coupled']['on']                       = False
-config['adjoint']['objective_function']       = 'log_lin_hybrid'
-config['adjoint']['gamma1']                   = 0.01
-config['adjoint']['gamma2']                   = 1000
 #config['log_history']                         = True
 
 # invert for basal friction over grounded ice :
 if i % 2 == 0:
   params['newton_solver']['relaxation_parameter'] = 1.0
-  #params['newton_solver']['relative_tolerance']   = 1e-10
+  params['newton_solver']['relative_tolerance']   = 1e-8
   params['newton_solver']['maximum_iterations']   = 3
+  config['adjoint']['objective_function']         = 'log_lin_hybrid'
+  config['adjoint']['gamma1']                     = 0.01
+  config['adjoint']['gamma2']                     = 1000
   config['adjoint']['surface_integral']           = 'grounded'
-  config['adjoint']['alpha']                      = 1e-7
+  config['adjoint']['alpha']                      = 1e-5
   config['adjoint']['bounds']                     = (0.0, 4000)
   config['adjoint']['control_variable']           = model.beta
   model.init_viscosity_mode('linear')
 
 # invert for enhancement over shelves :
 else:
-  params['newton_solver']['relaxation_parameter'] = 0.6
-  params['newton_solver']['relative_tolerance']   = 1e-3
-  params['newton_solver']['maximum_iterations']   = 18
+  params['newton_solver']['relaxation_parameter'] = 1.0
+  params['newton_solver']['relative_tolerance']   = 1e-8
+  params['newton_solver']['maximum_iterations']   = 3
+  config['adjoint']['objective_function']         = 'linear'
+  config['adjoint']['gamma1']                     = 0.01
+  config['adjoint']['gamma2']                     = 1000
   config['adjoint']['surface_integral']           = 'shelves'
-  config['adjoint']['alpha']                      = 0
-  config['adjoint']['bounds']                     = (1e-4, 1.0)
+  config['adjoint']['alpha']                      = 1e-15
+  config['adjoint']['bounds']                     = (1e-6, 1.0)
   config['adjoint']['control_variable']           = model.E_shf
+  model.init_viscosity_mode('linear')
 
 A = solvers.AdjointSolver(model, config)
 A.solve()

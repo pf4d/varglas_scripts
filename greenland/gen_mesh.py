@@ -26,7 +26,8 @@ drg.set_data_min('U_ob', boundary=0.0,    val=0.0)
 
 #===============================================================================
 # form field from which to refine :
-drg.data['ref'] = (0.05 + 1/(1 + drg.data['U_ob'])) * 50000
+# antarctica :: Info : 4449632 vertices 25902918 elements
+drg.data['ref'] = (0.02 + 1/(1 + drg.data['U_ob'])) * 50000
 
 ## plot to check :
 #imshow(drg.data['ref'][::-1,:])
