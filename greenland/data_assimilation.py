@@ -106,7 +106,7 @@ if i > 0:
   model.init_T(dir_b + str(i-1) + '/T.xml')             # temp
   model.init_W(dir_b + str(i-1) + '/W.xml')             # water
   model.init_beta(dir_b + str(i-1) + '/beta.xml')       # friction
-  model.init_E_shf(dir_b + str(i-1) + 'E_shf.xml')      # enhancement
+  model.init_E_shf(dir_b + str(i-1) + '/E_shf.xml')      # enhancement
 else:
   model.init_T(model.T_w - 30.0)
   model.init_beta_SIA()
