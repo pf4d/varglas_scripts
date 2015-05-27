@@ -7,8 +7,8 @@ from termcolor                    import colored
 
 
 # get the input args :
-out_dir = 'dump/test/01/'
-in_dir  = 'dump/vars/'
+out_dir = 'dump/ant_spacing/balance_velocity/'
+in_dir  = 'dump/vars_ant_spacing/'
 
 mesh   = Mesh(in_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -28,10 +28,11 @@ model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.initialize_variables()
 
+model.init_adot(adot)
+
 config = default_config()
 config['output_path']               = out_dir
 config['balance_velocity']['kappa'] = 20.0
-config['balance_velocity']['adot']  = adot
 
 F = physics.VelocityBalance(model, config)
 

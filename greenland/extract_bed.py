@@ -2,9 +2,10 @@ import varglas.model as model
 from fenics          import *
 from pylab           import *
 
-out_dir  = 'dump/bed/01/'
-in_dir   = 'dump/test/01/'
-var_dir  = 'dump/vars/'
+out_dir  = 'dump/bed/08/'
+in_dir   = 'dump/ant_spacing/08/'
+bv_dir   = 'dump/ant_spacing/balance_velocity/'
+var_dir  = 'dump/vars_ant_spacing/'
 
 mesh   = Mesh(var_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -44,6 +45,7 @@ model.init_U(in_dir + 'u.xml',
 model.init_T(in_dir + 'T.xml')
 model.init_Mb(in_dir + 'Mb.xml')
 model.init_W(in_dir + 'W.xml')
+model.init_Ubar(bv_dir + 'Ubar.xml')
 
 submesh = model.get_bed_mesh()
 
@@ -62,6 +64,7 @@ W_s     = Function(Q_b)
 adot_s  = Function(Q_b)
 qgeo_s  = Function(Q_b)
 U_ob_s  = Function(Q_b)
+Ubar_s  = Function(Q_b)
 
 lg      = LagrangeInterpolator()
 
@@ -78,6 +81,7 @@ lg.interpolate(W_s,    model.W)
 lg.interpolate(adot_s, adot)
 lg.interpolate(qgeo_s, q_geo)
 lg.interpolate(U_ob_s, U_ob)
+lg.interpolate(Ubar_s, model.Ubar)
 
 XDMFFile(submesh.mpi_comm(),  out_dir + 'submesh.xdmf') << submesh
 
@@ -94,6 +98,7 @@ File(out_dir + 'w_s.xml')     << w_s
 File(out_dir + 'adot_s.xml')  << adot_s
 File(out_dir + 'qgeo_s.xml')  << qgeo_s
 File(out_dir + 'U_ob_s.xml')  << U_ob_s
+File(out_dir + 'Ubar_s.xml')  << Ubar_s
 
 
 
