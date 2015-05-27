@@ -5,10 +5,7 @@ from scipy.special  import fdtrc
 from scipy.sparse   import diags
 
 import sys
-src_directory = '../../statistical_modeling'
-sys.path.append(src_directory)
 
-from src.regstats              import prbplotObj
 from fenics                    import *
 from pylab                     import *
 from varglas.helper            import plotIce
@@ -291,10 +288,10 @@ drg      = DataInput(rignot, gen_space=False)
 
 betaMax = 500.0
 
-#plotIce(drg, valid_f, '.', 'gist_yarg', scale='bool', name=r'$B$', 
-#        numLvls=12, tp=False, tpAlpha=0.5)
-#plotIce(drg, beta, '.', 'gist_yarg', scale='log', name=r'$beta$', 
-#        umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5)
+#plotIce(drg, valid_f, name='valid', direc='images/', cmap='gist_yarg', 
+#        scale='bool', numLvls=12, tp=False, tpAlpha=0.5)
+#plotIce(drg, beta,  name='beta', direc='images/', cmap='gist_yarg',
+#        scale='log', umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5)
 
 #===============================================================================
 # cell declustering :
@@ -355,72 +352,73 @@ v_m_rat  = sigma**2 / mu                # variance-to-mean ratio
 px       = poisson.pmf(vals, mu)        # compute probabilities
 expfreq  = px * len(y)                  # computes expected frequencies
 
-#===============================================================================
-# fitting to distributions :
-gam_fit  = gamma.fit(y)
-chi_fit  = chi2.fit(y)
-#cau_fit  = cauchy.fit(y)
-exp_fit  = expon.fit(y)
-ln_fit   = lognorm.fit(y)
-ing_fit  = invgauss.fit(y)
-#wei_fit  = weibull.fit(y)
-ingam_fit = invgamma.fit(y)
-#beta_fit  = betad.fit(y)
-g_x      = linspace(y.min(), y.max(), num)
-
-#===============================================================================
-# plotting :
-
-fig      = figure()
-ax       = fig.add_subplot(111)
-
-obs_freq, bins, patches = ax.hist(y, num, histtype='stepfilled', normed=True)
-nml_freq    = normal(g_x, mu, sigma)
-#cau_freq    = cauchy.pdf(g_x, *cau_fit)
-ln_freq     = lognorm.pdf(g_x, *ln_fit)
-ing_freq    = invgauss.pdf(g_x, *ing_fit)
-#wei_freq    = weibull.pdf(g_x, *wei_fit)
-ingam_freq  = invgamma.pdf(g_x, *ingam_fit)
-#betad_freq  = betad.pdf(g_x, *beta_fit)
-#chi_freq  = chi2.pdf(g_x, *chi_fit)
-#exp_freq  = expon.pdf(g_x, *exp_fit)
-#gam_freq  = gamma.pdf(g_x, *gam_fit)
-#chi2tst   = chisquare(obs_freq, f_exp=exp_freq, ddof=1)[1]
-ax.plot(g_x, nml_freq,    'r-',  lw=2.0,  label=r'$\mathcal{N}$')
-#ax.plot(g_x, cau_freq,    'm-',  lw=2.0,  label=r'$\mathrm{Cauchy}$')
-ax.plot(g_x, ln_freq,     'g-',  lw=2.0,  label=r'$\mathrm{LogNorm}$')
-ax.plot(g_x, ing_freq,    'k-',  lw=2.0,  label=r'$\mathrm{InvGauss}$')
-#ax.plot(g_x, wei_freq,    'y-',  lw=2.0,  label=r'$\mathrm{Weibull}$')
-ax.plot(g_x, ingam_freq,  'k:',  lw=2.0,  label=r'$\mathrm{InvGamma}$')
-#ax.plot(g_x, betad_freq,  'k--', lw=2.0,  label=r'$\mathrm{Beta}$')
-#ax.plot(g_x, chi_freq, 'g-', lw=2.0, label=r'$\chi$')
-#ax.plot(g_x, exp_freq, 'k-', lw=2.0, label=r'$\exp$')
-#ax.plot(g_x, gam_freq, 'y-', lw=2.0, label=r'$\Gamma$')
-ax.set_xlim([0,200])
-ax.set_ylim([0,0.025])
-ax.set_xlabel(r'$\beta$')
-ax.set_ylabel('Frequency')
-ax.set_title(r'Histogram of $\beta$ values')
-ax.grid()
-leg = ax.legend(loc='lower right')
-leg.get_frame().set_alpha(0.5)
-textstr =   '$n = %i$\n' \
-          + '$\mu = %.2f$\n' \
-          + '$\mathrm{median} = %.2f$\n' \
-          + '$\sigma = %.2f$\n' \
-          + '$\sigma^2 = %.2f$\n' \
-          + '$\mathrm{IQR} = %.3f$\n' \
-          + '$\sigma^2 / \mu = %.2f$\n'
-#          + '$\chi^2 \mathrm{test} = %.2f$'
-textstr = textstr % (n, mu, med, sigma, sigma**2, fe_iqr, v_m_rat)
-
-# these are matplotlib.patch.Patch properties
-props   = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-
-# place a text box in upper left in axes coords
-ax.text(0.65, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-        verticalalignment='top', bbox=props)
-show()
+##===============================================================================
+## fitting to distributions :
+#gam_fit  = gamma.fit(y)
+#chi_fit  = chi2.fit(y)
+##cau_fit  = cauchy.fit(y)
+#exp_fit  = expon.fit(y)
+#ln_fit   = lognorm.fit(y)
+#ing_fit  = invgauss.fit(y)
+##wei_fit  = weibull.fit(y)
+#ingam_fit = invgamma.fit(y)
+##beta_fit  = betad.fit(y)
+#g_x      = linspace(y.min(), y.max(), num)
+#
+##===============================================================================
+## plotting :
+#
+#fig      = figure()
+#ax       = fig.add_subplot(111)
+#
+#obs_freq, bins, patches = ax.hist(y, num, histtype='stepfilled', normed=True)
+#nml_freq    = normal(g_x, mu, sigma)
+##cau_freq    = cauchy.pdf(g_x, *cau_fit)
+#ln_freq     = lognorm.pdf(g_x, *ln_fit)
+#ing_freq    = invgauss.pdf(g_x, *ing_fit)
+##wei_freq    = weibull.pdf(g_x, *wei_fit)
+#ingam_freq  = invgamma.pdf(g_x, *ingam_fit)
+##betad_freq  = betad.pdf(g_x, *beta_fit)
+##chi_freq  = chi2.pdf(g_x, *chi_fit)
+##exp_freq  = expon.pdf(g_x, *exp_fit)
+##gam_freq  = gamma.pdf(g_x, *gam_fit)
+##chi2tst   = chisquare(obs_freq, f_exp=exp_freq, ddof=1)[1]
+#ax.plot(g_x, nml_freq,    'r-',  lw=2.0,  label=r'$\mathcal{N}$')
+##ax.plot(g_x, cau_freq,    'm-',  lw=2.0,  label=r'$\mathrm{Cauchy}$')
+#ax.plot(g_x, ln_freq,     'g-',  lw=2.0,  label=r'$\mathrm{LogNorm}$')
+#ax.plot(g_x, ing_freq,    'k-',  lw=2.0,  label=r'$\mathrm{InvGauss}$')
+##ax.plot(g_x, wei_freq,    'y-',  lw=2.0,  label=r'$\mathrm{Weibull}$')
+#ax.plot(g_x, ingam_freq,  'k:',  lw=2.0,  label=r'$\mathrm{InvGamma}$')
+##ax.plot(g_x, betad_freq,  'k--', lw=2.0,  label=r'$\mathrm{Beta}$')
+##ax.plot(g_x, chi_freq, 'g-', lw=2.0, label=r'$\chi$')
+##ax.plot(g_x, exp_freq, 'k-', lw=2.0, label=r'$\exp$')
+##ax.plot(g_x, gam_freq, 'y-', lw=2.0, label=r'$\Gamma$')
+#ax.set_xlim([0,200])
+#ax.set_ylim([0,0.025])
+#ax.set_xlabel(r'$\beta$')
+#ax.set_ylabel('Frequency')
+#ax.set_title(r'Histogram of $\beta$ values')
+#ax.grid()
+#leg = ax.legend(loc='lower right')
+#leg.get_frame().set_alpha(0.5)
+#textstr =   '$n = %i$\n' \
+#          + '$\mu = %.2f$\n' \
+#          + '$\mathrm{median} = %.2f$\n' \
+#          + '$\sigma = %.2f$\n' \
+#          + '$\sigma^2 = %.2f$\n' \
+#          + '$\mathrm{IQR} = %.3f$\n' \
+#          + '$\sigma^2 / \mu = %.2f$\n'
+##          + '$\chi^2 \mathrm{test} = %.2f$'
+#textstr = textstr % (n, mu, med, sigma, sigma**2, fe_iqr, v_m_rat)
+#
+## these are matplotlib.patch.Patch properties
+#props   = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+#
+## place a text box in upper left in axes coords
+#ax.text(0.65, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+#        verticalalignment='top', bbox=props)
+#savefig('images/beta_distribution.png', dpi=200)
+#show()
 
 #===============================================================================
 # do the glm :
@@ -477,7 +475,8 @@ names = [r'$S$',
 
 X      = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14]
 V      = [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14]
-index  = [0,1,2,3,4,5,6,7,8,10,11,12,13,14]
+#index  = [0,1,2,3,4,5,10,11]                # dependent only
+index  = [0,1,2,3,4,5,6,7,8,10,11,12,13,14]  # full
 #index  = [0,1,2,3,4,5,10,11,12,13,14]
 #index  = [1,2,4,10,11,12,13,14]
 ii     = index
@@ -527,32 +526,24 @@ ex_n.insert(0, '$\hat{a}_0$')
 # fit the glm :
 
 out_glm   = glm(array(Xt), y)#, wt)
-yhat      = out_glm['yhat']
+glm_yhat  = out_glm['yhat']
 resid     = out_glm['resid']
 ahat      = out_glm['ahat']
   
 ahat_f = Function(Q)
 
-ahat_f.vector()[valid] = yhat
+ahat_f.vector()[valid] = glm_yhat
 
-#ahat_f.vector().apply('insert')
-
-plotIce(drg, ahat_f, '.', 'gist_yarg', scale='log', name=r'$ahat$', 
-        umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5)
-
-# remove any data above 1000 for plotting purposes :
-#lt1e3     = where(yhat < 1000)[0]
-#yhat      = yhat[lt1e3]
-#y         = y[y < 1000]
-#resid     = resid[lt1e3]
+#plotIce(drg, ahat_f, name='GLM_beta', direc='images/', cmap='gist_yarg',
+#        scale='log', umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5)
 
 #===============================================================================
 # data analysis :
 n        = len(valid)
-mu       = mean(yhat)                      # mean
-med      = median(yhat)                    # median
-sigma    = std(yhat)                       # standard deviation
-fe_iqr   = iqr(yhat)                       # IQR
+mu       = mean(glm_yhat)                  # mean
+med      = median(glm_yhat)                # median
+sigma    = std(glm_yhat)                   # standard deviation
+fe_iqr   = iqr(glm_yhat)                   # IQR
 v_m_rat  = sigma**2 / mu                   # variance-to-mean ratio
 
 #===============================================================================
@@ -560,14 +551,16 @@ v_m_rat  = sigma**2 / mu                   # variance-to-mean ratio
 fig      = figure()
 ax       = fig.add_subplot(111)
 
-ax.hist(y,    800, histtype='stepfilled', alpha=0.5, normed=True)
-ax.hist(yhat, 800, histtype='stepfilled', alpha=0.5, normed=True)
+ax.hist(y,    800, histtype='step', alpha=1.0, normed=True,
+        label=r'$\beta$')
+ax.hist(glm_yhat, 800, histtype='step', alpha=1.0, normed=True,
+        label=r'$\hat{\mu}$')
 ax.set_xlim([0,200])
 ax.set_ylim([0,0.025])
 ax.set_xlabel(r'$\hat{\mu}$')
 ax.set_ylabel('Frequency')
 ax.set_title(r'Histogram of $\hat{\mu}$ values')
-#ax.legend(loc='center right')
+ax.legend(loc='center right')
 ax.grid()
 textstr =   '$n = %i$\n' \
           + '$\mu = %.2f$\n' \
@@ -584,8 +577,8 @@ props   = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 # place a text box in upper left in axes coords
 ax.text(0.65, 0.95, textstr, transform=ax.transAxes, fontsize=14,
         verticalalignment='top', bbox=props)
-fn = 'images/glm_beta_distributions.png'
-savefig(fn, dpi=100)
+fn = 'images/GLM_beta_distributions.png'
+savefig(fn, dpi=200)
 show()
   
 #=============================================================================
@@ -594,7 +587,7 @@ fig = figure(figsize=(12,5))
 ax1 = fig.add_subplot(121)
 ax2 = fig.add_subplot(122)
 
-ax1.plot(yhat, resid, 'ko', alpha=0.1)
+ax1.plot(glm_yhat, resid, 'ko', alpha=0.1)
 ax1.set_xlabel('Predicted Values') 
 ax1.set_ylabel('Residuals') 
 ax1.set_title('Residual Plot') 
@@ -610,8 +603,8 @@ ax2.set_title('Normal Quantile Plot')
 #ax2.set_xlim([-6,6])
 #ax2.set_ylim([-3,3])
 ax2.grid()
-fn = 'images/glm_resid-NQ.png'
-savefig(fn, dpi=100)
+fn = 'images/GLM_resid-NQ.png'
+savefig(fn, dpi=200)
 show()
 
 #=============================================================================
@@ -632,8 +625,8 @@ show()
 #    x = X[i]
 #    n = names[i]
 #
-#  ax.plot(x, y,    'ko', alpha=0.1)
-#  ax.plot(x, yhat, 'ro', alpha=0.1)
+#  ax.plot(x, y,        'ko', alpha=0.1)
+#  ax.plot(x, glm_yhat, 'ro', alpha=0.1)
 #  #ax.set_ylim([4,8])
 #  ax.set_xlabel(n)
 #  ax.set_ylabel(r'$\beta$')
@@ -740,8 +733,8 @@ bhat_f = Function(Q)
 
 bhat_f.vector()[valid] = exp(yhat)
 
-plotIce(drg, bhat_f, '.', 'gist_yarg', scale='log', name=r'$bhat$', 
-        umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5)
+plotIce(drg, bhat_f, name='OLM_beta', direc='images/', cmap='gist_yarg',
+        scale='log', umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5)
 
 #=============================================================================
 # remove any data above 1000 for plotting purposes :
@@ -762,14 +755,17 @@ v_m_rat  = sigma**2 / mu                   # variance-to-mean ratio
 fig      = figure()
 ax       = fig.add_subplot(111)
 
-ax.hist(expY,    800, histtype='stepfilled', alpha=0.5, normed=True)
-ax.hist(expYhat, 800, histtype='stepfilled', alpha=0.5, normed=True)
+y_s = [expY, glm_yhat, expYhat]
+l_s = [r'$\beta$', r'GLM - $\hat{\mu}$', r'OLM - $\hat{\mu}$']
+
+ax.hist(y_s, 800, histtype='step', alpha=1.0, normed=True,
+        label=l_s, stacked=False)
 ax.set_xlim([0,200])
 ax.set_ylim([0,0.025])
-ax.set_xlabel(r'$\hat{\beta}$')
+ax.set_xlabel(r'$\hat{\mu}$')
 ax.set_ylabel('Frequency')
-ax.set_title(r'Histogram of $\hat{\beta}$ values')
-#ax.legend(loc='center right')
+ax.set_title(r'Histogram of $\hat{\mu}$ values')
+ax.legend(loc='center right')
 ax.grid()
 textstr =   '$n = %i$\n' \
           + '$\mu = %.2f$\n' \
@@ -786,8 +782,8 @@ props   = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 # place a text box in upper left in axes coords
 ax.text(0.65, 0.95, textstr, transform=ax.transAxes, fontsize=14,
         verticalalignment='top', bbox=props)
-fn = 'images/olm_beta_distributions.png'
-savefig(fn, dpi=100)
+fn = 'images/beta_distributions.png'
+savefig(fn, dpi=200)
 show()
 
 
@@ -813,8 +809,8 @@ ax2.set_title('Normal Quantile Plot')
 #ax2.set_xlim([-6,6])
 #ax2.set_ylim([-3,3])
 ax2.grid()
-fn = 'images/olm_resid-NQ_' + str(idx) + '.png'
-savefig(fn, dpi=100)
+fn = 'images/OLM_resid-NQ_' + str(idx) + '.png'
+savefig(fn, dpi=200)
 show()
 
 

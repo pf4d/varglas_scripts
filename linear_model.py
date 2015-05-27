@@ -17,6 +17,8 @@ gamma   = distributions.gamma
 chi2    = distributions.chi2
 cauchy  = distributions.cauchy
 expon   = distributions.expon
+lognorm = distributions.lognorm
+invgauss = distributions.invgauss
 
 def iqr(arr):
   arr           = sort(arr.copy())
