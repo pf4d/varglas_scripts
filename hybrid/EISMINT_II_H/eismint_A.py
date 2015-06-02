@@ -14,7 +14,7 @@ parameters['form_compiler']['representation']    = 'quadrature'
 mesh = Mesh('meshes/circle_mesh.xml')
 
 thklim = 1.0
-L      = 650000.
+L      = 800000.
 xmin   = -L
 xmax   =  L
 ymin   = -L
@@ -37,9 +37,9 @@ config = default_config()
 config['log']                          = True
 config['mode']                         = 'transient'
 config['model_order']                  = 'L1L2'
-config['output_path']                  = './test_beta_stats/'
+config['output_path']                  = './A/'
 config['t_start']                      = 0.0
-config['t_end']                        = 50000.0
+config['t_end']                        = 200000.0
 config['time_step']                    = 10.0
 config['periodic_boundary_conditions'] = False
 config['velocity']['poly_degree']      = 2
@@ -47,8 +47,8 @@ config['enthalpy']['on']               = True
 config['enthalpy']['N_T']              = 8
 config['free_surface']['on']           = True
 config['free_surface']['thklim']       = thklim
-config['velocity']['use_stat_beta']    = True
-config['balance_velocity']['on']       = True
+#config['balance_velocity']['on']       = True
+config['velocity']['use_stat_beta']    = False
 
 model = Model(config)
 model.set_mesh(mesh)
@@ -88,12 +88,12 @@ model.set_geometry(S, B, deform=False)
 model.initialize_variables()
 
 model.init_adot(adot)
-#model.init_beta(beta)
+model.init_beta(beta)
 model.init_T_surface(T_s)
 model.init_H(thklim)
 model.init_H_bounds(thklim, 1e4)
 model.init_q_geo(model.ghf)
-model.init_beta_stats()
+#model.init_beta_stats()
 
 model.eps_reg = 1e-10
 

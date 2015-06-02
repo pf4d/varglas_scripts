@@ -404,7 +404,7 @@ l_thick = project(Constant(thklim),Q)
 u_thick = project(Constant(1e4),Q)
 
 t = 0.0
-t_end = 50000.0
+t_end = 200000.0
 
 Us = project(as_vector([u(0.),v(0.0)]))
 ww = project(w(0),Q)
@@ -454,8 +454,8 @@ while t<t_end:
     Tb_m = project(Tmb)
     Tb_temp = project(T_[N_T-1],Q)
 
-    beta2.vector()[Tb_temp.vector()>(Tb_m.vector() - T_tol)] = 1e3
-    beta2.vector()[Tb_temp.vector()<=(Tb_m.vector() - T_tol)] = 1e9
+    #beta2.vector()[Tb_temp.vector()>(Tb_m.vector() - T_tol)] = 1e3
+    #beta2.vector()[Tb_temp.vector()<=(Tb_m.vector() - T_tol)] = 1e9
 
     T_.vector()[T_.vector()>T_melt.vector()] = T_melt.vector()[T_.vector()>T_melt.vector()]
 
@@ -476,13 +476,20 @@ while t<t_end:
     Ts_.interpolate(Ts_temp)
     Tb_.interpolate(Tb_temp)
 
-    Ufile << (Us,t)
-    wfile << (ww,t)
-    Hfile << (H,t)
-    bfile << (beta2,t)
+    File(results_dir + 'U.pvd')     << Us
+    File(results_dir + 'w.pvd')     << ww
+    File(results_dir + 'H.pvd')     << H
+    File(results_dir + 'beta2.pvd') << beta2
+    File(results_dir + 'Tb.pvd')    << Tb_
+    File(results_dir + 'Ts.pvd')    << Ts_
 
-    Tbfile << (Tb_,t)
-    Tsfile << (Ts_,t)
-    Hxfile << H
-    Txfile << T_
+    #Ufile << (Us,t)
+    #wfile << (ww,t)
+    #Hfile << (H,t)
+    #bfile << (beta2,t)
+
+    #Tbfile << (Tb_,t)
+    #Tsfile << (Ts_,t)
+    #Hxfile << H
+    #Txfile << T_
 
