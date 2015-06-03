@@ -20,8 +20,7 @@ day = 24*hour
 year = 365*day
 
 # MESH RADIUS AND ELEMENT SIZE
-L = 650000.
-cell_size = 25000.
+L = 800000.
 
 # CONSTANTS
 rho = 910.
