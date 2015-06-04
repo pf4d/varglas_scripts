@@ -15,23 +15,12 @@ mesh = Mesh('meshes/circle_mesh.xml')
 
 thklim = 1.0
 L      = 800000.
-xmin   = -L
-xmax   =  L
-ymin   = -L
-ymax   =  L
 
-# width and origin of the domain for deforming x coord :
-width_x  = xmax - xmin
-offset_x = xmin
-
-# width and origin of the domain for deforming y coord :
-width_y  = ymax - ymin
-offset_y = ymin
 for x in mesh.coordinates():
   # transform x :
-  x[0]  = x[0]  * width_x
+  x[0]  = x[0]  * L
   # transform y :
-  x[1]  = x[1]  * width_y
+  x[1]  = x[1]  * L
 
 config = default_config()
 config['log']                          = True
