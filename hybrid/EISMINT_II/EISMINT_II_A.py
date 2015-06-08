@@ -36,7 +36,6 @@ config['enthalpy']['on']               = True
 config['enthalpy']['N_T']              = 8
 config['free_surface']['on']           = True
 config['free_surface']['thklim']       = thklim
-#config['balance_velocity']['on']       = True
 
 model = Model(config)
 model.set_mesh(mesh)
@@ -61,7 +60,6 @@ class Adot(Expression):
   Rel = 450000
   s   = 1e-5
   def eval(self,values,x):
-    #values[0] = 0.3
     values[0] = min(0.5,self.s*(self.Rel-sqrt(x[0]**2 + x[1]**2)))
 adot = Adot(element=model.Q.ufl_element())
 
@@ -81,12 +79,26 @@ model.init_T_surface(T_s)
 model.init_H(thklim)
 model.init_H_bounds(thklim, 1e4)
 model.init_q_geo(model.ghf)
-#model.init_beta_stats()
 
 model.eps_reg = 1e-10
 
 T = HybridTransientSolver(model, config)
 T.solve()
+
+File(out_dir + 'Ts.xml')      << model.Ts
+File(out_dir + 'Tb.xml')      << model.Tb
+File(out_dir + 'Mb.xml')      << model.Mb
+File(out_dir + 'H.xml')       << model.H
+File(out_dir + 'S.xml')       << model.S
+File(out_dir + 'B.xml')       << model.B
+File(out_dir + 'u_s.xml')     << model.u_s
+File(out_dir + 'v_s.xml')     << model.v_s
+File(out_dir + 'w_s.xml')     << model.w_s
+File(out_dir + 'u_b.xml')     << model.u_b
+File(out_dir + 'v_b.xml')     << model.v_b
+File(out_dir + 'w_b.xml')     << model.w_b
+File(out_dir + 'Ubar.xml')    << model.Ubar
+File(out_dir + 'beta.xml')    << model.beta
 
 
 
