@@ -1,4 +1,4 @@
-import varglas.physics            as physics
+import varglas.solvers            as solvers
 import varglas.model              as model
 from varglas.helper               import default_config
 from fenics                       import *
@@ -31,6 +31,8 @@ model = model.Model(config)
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.initialize_variables()
+
+model.init_adot(adot)
 
 F = solvers.BalanceVelocitySolver(model, config)
 

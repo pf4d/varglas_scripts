@@ -5,6 +5,8 @@ from varglas.model   import Model
 
 set_log_active(False)
 
+out_dir = './H/'
+
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
 #parameters['form_compiler']['optimize']          = True
@@ -26,7 +28,7 @@ config = default_config()
 config['log']                          = True
 config['mode']                         = 'transient'
 config['model_order']                  = 'L1L2'
-config['output_path']                  = './H/'
+config['output_path']                  = out_dir
 config['t_start']                      = 0.0
 config['t_end']                        = 200000.0
 config['time_step']                    = 10.0
@@ -40,6 +42,8 @@ config['velocity']['transient_beta']   = 'eismint_H'
 
 model = Model(config)
 model.set_mesh(mesh)
+
+model.rhoi = 910.0
 
 # GEOMETRY AND INPUT DATA
 class Surface(Expression):
