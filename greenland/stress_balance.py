@@ -10,9 +10,9 @@ from fenics                       import *
 set_log_active(False)
 
 thklim  = 1.0
-in_dir  = 'dump/test/01/'
+in_dir  = 'dump/ant_spacing/08/'
 out_dir = 'dump/stress/'
-var_dir = 'dump/vars/'
+var_dir = 'dump/vars_ant_spacing/'
 
 mesh   = Mesh(var_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -31,11 +31,18 @@ f.read(ff,      'ff')
 f.read(cf,      'cf')
 f.read(ff_acc,  'ff_acc')
 
-model = model.Model()
+config = default_config()
+config['output_path']                      = out_dir
+config['model_order']                      = 'BP'
+config['use_dukowicz']                     = False
+config['stokes_balance']['vert_integrate'] = True
+
+model = model.Model(config)
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
+model.init_viscosity_mode('full')
 
 model.init_beta(in_dir + 'beta.xml')
 model.init_U(in_dir + 'u.xml',
@@ -45,16 +52,19 @@ model.init_T(in_dir + 'T.xml')
 model.init_W(in_dir + 'W.xml')
 model.init_E(1.0)
 
-model.calc_eta()
-
-config = default_config()
-config['output_path']                      = out_dir
-config['stokes_balance']['viscosity_mode'] = 'linear'
-config['stokes_balance']['eta']            = model.eta
-config['stokes_balance']['vert_integrate'] = False
-
 T = solvers.StokesBalanceSolver(model, config)
 T.solve()
 
-
+model.save_xml(model.tau_dn, 'tau_dn')
+model.save_xml(model.tau_dt, 'tau_dt')
+model.save_xml(model.tau_bn, 'tau_bn')
+model.save_xml(model.tau_bt, 'tau_bt')
+model.save_xml(model.tau_pn, 'tau_pn')
+model.save_xml(model.tau_pt, 'tau_pt')
+model.save_xml(model.tau_nn, 'tau_nn')
+model.save_xml(model.tau_nt, 'tau_nt')
+model.save_xml(model.tau_nz, 'tau_nz')
+model.save_xml(model.tau_tn, 'tau_tn')
+model.save_xml(model.tau_tt, 'tau_tt')
+model.save_xml(model.tau_tz, 'tau_tz')
 
