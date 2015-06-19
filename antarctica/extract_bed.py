@@ -115,8 +115,6 @@ lg.interpolate(U_ob_s,   U_ob)
 lg.interpolate(Ubar_s,   model.Ubar)
 lg.interpolate(tau_dn_s, tau_dn)
 lg.interpolate(tau_dt_s, tau_dt)
-lg.interpolate(tau_bn_s, tau_bn)
-lg.interpolate(tau_bt_s, tau_bt)
 lg.interpolate(tau_nn_s, tau_nn)
 lg.interpolate(tau_nt_s, tau_nt)
 lg.interpolate(tau_nz_s, tau_nz)
@@ -142,8 +140,6 @@ File(out_dir + 'U_ob_s.xml')    << U_ob_s
 File(out_dir + 'Ubar_s.xml')    << Ubar_s
 File(out_dir + 'tau_dn_s.xml')  << tau_dn_s
 File(out_dir + 'tau_dt_s.xml')  << tau_dt_s
-File(out_dir + 'tau_bn_s.xml')  << tau_bn_s
-File(out_dir + 'tau_bt_s.xml')  << tau_bt_s
 File(out_dir + 'tau_nn_s.xml')  << tau_nn_s
 File(out_dir + 'tau_nt_s.xml')  << tau_nt_s
 File(out_dir + 'tau_nz_s.xml')  << tau_nz_s

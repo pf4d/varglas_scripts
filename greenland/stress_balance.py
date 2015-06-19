@@ -2,9 +2,7 @@ import varglas.solvers            as solvers
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
-from varglas.helper               import default_nonlin_solver_params, \
-                                         default_config
-from varglas.io                   import DataInput, DataOutput
+from varglas.helper               import default_config
 from fenics                       import *
 
 set_log_active(False)
@@ -22,6 +20,7 @@ ff_acc = MeshFunction('size_t', mesh)
 
 S      = Function(Q)
 B      = Function(Q)
+mask   = Function(Q)
 
 f = HDF5File(mesh.mpi_comm(), var_dir + 'vars.h5', 'r')
 
@@ -30,6 +29,7 @@ f.read(B,       'B')
 f.read(ff,      'ff')
 f.read(cf,      'cf')
 f.read(ff_acc,  'ff_acc')
+f.read(mask,    'mask')
 
 config = default_config()
 config['output_path']                      = out_dir
@@ -44,6 +44,7 @@ model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
 model.init_viscosity_mode('full')
 
+model.init_mask(mask)
 model.init_beta(in_dir + 'beta.xml')
 model.init_U(in_dir + 'u.xml',
              in_dir + 'v.xml',
@@ -55,18 +56,18 @@ model.init_E(1.0)
 T = solvers.StokesBalanceSolver(model, config)
 T.solve()
 
-model.save_xml(model.tau_dn, 'tau_dn')
-model.save_xml(model.tau_dt, 'tau_dt')
-model.save_xml(model.tau_bn, 'tau_bn')
-model.save_xml(model.tau_bt, 'tau_bt')
-model.save_xml(model.tau_pn, 'tau_pn')
-model.save_xml(model.tau_pt, 'tau_pt')
-model.save_xml(model.tau_nn, 'tau_nn')
-model.save_xml(model.tau_nt, 'tau_nt')
-model.save_xml(model.tau_nz, 'tau_nz')
-model.save_xml(model.tau_tn, 'tau_tn')
-model.save_xml(model.tau_tt, 'tau_tt')
-model.save_xml(model.tau_tz, 'tau_tz')
-
+model.save_pvd(model.eta,    'eta')
+#model.save_xml(model.tau_id, 'tau_id')
+#model.save_xml(model.tau_jd, 'tau_jd')
+#model.save_xml(model.tau_ib, 'tau_ib')
+#model.save_xml(model.tau_jb, 'tau_jb')
+#model.save_xml(model.tau_ip, 'tau_ip')
+#model.save_xml(model.tau_jp, 'tau_jp')
+#model.save_xml(model.tau_ii, 'tau_ii')
+#model.save_xml(model.tau_ij, 'tau_ij')
+#model.save_xml(model.tau_iz, 'tau_iz')
+#model.save_xml(model.tau_ji, 'tau_ji')
+#model.save_xml(model.tau_jj, 'tau_jj')
+#model.save_xml(model.tau_jz, 'tau_jz')
 
 

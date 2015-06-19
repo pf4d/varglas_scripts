@@ -2,9 +2,7 @@ import varglas.solvers            as solvers
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
-from varglas.helper               import default_nonlin_solver_params, \
-                                         default_config
-from varglas.io                   import DataInput, DataOutput
+from varglas.helper               import default_config
 from fenics                       import *
 
 set_log_active(False)
@@ -22,6 +20,7 @@ ff_acc = MeshFunction('size_t', mesh)
 
 S      = Function(Q)
 B      = Function(Q)
+mask   = Function(Q)
 
 f = HDF5File(mesh.mpi_comm(), var_dir + 'vars.h5', 'r')
 
@@ -30,6 +29,7 @@ f.read(B,       'B')
 f.read(ff,      'ff')
 f.read(cf,      'cf')
 f.read(ff_acc,  'ff_acc')
+f.read(mask,    'mask')
 
 config = default_config()
 config['output_path']                      = out_dir
@@ -44,17 +44,20 @@ model.set_subdomains(ff, cf, ff_acc)
 model.initialize_variables()
 model.init_viscosity_mode('full')
 
+model.init_mask(mask)
 model.init_beta(in_dir + 'beta.xml')
 model.init_U(in_dir + 'u.xml',
              in_dir + 'v.xml',
              in_dir + 'w.xml')
 model.init_T(in_dir + 'T.xml')
 model.init_W(in_dir + 'W.xml')
-model.init_E(1.0)
+model.init_E_shf(in_dir + 'E_shf.xml')
+model.init_E_gnd(in_dir + 'E_gnd.xml')
 
 T = solvers.StokesBalanceSolver(model, config)
 T.solve()
 
+model.save_pvd(model.eta,    'eta')
 model.save_xml(model.tau_dn, 'tau_dn')
 model.save_xml(model.tau_dt, 'tau_dt')
 model.save_xml(model.tau_bn, 'tau_bn')
