@@ -8,9 +8,9 @@ from fenics                       import *
 set_log_active(False)
 
 thklim  = 1.0
-in_dir  = 'dump/ant_spacing/08/'
-out_dir = 'dump/stress/'
-var_dir = 'dump/vars_ant_spacing/'
+in_dir  = 'dump/high/07/'
+out_dir = 'dump/stress/BP/'
+var_dir = 'dump/vars_high/'
 
 mesh   = Mesh(var_dir + 'mesh.xdmf')
 Q      = FunctionSpace(mesh, 'CG', 1)
@@ -51,23 +51,29 @@ model.init_U(in_dir + 'u.xml',
              in_dir + 'w.xml')
 model.init_T(in_dir + 'T.xml')
 model.init_W(in_dir + 'W.xml')
-model.init_E(1.0)
+model.init_E_shf(in_dir + 'E_shf.xml')
+model.init_E_gnd(in_dir + 'E_gnd.xml')
+
+E_shf_v = model.E_shf.vector().array()
+E_shf_v[E_shf_v < 1e-2] = 1e-2
+model.assign_variable(model.E_shf, E_shf_v)
 
 T = solvers.StokesBalanceSolver(model, config)
 T.solve()
 
 model.save_pvd(model.eta,    'eta')
-#model.save_xml(model.tau_id, 'tau_id')
-#model.save_xml(model.tau_jd, 'tau_jd')
-#model.save_xml(model.tau_ib, 'tau_ib')
-#model.save_xml(model.tau_jb, 'tau_jb')
-#model.save_xml(model.tau_ip, 'tau_ip')
-#model.save_xml(model.tau_jp, 'tau_jp')
-#model.save_xml(model.tau_ii, 'tau_ii')
-#model.save_xml(model.tau_ij, 'tau_ij')
-#model.save_xml(model.tau_iz, 'tau_iz')
-#model.save_xml(model.tau_ji, 'tau_ji')
-#model.save_xml(model.tau_jj, 'tau_jj')
-#model.save_xml(model.tau_jz, 'tau_jz')
+model.save_xml(model.tau_id, 'tau_id')
+model.save_xml(model.tau_jd, 'tau_jd')
+model.save_xml(model.tau_ib, 'tau_ib')
+model.save_xml(model.tau_jb, 'tau_jb')
+model.save_xml(model.tau_ip, 'tau_ip')
+model.save_xml(model.tau_jp, 'tau_jp')
+model.save_xml(model.tau_ii, 'tau_ii')
+model.save_xml(model.tau_ij, 'tau_ij')
+model.save_xml(model.tau_iz, 'tau_iz')
+model.save_xml(model.tau_ji, 'tau_ji')
+model.save_xml(model.tau_jj, 'tau_jj')
+model.save_xml(model.tau_jz, 'tau_jz')
+
 
 

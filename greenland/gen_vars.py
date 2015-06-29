@@ -9,7 +9,7 @@ from termcolor                    import colored, cprint
 
 t0 = time()
 
-out_dir  = 'dump/vars_high/'
+out_dir  = 'dump/vars_ant_spacing/'
 thklim   = 1.0
 
 # collect the raw data :
@@ -19,7 +19,7 @@ fm_qgeo  = DataFactory.get_gre_qgeo_fox_maule()
 rignot   = DataFactory.get_gre_rignot()
 
 # define the mesh :
-mesh = Mesh('dump/meshes/gre_mesh_high.xml')
+mesh = Mesh('dump/meshes/gre_mesh_ant_spacing.xml')
 
 # create data objects to use with varglas :
 dsr     = DataInput(searise,  mesh=mesh)
