@@ -1,0 +1,8 @@
+#!/bin/bash
+
+python linear_model_n.py ind_only $1;
+python linear_model_n.py no_Mb $1;
+python linear_model_n.py no_U $1;
+python linear_model_n.py no_stress $1;
+python linear_model_n.py full $1;
+

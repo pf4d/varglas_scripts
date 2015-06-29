@@ -13,7 +13,7 @@ t0 = time()
 #set_log_level(PROGRESS)
 
 # get the input args :
-out_dir = 'dump/GLM/'
+out_dir = 'dump/ant_spacing/09/'
 var_dir = 'dump/vars_ant_spacing/'
 in_dir  = 'dump/ant_spacing/08/'
 
@@ -74,11 +74,11 @@ config['output_path']                     = out_dir
 config['model_order']                     = 'BP'
 config['use_dukowicz']                    = False
 config['coupled']['on']                   = True
-config['coupled']['max_iter']             = 20
+config['coupled']['max_iter']             = 10
 config['velocity']['newton_params']       = params
 config['velocity']['vert_solve_method']   = 'mumps'#'superlu_dist'
 config['velocity']['calc_pressure']       = False
-config['velocity']['transient_beta']      = 'stats'
+#config['velocity']['transient_beta']      = 'stats'
 config['balance_velocity']['kappa']       = 10
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
@@ -108,13 +108,13 @@ model.init_E(1.0)
 # use T0 and beta0 from the previous run :
 model.init_T(in_dir + 'T.xml')           # temp
 model.init_W(in_dir + 'W.xml')           # water
-#model.init_Mb(in_dir + 'Mb.xml')         # basal melt rate
-model.init_Mb('dump/test/Mb.xml')         # basal melt rate
+model.init_Mb(in_dir + 'Mb.xml')         # basal melt rate
 model.init_U(in_dir + 'u.xml',
              in_dir + 'v.xml',
              in_dir + 'w.xml')           # velocity
-model.init_Ubar('dump/BV/Ubar.xml')      # balance velocity
-model.init_beta_stats()                  # friction
+model.init_beta(in_dir + 'beta.xml')     # friction
+#model.init_Ubar('dump/BV/Ubar.xml')      # balance velocity
+#model.init_beta_stats()                  # friction
 
 model.save_pvd(model.beta, 'beta0')
 
@@ -122,15 +122,15 @@ model.save_pvd(model.beta, 'beta0')
 F = solvers.SteadySolver(model, config)
 F.solve()
 
-File(out_dir + 'T.xml')       << model.T
-File(out_dir + 'W.xml')       << model.W 
-File(out_dir + 'S.xml')       << model.S
-File(out_dir + 'B.xml')       << model.B
-File(out_dir + 'u.xml')       << model.u 
-File(out_dir + 'v.xml')       << model.v 
-File(out_dir + 'w.xml')       << model.w 
-File(out_dir + 'beta.xml')    << model.beta
-File(out_dir + 'Mb.xml')      << model.Mb
+model.save_xml(model.T,    'T')
+model.save_xml(model.W,    'W')
+model.save_xml(model.S,    'S')
+model.save_xml(model.B,    'B')
+model.save_xml(model.u,    'u')
+model.save_xml(model.v,    'v')
+model.save_xml(model.w,    'w')
+model.save_xml(model.beta, 'beta')
+model.save_xml(model.Mb,   'Mb')
 
 #===============================================================================
 # calculate total time to compute

@@ -1,14 +1,17 @@
 import varglas.model as model
 from fenics          import *
 from pylab           import *
+from varglas.helper  import default_config
 
-out_dir  = 'dump/bed/04/'
-in_dir   = 'dump/high/04/'
+out_dir  = 'dump/bed/07/'
+in_dir   = 'dump/high/07/'
 bv_dir   = 'dump/high/balance_velocity/'
 var_dir  = 'dump/vars_high/'
-str_dir  = 'dump/stress/'
+avg_dir  = 'dump/high/vert_average/'
+str_dir  = 'dump/stress/BP/'
 
-mesh   = Mesh(var_dir + 'mesh.xdmf')
+#mesh   = Mesh(var_dir + 'mesh.xdmf')
+mesh = Mesh('dump/meshes/ant_mesh_high.xml')
 Q      = FunctionSpace(mesh, 'CG', 1)
 ff     = MeshFunction('size_t', mesh)
 cf     = MeshFunction('size_t', mesh)
@@ -20,17 +23,20 @@ T_s    = Function(Q)
 U_ob   = Function(Q)
 adot   = Function(Q)
 q_geo  = Function(Q)
+mask   = Function(Q)
 
-tau_dn = Function(Q)
-tau_dt = Function(Q)
-tau_bn = Function(Q)
-tau_bt = Function(Q)
-tau_nn = Function(Q)
-tau_nt = Function(Q)
-tau_nz = Function(Q)
-tau_tn = Function(Q)
-tau_tt = Function(Q)
-tau_tz = Function(Q)
+tau_id = Function(Q)
+tau_jd = Function(Q)
+tau_ii = Function(Q)
+tau_ij = Function(Q)
+tau_iz = Function(Q)
+tau_ji = Function(Q)
+tau_jj = Function(Q)
+tau_jz = Function(Q)
+
+us     = Function(Q)
+vs     = Function(Q)
+ws     = Function(Q)
 
 f = HDF5File(mesh.mpi_comm(), var_dir + 'vars.h5', 'r')
 
@@ -43,19 +49,13 @@ f.read(adot,  'adot')
 f.read(ff,    'ff')
 f.read(cf,    'cf')
 f.read(ff_acc,'ff_acc')
+f.read(mask,  'mask')
 
-File(str_dir + 'tau_dn.xml') >> tau_dn
-File(str_dir + 'tau_dt.xml') >> tau_dt
-File(str_dir + 'tau_bn.xml') >> tau_bn
-File(str_dir + 'tau_bt.xml') >> tau_bt
-File(str_dir + 'tau_nn.xml') >> tau_nn
-File(str_dir + 'tau_nt.xml') >> tau_nt
-File(str_dir + 'tau_nz.xml') >> tau_nz
-File(str_dir + 'tau_tn.xml') >> tau_tn
-File(str_dir + 'tau_tt.xml') >> tau_tt
-File(str_dir + 'tau_tz.xml') >> tau_tz
+config = default_config()
+config['output_path']     = out_dir
+config['model_order']     = 'SSA'
 
-model = model.Model()
+model = model.Model(config)
 model.set_mesh(mesh)
 model.set_surface_and_bed(S, B)
 model.set_subdomains(ff, cf, ff_acc)
@@ -69,6 +69,22 @@ model.init_T(in_dir + 'T.xml')
 model.init_Mb(in_dir + 'Mb.xml')
 model.init_W(in_dir + 'W.xml')
 model.init_Ubar(bv_dir + 'Ubar.xml')
+model.init_etabar(avg_dir + 'etabar.xml')
+model.init_component_Ubar(avg_dir + 'ubar.xml',
+                          avg_dir + 'vbar.xml')
+
+model.assign_variable(tau_id, str_dir + 'tau_id.xml')
+model.assign_variable(tau_jd, str_dir + 'tau_jd.xml')
+model.assign_variable(tau_ii, str_dir + 'tau_ii.xml')
+model.assign_variable(tau_ij, str_dir + 'tau_ij.xml')
+model.assign_variable(tau_iz, str_dir + 'tau_iz.xml')
+model.assign_variable(tau_ji, str_dir + 'tau_ji.xml')
+model.assign_variable(tau_jj, str_dir + 'tau_jj.xml')
+model.assign_variable(tau_jz, str_dir + 'tau_jz.xml')
+
+model.assign_variable(us, avg_dir + 'us.xml')
+model.assign_variable(vs, avg_dir + 'vs.xml')
+model.assign_variable(ws, avg_dir + 'ws.xml')
 
 submesh = model.get_bed_mesh()
 
@@ -79,23 +95,31 @@ B_s       = Function(Q_b)
 H_s       = Function(Q_b)
 Tb_s      = Function(Q_b)
 Ts_s      = Function(Q_b)
-u_s       = Function(Q_b)
-v_s       = Function(Q_b)
-w_s       = Function(Q_b)
+ub_s      = Function(Q_b)
+vb_s      = Function(Q_b)
+wb_s      = Function(Q_b)
+us_s      = Function(Q_b)
+vs_s      = Function(Q_b)
+ws_s      = Function(Q_b)
 Mb_s      = Function(Q_b)
 W_s       = Function(Q_b)
 adot_s    = Function(Q_b)
 qgeo_s    = Function(Q_b)
 U_ob_s    = Function(Q_b)
 Ubar_s    = Function(Q_b)
-tau_dn_s  = Function(Q_b)
-tau_dt_s  = Function(Q_b)
-tau_nn_s  = Function(Q_b)
-tau_nt_s  = Function(Q_b)
-tau_nz_s  = Function(Q_b)
-tau_tn_s  = Function(Q_b)
-tau_tt_s  = Function(Q_b)
-tau_tz_s  = Function(Q_b)
+etabar_s  = Function(Q_b)
+ubar_s    = Function(Q_b)
+vbar_s    = Function(Q_b)
+tau_id_s  = Function(Q_b)
+tau_jd_s  = Function(Q_b)
+tau_ii_s  = Function(Q_b)
+tau_ij_s  = Function(Q_b)
+tau_iz_s  = Function(Q_b)
+tau_ji_s  = Function(Q_b)
+tau_jj_s  = Function(Q_b)
+tau_jz_s  = Function(Q_b)
+mask_s    = Function(Q_b)
+
 
 lg      = LagrangeInterpolator()
 
@@ -104,48 +128,62 @@ lg.interpolate(Tb_s,     model.T)
 lg.interpolate(Ts_s,     T_s)
 lg.interpolate(S_s,      S)
 lg.interpolate(B_s,      B)
-lg.interpolate(u_s,      model.u)
-lg.interpolate(v_s,      model.v)
-lg.interpolate(w_s,      model.w)
+lg.interpolate(ub_s,     model.u)
+lg.interpolate(vb_s,     model.v)
+lg.interpolate(wb_s,     model.w)
+lg.interpolate(us_s,     us)
+lg.interpolate(vs_s,     vs)
+lg.interpolate(ws_s,     ws)
 lg.interpolate(Mb_s,     model.Mb)
 lg.interpolate(W_s,      model.W)
 lg.interpolate(adot_s,   adot)
 lg.interpolate(qgeo_s,   q_geo)
 lg.interpolate(U_ob_s,   U_ob)
 lg.interpolate(Ubar_s,   model.Ubar)
-lg.interpolate(tau_dn_s, tau_dn)
-lg.interpolate(tau_dt_s, tau_dt)
-lg.interpolate(tau_nn_s, tau_nn)
-lg.interpolate(tau_nt_s, tau_nt)
-lg.interpolate(tau_nz_s, tau_nz)
-lg.interpolate(tau_tn_s, tau_tn)
-lg.interpolate(tau_tt_s, tau_tt)
-lg.interpolate(tau_tz_s, tau_tz)
+lg.interpolate(etabar_s, model.etabar)
+lg.interpolate(ubar_s,   model.ubar)
+lg.interpolate(vbar_s,   model.vbar)
+lg.interpolate(tau_id_s, tau_id)
+lg.interpolate(tau_jd_s, tau_jd)
+lg.interpolate(tau_ii_s, tau_ii)
+lg.interpolate(tau_ij_s, tau_ij)
+lg.interpolate(tau_iz_s, tau_iz)
+lg.interpolate(tau_ji_s, tau_ji)
+lg.interpolate(tau_jj_s, tau_jj)
+lg.interpolate(tau_jz_s, tau_jz)
+lg.interpolate(mask_s,   mask)
 
-XDMFFile(submesh.mpi_comm(),  out_dir + 'submesh.xdmf') << submesh
+XDMFFile(submesh.mpi_comm(), out_dir + 'submesh.xdmf') << submesh
 
-File(out_dir + 'beta_s.xml')    << beta_s
-File(out_dir + 'Mb_s.xml')      << Mb_s
-File(out_dir + 'W_s.xml')       << W_s
-File(out_dir + 'Tb_s.xml')      << Tb_s
-File(out_dir + 'Ts_s.xml')      << Ts_s
-File(out_dir + 'S_s.xml')       << S_s
-File(out_dir + 'B_s.xml')       << B_s
-File(out_dir + 'u_s.xml')       << u_s
-File(out_dir + 'v_s.xml')       << v_s
-File(out_dir + 'w_s.xml')       << w_s
-File(out_dir + 'adot_s.xml')    << adot_s
-File(out_dir + 'qgeo_s.xml')    << qgeo_s
-File(out_dir + 'U_ob_s.xml')    << U_ob_s
-File(out_dir + 'Ubar_s.xml')    << Ubar_s
-File(out_dir + 'tau_dn_s.xml')  << tau_dn_s
-File(out_dir + 'tau_dt_s.xml')  << tau_dt_s
-File(out_dir + 'tau_nn_s.xml')  << tau_nn_s
-File(out_dir + 'tau_nt_s.xml')  << tau_nt_s
-File(out_dir + 'tau_nz_s.xml')  << tau_nz_s
-File(out_dir + 'tau_tn_s.xml')  << tau_tn_s
-File(out_dir + 'tau_tt_s.xml')  << tau_tt_s
-File(out_dir + 'tau_tz_s.xml')  << tau_tz_s
+model.save_xml(beta_s,   'beta_s')
+model.save_xml(Tb_s,     'Tb_s')
+model.save_xml(Ts_s,     'Ts_s')
+model.save_xml(S_s,      'S_s')
+model.save_xml(B_s,      'B_s')
+model.save_xml(ub_s,     'ub_s')
+model.save_xml(vb_s,     'vb_s')
+model.save_xml(wb_s,     'wb_s')
+model.save_xml(us_s,     'us_s')
+model.save_xml(vs_s,     'vs_s')
+model.save_xml(ws_s,     'ws_s')
+model.save_xml(Mb_s,     'Mb_s')
+model.save_xml(W_s,      'W_s')
+model.save_xml(adot_s,   'adot_s')
+model.save_xml(qgeo_s,   'qgeo_s')
+model.save_xml(U_ob_s,   'U_ob_s')
+model.save_xml(Ubar_s,   'Ubar_s')
+model.save_xml(etabar_s, 'etabar_s')
+model.save_xml(ubar_s,   'ubar_s')
+model.save_xml(vbar_s,   'vbar_s')
+model.save_xml(tau_id_s, 'tau_id_s')
+model.save_xml(tau_jd_s, 'tau_jd_s')
+model.save_xml(tau_ii_s, 'tau_ii_s')
+model.save_xml(tau_ij_s, 'tau_ij_s')
+model.save_xml(tau_iz_s, 'tau_iz_s')
+model.save_xml(tau_ji_s, 'tau_ji_s')
+model.save_xml(tau_jj_s, 'tau_jj_s')
+model.save_xml(tau_jz_s, 'tau_jz_s')
+model.save_xml(mask_s,   'mask_s')
 
 
 

@@ -5,8 +5,8 @@ from scipy.special     import fdtrc
 from scipy.sparse      import diags
 from scipy.interpolate import interp1d
 
-import os
 import sys
+import os
 
 from fenics                    import *
 from pylab                     import *
@@ -91,10 +91,10 @@ def glm(x,y,w=1.0):
   sea    = sqrt(varA)             # vector of standard errors for alpha hat
   t_a    = ahat / sea
   pval   = t.sf(abs(t_a), dof) * 2
-  conf   = 0.95                      # 95% confidence interval
-  tbonf  = t.ppf((1 - conf/p), dof)  # bonferroni corrected t-value
-  ci     = tbonf*sea                 # confidence interval for ahat
-  resid  = (y - mu)                  # 'working' residual
+  conf   = 0.95                        # 95% confidence interval
+  tbonf  = t.ppf((1 - conf/p), dof)    # bonferroni corrected t-value
+  ci     = tbonf*sea                   # confidence interval for ahat
+  resid  = (y - mu)                    # 'working' residual
                                        
   RSS    = sum((y - mu)**2)            # residual sum of squares
   TSS    = sum((y - mean(y))**2)       # total sum of squares
@@ -140,7 +140,10 @@ else:
 
 print file_n
 
-dirs = ['images/stats/' + file_n, 'dat/' + file_n]
+a_fn = 'images/stats/' + file_n + 'antarctica/'
+g_fn = 'images/stats/' + file_n + 'greenland/'
+
+dirs = [a_fn, g_fn, 'dat/' + file_n]
 
 for di in dirs:
   if not os.path.exists(di):
@@ -150,153 +153,327 @@ for di in dirs:
 #===============================================================================
 # get the data from the model output on the bed :
 
-in_dir  = 'dump/bed/09/'
-out_dir = 'dump/linear_model/09/'
+a_in_dir  = '../antarctica/dump/bed/07/'
+g_in_dir  = '../greenland/dump/bed/09/'
 
-mesh  = Mesh(in_dir + 'submesh.xdmf')
-Q     = FunctionSpace(mesh, 'CG', 1)
+#===============================================================================
+# antarctica :
 
-S      = Function(Q)
-B      = Function(Q)
-adot   = Function(Q)
-qgeo   = Function(Q)
-beta   = Function(Q)
-Mb     = Function(Q)
-Tb     = Function(Q)
-Ts     = Function(Q)
-u      = Function(Q)
-v      = Function(Q)
-w      = Function(Q)
-Ubar5  = Function(Q)
-Ubar10 = Function(Q)
-Ubar20 = Function(Q)
-U_ob   = Function(Q)
-tau_id = Function(Q)
-tau_jd = Function(Q)
-tau_ii = Function(Q)
-tau_ij = Function(Q)
-tau_iz = Function(Q)
-tau_ji = Function(Q)
-tau_jj = Function(Q)
-tau_jz = Function(Q)
-mask   = Function(Q)
+a_mesh  = Mesh(a_in_dir + 'submesh.xdmf')
+a_Q     = FunctionSpace(a_mesh, 'CG', 1)
 
-File(in_dir + 'S_s.xml')    >> S
-File(in_dir + 'B_s.xml')    >> B
-File(in_dir + 'adot_s.xml') >> adot
-File(in_dir + 'qgeo_s.xml') >> qgeo
-File(in_dir + 'beta_s.xml') >> beta
-File(in_dir + 'Mb_s.xml')   >> Mb
-File(in_dir + 'Tb_s.xml')   >> Tb
-File(in_dir + 'Ts_s.xml')   >> Ts
-File(in_dir + 'ub_s.xml')   >> u
-File(in_dir + 'vb_s.xml')   >> v
-File(in_dir + 'wb_s.xml')   >> w
-File(in_dir + 'bv/Ubar_5.xml')  >> Ubar5
-File(in_dir + 'bv/Ubar_10.xml') >> Ubar10
-File(in_dir + 'bv/Ubar_20.xml') >> Ubar20
-File(in_dir + 'U_ob_s.xml') >> U_ob
+a_S      = Function(a_Q)
+a_B      = Function(a_Q)
+a_adot   = Function(a_Q)
+a_qgeo   = Function(a_Q)
+a_beta   = Function(a_Q)
+a_Mb     = Function(a_Q)
+a_Tb     = Function(a_Q)
+a_Ts     = Function(a_Q)
+a_u      = Function(a_Q)
+a_v      = Function(a_Q)
+a_w      = Function(a_Q)
+a_Ubar5  = Function(a_Q)
+a_Ubar10 = Function(a_Q)
+a_Ubar20 = Function(a_Q)
+a_U_ob   = Function(a_Q)
+a_tau_id = Function(a_Q)
+a_tau_jd = Function(a_Q)
+a_tau_ii = Function(a_Q)
+a_tau_ij = Function(a_Q)
+a_tau_iz = Function(a_Q)
+a_tau_ji = Function(a_Q)
+a_tau_jj = Function(a_Q)
+a_tau_jz = Function(a_Q)
+a_mask   = Function(a_Q)
 
-File(in_dir + 'tau_id_s.xml') >> tau_id
-File(in_dir + 'tau_jd_s.xml') >> tau_jd
-File(in_dir + 'tau_ii_s.xml') >> tau_ii
-File(in_dir + 'tau_ij_s.xml') >> tau_ij
-File(in_dir + 'tau_iz_s.xml') >> tau_iz
-File(in_dir + 'tau_ji_s.xml') >> tau_ji
-File(in_dir + 'tau_jj_s.xml') >> tau_jj
-File(in_dir + 'tau_jz_s.xml') >> tau_jz
-File(in_dir + 'mask_s.xml')   >> mask
+File(a_in_dir + 'S_s.xml')    >> a_S
+File(a_in_dir + 'B_s.xml')    >> a_B
+File(a_in_dir + 'adot_s.xml') >> a_adot
+File(a_in_dir + 'qgeo_s.xml') >> a_qgeo
+File(a_in_dir + 'beta_s.xml') >> a_beta
+File(a_in_dir + 'Mb_s.xml')   >> a_Mb
+File(a_in_dir + 'Tb_s.xml')   >> a_Tb
+File(a_in_dir + 'Ts_s.xml')   >> a_Ts
+File(a_in_dir + 'ub_s.xml')   >> a_u
+File(a_in_dir + 'vb_s.xml')   >> a_v
+File(a_in_dir + 'wb_s.xml')   >> a_w
+File(a_in_dir + 'bv/Ubar_5.xml')  >> a_Ubar5
+File(a_in_dir + 'bv/Ubar_10.xml') >> a_Ubar10
+File(a_in_dir + 'bv/Ubar_20.xml') >> a_Ubar20
+File(a_in_dir + 'U_ob_s.xml') >> a_U_ob
 
-dSdx   = project(S.dx(0), Q)
-dSdy   = project(S.dx(1), Q)
+File(a_in_dir + 'tau_id_s.xml') >> a_tau_id
+File(a_in_dir + 'tau_jd_s.xml') >> a_tau_jd
+File(a_in_dir + 'tau_ii_s.xml') >> a_tau_ii
+File(a_in_dir + 'tau_ij_s.xml') >> a_tau_ij
+File(a_in_dir + 'tau_iz_s.xml') >> a_tau_iz
+File(a_in_dir + 'tau_ji_s.xml') >> a_tau_ji
+File(a_in_dir + 'tau_jj_s.xml') >> a_tau_jj
+File(a_in_dir + 'tau_jz_s.xml') >> a_tau_jz
+File(a_in_dir + 'mask_s.xml')   >> a_mask
+
+a_dSdx   = project(a_S.dx(0), a_Q)
+a_dSdy   = project(a_S.dx(1), a_Q)
                           
-dBdx   = project(B.dx(0), Q)
-dBdy   = project(B.dx(1), Q)
+a_dBdx   = project(a_B.dx(0), a_Q)
+a_dBdy   = project(a_B.dx(1), a_Q)
 
 # vectors :
-beta_v = beta.vector().array()
-S_v    = S.vector().array()
-B_v    = B.vector().array()
-adot_v = adot.vector().array()
-qgeo_v = qgeo.vector().array()
-Mb_v   = Mb.vector().array()
-Tb_v   = Tb.vector().array()
-Ts_v   = Ts.vector().array()
-u_v    = u.vector().array()
-v_v    = v.vector().array()
-w_v    = w.vector().array()
-Ubar5_v  = Ubar5.vector().array()
-Ubar10_v = Ubar10.vector().array()
-Ubar20_v = Ubar20.vector().array()
-U_ob_v = U_ob.vector().array()
-tau_id_v = tau_id.vector().array()
-tau_jd_v = tau_jd.vector().array()
-tau_ii_v = tau_ii.vector().array()
-tau_ij_v = tau_ij.vector().array()
-tau_iz_v = tau_iz.vector().array()
-tau_ji_v = tau_ji.vector().array()
-tau_jj_v = tau_jj.vector().array()
-tau_jz_v = tau_jz.vector().array()
-mask_v   = mask.vector().array()
+a_beta_v   = a_beta.vector().array()
+a_S_v      = a_S.vector().array()
+a_B_v      = a_B.vector().array()
+a_adot_v   = a_adot.vector().array()
+a_qgeo_v   = a_qgeo.vector().array()
+a_Mb_v     = a_Mb.vector().array()
+a_Tb_v     = a_Tb.vector().array()
+a_Ts_v     = a_Ts.vector().array()
+a_u_v      = a_u.vector().array()
+a_v_v      = a_v.vector().array()
+a_w_v      = a_w.vector().array()
+a_Ubar5_v  = a_Ubar5.vector().array()
+a_Ubar10_v = a_Ubar10.vector().array()
+a_Ubar20_v = a_Ubar20.vector().array()
+a_U_ob_v   = a_U_ob.vector().array()
+a_tau_id_v = a_tau_id.vector().array()
+a_tau_jd_v = a_tau_jd.vector().array()
+a_tau_ii_v = a_tau_ii.vector().array()
+a_tau_ij_v = a_tau_ij.vector().array()
+a_tau_iz_v = a_tau_iz.vector().array()
+a_tau_ji_v = a_tau_ji.vector().array()
+a_tau_jj_v = a_tau_jj.vector().array()
+a_tau_jz_v = a_tau_jz.vector().array()
+a_mask_v   = a_mask.vector().array()
 
-H_v    = S_v - B_v
-U_mag  = sqrt(u_v**2 + v_v**2 + w_v**2 + 1e-16)
-dSdx_v = dSdx.vector().array()
-dSdy_v = dSdy.vector().array()
-gradS  = sqrt(dSdx_v**2 + dSdy_v**2 + 1e-16)
-dBdx_v = dBdx.vector().array()
-dBdy_v = dBdy.vector().array()
-gradB  = sqrt(dBdx_v**2 + dBdy_v**2 + 1e-16)
-D      = zeros(len(B_v))
-D[B_v < 0] = B_v[B_v < 0]
+a_H_v    = a_S_v - a_B_v
+a_U_mag  = sqrt(a_u_v**2 + a_v_v**2 + a_w_v**2 + 1e-16)
+a_dSdx_v = a_dSdx.vector().array()
+a_dSdy_v = a_dSdy.vector().array()
+a_gradS  = sqrt(a_dSdx_v**2 + a_dSdy_v**2 + 1e-16)
+a_dBdx_v = a_dBdx.vector().array()
+a_dBdy_v = a_dBdy.vector().array()
+a_gradB  = sqrt(a_dBdx_v**2 + a_dBdy_v**2 + 1e-16)
+a_D      = zeros(len(a_B_v))
+a_D[a_B_v < 0] = a_B_v[a_B_v < 0]
 
-Ubar_avg = (Ubar5_v + Ubar10_v + Ubar20_v) / 3.0
-ini      = sqrt(917.0 * 9.8 * H_v * gradS / (Ubar_avg + 0.1))
+a_Ubar_avg = (a_Ubar5_v + a_Ubar10_v + a_Ubar20_v) / 3.0
+a_ini      = sqrt(917.0 * 9.8 * a_H_v * a_gradS / (a_Ubar5_v + 0.1))
 
 # areas of cells for weighting :
-h_v  = project(CellSize(mesh), Q).vector().array()
+a_h_v  = project(CellSize(a_mesh), a_Q).vector().array()
+
+# number of dofs :
+a_n = len(a_beta_v)
+
+#===============================================================================
+# greenland :
+
+g_mesh  = Mesh(g_in_dir + 'submesh.xdmf')
+g_Q     = FunctionSpace(g_mesh, 'CG', 1)
+
+g_S      = Function(g_Q)
+g_B      = Function(g_Q)
+g_adot   = Function(g_Q)
+g_qgeo   = Function(g_Q)
+g_beta   = Function(g_Q)
+g_Mb     = Function(g_Q)
+g_Tb     = Function(g_Q)
+g_Ts     = Function(g_Q)
+g_u      = Function(g_Q)
+g_v      = Function(g_Q)
+g_w      = Function(g_Q)
+g_Ubar5  = Function(g_Q)
+g_Ubar10 = Function(g_Q)
+g_Ubar20 = Function(g_Q)
+g_U_ob   = Function(g_Q)
+g_tau_id = Function(g_Q)
+g_tau_jd = Function(g_Q)
+g_tau_ii = Function(g_Q)
+g_tau_ij = Function(g_Q)
+g_tau_iz = Function(g_Q)
+g_tau_ji = Function(g_Q)
+g_tau_jj = Function(g_Q)
+g_tau_jz = Function(g_Q)
+g_mask   = Function(g_Q)
+
+File(g_in_dir + 'S_s.xml')    >> g_S
+File(g_in_dir + 'B_s.xml')    >> g_B
+File(g_in_dir + 'adot_s.xml') >> g_adot
+File(g_in_dir + 'qgeo_s.xml') >> g_qgeo
+File(g_in_dir + 'beta_s.xml') >> g_beta
+File(g_in_dir + 'Mb_s.xml')   >> g_Mb
+File(g_in_dir + 'Tb_s.xml')   >> g_Tb
+File(g_in_dir + 'Ts_s.xml')   >> g_Ts
+File(g_in_dir + 'ub_s.xml')   >> g_u
+File(g_in_dir + 'vb_s.xml')   >> g_v
+File(g_in_dir + 'wb_s.xml')   >> g_w
+File(g_in_dir + 'bv/Ubar_5.xml')  >> g_Ubar5
+File(g_in_dir + 'bv/Ubar_10.xml') >> g_Ubar10
+File(g_in_dir + 'bv/Ubar_20.xml') >> g_Ubar20
+File(g_in_dir + 'U_ob_s.xml') >> g_U_ob
+
+File(g_in_dir + 'tau_id_s.xml') >> g_tau_id
+File(g_in_dir + 'tau_jd_s.xml') >> g_tau_jd
+File(g_in_dir + 'tau_ii_s.xml') >> g_tau_ii
+File(g_in_dir + 'tau_ij_s.xml') >> g_tau_ij
+File(g_in_dir + 'tau_iz_s.xml') >> g_tau_iz
+File(g_in_dir + 'tau_ji_s.xml') >> g_tau_ji
+File(g_in_dir + 'tau_jj_s.xml') >> g_tau_jj
+File(g_in_dir + 'tau_jz_s.xml') >> g_tau_jz
+File(g_in_dir + 'mask_s.xml')   >> g_mask
+
+g_dSdx   = project(g_S.dx(0), g_Q)
+g_dSdy   = project(g_S.dx(1), g_Q)
+
+g_dBdx   = project(g_B.dx(0), g_Q)
+g_dBdy   = project(g_B.dx(1), g_Q)
+
+# vectors :
+g_beta_v   = g_beta.vector().array()
+g_S_v      = g_S.vector().array()
+g_B_v      = g_B.vector().array()
+g_adot_v   = g_adot.vector().array()
+g_qgeo_v   = g_qgeo.vector().array()
+g_Mb_v     = g_Mb.vector().array()
+g_Tb_v     = g_Tb.vector().array()
+g_Ts_v     = g_Ts.vector().array()
+g_u_v      = g_u.vector().array()
+g_v_v      = g_v.vector().array()
+g_w_v      = g_w.vector().array()
+g_Ubar5_v  = g_Ubar5.vector().array()
+g_Ubar10_v = g_Ubar10.vector().array()
+g_Ubar20_v = g_Ubar20.vector().array()
+g_U_ob_v   = g_U_ob.vector().array()
+g_tau_id_v = g_tau_id.vector().array()
+g_tau_jd_v = g_tau_jd.vector().array()
+g_tau_ii_v = g_tau_ii.vector().array()
+g_tau_ij_v = g_tau_ij.vector().array()
+g_tau_iz_v = g_tau_iz.vector().array()
+g_tau_ji_v = g_tau_ji.vector().array()
+g_tau_jj_v = g_tau_jj.vector().array()
+g_tau_jz_v = g_tau_jz.vector().array()
+g_mask_v   = g_mask.vector().array()
+
+g_H_v    = g_S_v - g_B_v
+g_U_mag  = sqrt(g_u_v**2 + g_v_v**2 + g_w_v**2 + 1e-16)
+g_dSdx_v = g_dSdx.vector().array()
+g_dSdy_v = g_dSdy.vector().array()
+g_gradS  = sqrt(g_dSdx_v**2 + g_dSdy_v**2 + 1e-16)
+g_dBdx_v = g_dBdx.vector().array()
+g_dBdy_v = g_dBdy.vector().array()
+g_gradB  = sqrt(g_dBdx_v**2 + g_dBdy_v**2 + 1e-16)
+g_D      = zeros(len(g_B_v))
+g_D[g_B_v < 0] = g_B_v[g_B_v < 0]
+
+g_Ubar_avg = (g_Ubar5_v + g_Ubar10_v + g_Ubar20_v) / 3.0
+g_ini      = sqrt(917.0 * 9.8 * g_H_v * g_gradS / (g_Ubar5_v + 0.1))
+
+# areas of cells for weighting :
+g_h_v  = project(CellSize(g_mesh), g_Q).vector().array()
+
+# number of dofs :
+g_n = len(g_beta_v)
+
+#===============================================================================
+# indicies for each ice sheet :
+
+a_indicies = arange(a_n)
+g_indicies = arange(a_n, g_n + a_n)
+
+#===============================================================================
+# combined :
+
+beta_v    = hstack((a_beta_v,   g_beta_v  ))
+S_v       = hstack((a_S_v,      g_S_v     )) 
+B_v       = hstack((a_B_v,      g_B_v     )) 
+Ts_v      = hstack((a_Ts_v,     g_Ts_v    ))
+gradS     = hstack((a_gradS,    g_gradS   ))
+D         = hstack((a_D,        g_D       ))
+gradB     = hstack((a_gradB,    g_gradB   ))
+H_v       = hstack((a_H_v,      g_H_v     ))
+qgeo_v    = hstack((a_qgeo_v,   g_qgeo_v  ))
+adot_v    = hstack((a_adot_v,   g_adot_v  ))
+Tb_v      = hstack((a_Tb_v,     g_Tb_v    ))
+Mb_v      = hstack((a_Mb_v,     g_Mb_v    ))
+u_v       = hstack((a_u_v,      g_u_v     ))
+v_v       = hstack((a_v_v,      g_v_v     ))
+w_v       = hstack((a_w_v,      g_w_v     ))
+Ubar5_v   = hstack((a_Ubar5_v,  g_Ubar5_v ))
+Ubar10_v  = hstack((a_Ubar10_v, g_Ubar10_v))
+Ubar20_v  = hstack((a_Ubar20_v, g_Ubar20_v))
+U_ob_v    = hstack((a_U_ob_v,   g_U_ob_v  ))
+U_mag     = hstack((a_U_mag,    g_U_mag   ))
+tau_id_v  = hstack((a_tau_id_v, g_tau_id_v))
+tau_jd_v  = hstack((a_tau_jd_v, g_tau_jd_v))
+tau_ii_v  = hstack((a_tau_ii_v, g_tau_ii_v))
+tau_ij_v  = hstack((a_tau_ij_v, g_tau_ij_v))
+tau_iz_v  = hstack((a_tau_iz_v, g_tau_iz_v))
+tau_ji_v  = hstack((a_tau_ji_v, g_tau_ji_v))
+tau_jj_v  = hstack((a_tau_jj_v, g_tau_jj_v))
+tau_jz_v  = hstack((a_tau_jz_v, g_tau_jz_v))
+ini       = hstack((a_ini,      g_ini     ))
+mask_v    = hstack((a_mask_v,   g_mask_v  ))
+h_v       = hstack((a_h_v,      g_h_v     ))
+
 
 #===============================================================================
 # remove areas with garbage data :
 valid  = where(mask_v < 1.0)[0]
-valid  = intersect1d(valid, where(beta_v > 1e-14)[0])
+valid  = intersect1d(valid, where(S_v > 0.0)[0])
 valid  = intersect1d(valid, where(beta_v < 1000)[0])
+valid  = intersect1d(valid, where(beta_v > 1e-14)[0])
 if sys.argv[2] == 'limited':
   valid  = intersect1d(valid, where(U_mag > 20)[0])
 else:
   valid  = intersect1d(valid, where(U_mag > 0)[0])
 valid  = intersect1d(valid, where(U_ob_v > 1e-9)[0])
-valid  = intersect1d(valid, where(abs(Mb_v) < 200)[0])
-valid  = intersect1d(valid, where(S_v > -100)[0])
 valid  = intersect1d(valid, where(Ts_v > 100)[0])
 valid  = intersect1d(valid, where(h_v > 0)[0])
 valid  = intersect1d(valid, where(S_v - B_v > 10)[0])
+#valid  = intersect1d(valid, where(gradS < 0.05)[0])
+#valid  = intersect1d(valid, where(gradB < 0.2)[0])
+#valid  = intersect1d(valid, where(Mb_v < 0.04)[0])
+#valid  = intersect1d(valid, where(Mb_v > 0.0)[0])
+#valid  = intersect1d(valid, where(adot_v < 1.2)[0])
+#valid  = intersect1d(valid, where(adot_v > -1.0)[0])
 
-valid_f          = Function(Q)
-valid_f_v        = valid_f.vector().array()
-valid_f_v[valid] = 1.0
-valid_f.vector().set_local(valid_f_v)
-valid_f.vector().apply('insert')
+#===============================================================================
+# individual regions for plotting :
+
+a_valid = intersect1d(a_indicies, valid)
+g_valid = intersect1d(g_indicies, valid) - a_n
+
+# to convert to fenics functions for plotting : 
+a_conv  = arange(len(a_valid))
+g_conv  = arange(len(a_valid), len(g_valid) + len(a_valid))
+
+a_valid_f            = Function(a_Q)
+a_valid_f_v          = a_valid_f.vector().array()
+a_valid_f_v[a_valid] = 1.0
+a_valid_f.vector().set_local(a_valid_f_v)
+a_valid_f.vector().apply('insert')
+
+g_valid_f            = Function(g_Q)
+g_valid_f_v          = g_valid_f.vector().array()
+g_valid_f_v[g_valid] = 1.0
+g_valid_f.vector().set_local(g_valid_f_v)
+g_valid_f.vector().apply('insert')
+
+measures = DataFactory.get_ant_measures(res=900)
+dm       = DataInput(measures, gen_space=False)
 
 rignot   = DataFactory.get_gre_rignot()
 drg      = DataInput(rignot, gen_space=False)
 
 betaMax = 200.0
 
-ini_f = Function(Q)
-ini_f.vector()[:] = ini
-plotIce(drg, ini_f, name='ini', direc='images/stats/' + file_n,
-        cmap='gist_yarg', scale='log', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False, umin=1.0, umax=betaMax)
+#===============================================================================
 
-Ubar_avg_f = Function(Q)
-Ubar_avg_f.vector()[:] = Ubar_avg
-plotIce(drg, Ubar_avg_f, name='Ubar_avg', direc='images/stats/' + file_n,
-        title=r'$\Vert \mathbf{\bar{u}}_{\bar{bv}} \Vert$', cmap='gist_yarg', 
-        scale='log', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False, umin=1.0, umax=4000.0)
+plotIce(dm, a_valid_f, name='valid', direc=a_fn,
+        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
+        tpAlpha=0.5, show=False)
 
-plotIce(drg, valid_f, name='valid', direc='images/stats/' + file_n,
+plotIce(drg, g_valid_f, name='valid', direc=g_fn,
         cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
         tpAlpha=0.5, show=False)
 
@@ -309,7 +486,6 @@ wt       = n * h_v / A
 beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 
 #===============================================================================
-
 #g_data = [log(g_beta_v + 1), g_S_v, g_B_v, g_H_v, g_adot_v, g_Mb_v, 
 #          g_Tb_v, g_Ts_v, log(g_Ubar_v + 1), g_qbar_v, g_u_v, 
 #          g_v_v, g_w_v, log(g_U_mag + 1), sqrt(g_gradS + 1), sqrt(g_gradB + 1)]
@@ -326,7 +502,7 @@ beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 #         r'$T_S$', 
 #         r'$T_B$', 
 #         r'$M_B$', 
-#         r'$\Vert \bar{\mathbf{u}} \Vert$',
+#         r'$\Vert \bar{\mathbf{u}_{bv}} \Vert$',
 #         r'$u$', 
 #         r'$v$', 
 #         r'$w$', 
@@ -341,7 +517,7 @@ beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 #  ax.set_ylabel(r'$n$')
 #  ax.grid()
 #fn = 'images/greenland_data.png'
-#savefig(fn, dpi=100)
+##savefig(fn, dpi=100)
 #show()
 
 #===============================================================================
@@ -457,7 +633,7 @@ elif sys.argv[1] == 'no_Mb':
 
 # independent only :
 elif sys.argv[1] == 'ind_only':
-  index  = [0,1,2,4,5,7,13,14,15,25]
+  index  = [0,1,2,4,5,7,13,25]
 
 ii     = index
 ii_int = []
@@ -503,7 +679,7 @@ ex_n.insert(0, '$\mathbf{1}$')
  
 #show()
 
-#===============================================================================
+#==============================================================================
 # plot beta distribution and lognorm fit :
 
 ln_fit   = lognorm.fit(y)
@@ -517,7 +693,7 @@ ax.hist(y, 300, histtype='stepfilled', color='k', alpha=0.5, normed=True,
         label=r'$\beta$')
 ax.plot(g_x, ln_freq, lw=2.0, color='r', label=r'$\mathrm{LogNorm}$')
 ax.set_xlim([0,200])
-#ax.set_ylim([0,0.025])
+#ax.set_ylim([0,0.020])
 ax.set_xlabel(r'$\beta$')
 ax.set_ylabel('Frequency')
 ax.legend(loc='upper right')
@@ -539,25 +715,31 @@ yhat  = out['yhat']
 resid = out['resid']
 ahat  = out['ahat']
 ci    = out['ci']
+
+a_yhat_f = Function(a_Q)
+a_resi_f = Function(a_Q)
+a_yhat_f.vector()[a_valid] = yhat[a_conv]
+a_resi_f.vector()[a_valid] = resid[a_conv]
   
-yhat_f = Function(Q)
-y_f    = Function(Q)
-resi_f = Function(Q)
+g_yhat_f = Function(g_Q)
+g_resi_f = Function(g_Q)
+g_yhat_f.vector()[g_valid] = yhat[g_conv]
+g_resi_f.vector()[g_valid] = resid[g_conv]
 
-yhat_f.vector()[valid] = yhat
-y_f.vector()[valid] = y
-resi_f.vector()[valid] = resid
-
-plotIce(drg, yhat_f, name='GLM_beta', direc='images/stats/' + file_n, 
-        title=r'$\hat{\beta}$', cmap='gist_yarg', scale='log', 
+plotIce(dm, a_yhat_f, name='GLM_beta', direc=a_fn, 
+        title=r'$\hat{\beta}$', cmap='gist_yarg', scale='log', extend='max',
         umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5, show=False)
 
-plotIce(drg, y_f, name='beta', direc='images/stats/' + file_n, 
-        title=r'$\beta$', cmap='gist_yarg', scale='log', 
+plotIce(dm, a_resi_f, name='GLM_resid', direc=a_fn, 
+        title=r'$d$', cmap='RdGy', scale='lin', extend='both', 
+        umin=-50, umax=50, numLvls=13, tp=False, tpAlpha=0.5, show=False)
+
+plotIce(drg, g_yhat_f, name='GLM_beta', direc=g_fn, 
+        title=r'$\hat{\beta}$', cmap='gist_yarg', scale='log', extend='max',
         umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5, show=False)
 
-plotIce(drg, resi_f, name='GLM_resid', direc='images/stats/' + file_n, 
-        title=r'$d$', cmap='RdGy', scale='lin', 
+plotIce(drg, g_resi_f, name='GLM_resid', direc=g_fn, 
+        title=r'$d$', cmap='RdGy', scale='lin', extend='both',
         umin=-50, umax=50, numLvls=13, tp=False, tpAlpha=0.5, show=False)
 
 #===============================================================================
@@ -587,6 +769,12 @@ close(fig)
 fig = figure(figsize=(12,5))
 ax1 = fig.add_subplot(121)
 ax2 = fig.add_subplot(122)
+
+#rtol  = 30
+#Xr    = array(X)
+#Xr    = Xr[:, resid < rtol]
+#yhat  = yhat[resid < rtol]
+#resid = resid[resid < rtol]
 
 # Normal quantile plot of residuals
 ((osm,osr), (m, b, r)) = probplot(resid)
@@ -632,8 +820,8 @@ ax.set_yscale('log')
 ax.set_xlim([0, len(out['dev_a'])-1])
 ax.grid()
 ax.legend()
-tight_layout()
 fn = 'images/stats/' + file_n + 'GLM_newton_resid.png'
+tight_layout()
 savefig(fn, dpi=100)
 #show()
 close(fig)
@@ -749,23 +937,33 @@ while exterminated > 0:
   resid_n = out_n['resid']
   ahat_n  = out_n['ahat']
   ci_n    = out_n['ci']
+
+  a_yhat_f = Function(a_Q)
+  a_resi_f = Function(a_Q)
+  a_yhat_f.vector()[a_valid] = yhat_n[a_conv]
+  a_resi_f.vector()[a_valid] = resid_n[a_conv]
     
-  yhat_f = Function(Q)
-  resi_f = Function(Q)
+  g_yhat_f = Function(g_Q)
+  g_resi_f = Function(g_Q)
+  g_yhat_f.vector()[g_valid] = yhat_n[g_conv]
+  g_resi_f.vector()[g_valid] = resid_n[g_conv]
   
-  yhat_f.vector()[valid] = yhat_n
-  resi_f.vector()[valid] = resid_n
+  plotIce(dm, a_yhat_f, name='GLM_beta_reduced', direc=a_fn, 
+          title=r'$\hat{\beta}$', cmap='gist_yarg', scale='log', 
+          umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5, show=False)
   
-  plotIce(drg, yhat_f, name='GLM_beta_reduced',
-          direc='images/stats/' + file_n, title=r'$\hat{\beta}$',
-          cmap='gist_yarg', scale='log', umin=1.0, umax=betaMax, 
-          numLvls=12, tp=False, tpAlpha=0.5, show=False)
+  plotIce(dm, a_resi_f, name='GLM_resid_reduced', direc=a_fn, 
+          title=r'$d$', cmap='RdGy', scale='lin', 
+          umin=-50, umax=50, numLvls=13, tp=False, tpAlpha=0.5, show=False)
   
-  plotIce(drg, resi_f, name='GLM_resid_reduced',
-          direc='images/stats/' + file_n, title=r'$d$',
-          cmap='RdGy', scale='lin', umin=-50, umax=50,
-          numLvls=13, tp=False, tpAlpha=0.5, show=False)
+  plotIce(drg, g_yhat_f, name='GLM_beta_reduced', direc=g_fn, 
+          title=r'$\hat{\beta}$', cmap='gist_yarg', scale='log', 
+          umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5, show=False)
   
+  plotIce(drg, g_resi_f, name='GLM_resid_reduced', direc=g_fn, 
+          title=r'$d$', cmap='RdGy', scale='lin', 
+          umin=-50, umax=50, numLvls=13, tp=False, tpAlpha=0.5, show=False)
+    
   #=============================================================================
   # data analysis :
   
@@ -840,7 +1038,7 @@ while exterminated > 0:
     fn.write(strng % (n, al, a, ah))
   fn.write('\n')
   fn.close()
-  
+
   mu       = mean(yhat_n)                  # mean
   med      = median(yhat_n)                # median
   sigma    = std(yhat_n)                   # standard deviation
@@ -868,9 +1066,6 @@ while exterminated > 0:
   v = array(v)
   exterminated = len(ahat_n) - len(v)
   print "eliminated %i fields" % exterminated
-  
-
-
 
 
 

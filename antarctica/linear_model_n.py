@@ -5,8 +5,8 @@ from scipy.special     import fdtrc
 from scipy.sparse      import diags
 from scipy.interpolate import interp1d
 
-import os
 import sys
+import os
 
 from fenics                    import *
 from pylab                     import *
@@ -91,10 +91,10 @@ def glm(x,y,w=1.0):
   sea    = sqrt(varA)             # vector of standard errors for alpha hat
   t_a    = ahat / sea
   pval   = t.sf(abs(t_a), dof) * 2
-  conf   = 0.95                      # 95% confidence interval
-  tbonf  = t.ppf((1 - conf/p), dof)  # bonferroni corrected t-value
-  ci     = tbonf*sea                 # confidence interval for ahat
-  resid  = (y - mu)                  # 'working' residual
+  conf   = 0.95                        # 95% confidence interval
+  tbonf  = t.ppf((1 - conf/p), dof)    # bonferroni corrected t-value
+  ci     = tbonf*sea                   # confidence interval for ahat
+  resid  = (y - mu)                    # 'working' residual
                                        
   RSS    = sum((y - mu)**2)            # residual sum of squares
   TSS    = sum((y - mean(y))**2)       # total sum of squares
@@ -150,8 +150,8 @@ for di in dirs:
 #===============================================================================
 # get the data from the model output on the bed :
 
-in_dir  = 'dump/bed/09/'
-out_dir = 'dump/linear_model/09/'
+in_dir  = 'dump/bed/07/'
+out_dir = 'dump/linear_model/07/'
 
 mesh  = Mesh(in_dir + 'submesh.xdmf')
 Q     = FunctionSpace(mesh, 'CG', 1)
@@ -278,25 +278,25 @@ valid_f_v[valid] = 1.0
 valid_f.vector().set_local(valid_f_v)
 valid_f.vector().apply('insert')
 
-rignot   = DataFactory.get_gre_rignot()
-drg      = DataInput(rignot, gen_space=False)
+measures = DataFactory.get_ant_measures(res=900)
+dm       = DataInput(measures, gen_space=False)
 
 betaMax = 200.0
 
 ini_f = Function(Q)
 ini_f.vector()[:] = ini
-plotIce(drg, ini_f, name='ini', direc='images/stats/' + file_n,
+plotIce(dm, ini_f, name='ini', direc='images/stats/' + file_n,
         cmap='gist_yarg', scale='log', numLvls=12, tp=False,
         tpAlpha=0.5, show=False, umin=1.0, umax=betaMax)
 
 Ubar_avg_f = Function(Q)
 Ubar_avg_f.vector()[:] = Ubar_avg
-plotIce(drg, Ubar_avg_f, name='Ubar_avg', direc='images/stats/' + file_n,
+plotIce(dm, Ubar_avg_f, name='Ubar_avg', direc='images/stats/' + file_n,
         title=r'$\Vert \mathbf{\bar{u}}_{\bar{bv}} \Vert$', cmap='gist_yarg', 
         scale='log', numLvls=12, tp=False,
         tpAlpha=0.5, show=False, umin=1.0, umax=4000.0)
 
-plotIce(drg, valid_f, name='valid', direc='images/stats/' + file_n,
+plotIce(dm, valid_f, name='valid', direc='images/stats/' + file_n,
         cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
         tpAlpha=0.5, show=False)
 
@@ -326,7 +326,7 @@ beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 #         r'$T_S$', 
 #         r'$T_B$', 
 #         r'$M_B$', 
-#         r'$\Vert \bar{\mathbf{u}} \Vert$',
+#         r'$\Vert \bar{\mathbf{u}_{bv}} \Vert$',
 #         r'$u$', 
 #         r'$v$', 
 #         r'$w$', 
@@ -503,7 +503,7 @@ ex_n.insert(0, '$\mathbf{1}$')
  
 #show()
 
-#===============================================================================
+#==============================================================================
 # plot beta distribution and lognorm fit :
 
 ln_fit   = lognorm.fit(y)
@@ -517,7 +517,7 @@ ax.hist(y, 300, histtype='stepfilled', color='k', alpha=0.5, normed=True,
         label=r'$\beta$')
 ax.plot(g_x, ln_freq, lw=2.0, color='r', label=r'$\mathrm{LogNorm}$')
 ax.set_xlim([0,200])
-#ax.set_ylim([0,0.025])
+#ax.set_ylim([0,0.015])
 ax.set_xlabel(r'$\beta$')
 ax.set_ylabel('Frequency')
 ax.legend(loc='upper right')
@@ -548,18 +548,18 @@ yhat_f.vector()[valid] = yhat
 y_f.vector()[valid] = y
 resi_f.vector()[valid] = resid
 
-plotIce(drg, yhat_f, name='GLM_beta', direc='images/stats/' + file_n, 
+plotIce(dm, yhat_f, name='GLM_beta', direc='images/stats/' + file_n, 
         title=r'$\hat{\beta}$', cmap='gist_yarg', scale='log', 
         umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5, show=False)
 
-plotIce(drg, y_f, name='beta', direc='images/stats/' + file_n, 
+plotIce(dm, y_f, name='beta', direc='images/stats/' + file_n, 
         title=r'$\beta$', cmap='gist_yarg', scale='log', 
         umin=1.0, umax=betaMax, numLvls=12, tp=False, tpAlpha=0.5, show=False)
 
-plotIce(drg, resi_f, name='GLM_resid', direc='images/stats/' + file_n, 
+plotIce(dm, resi_f, name='GLM_resid', direc='images/stats/' + file_n, 
         title=r'$d$', cmap='RdGy', scale='lin', 
         umin=-50, umax=50, numLvls=13, tp=False, tpAlpha=0.5, show=False)
-
+  
 #===============================================================================
 # data analysis :
 
@@ -632,8 +632,8 @@ ax.set_yscale('log')
 ax.set_xlim([0, len(out['dev_a'])-1])
 ax.grid()
 ax.legend()
-tight_layout()
 fn = 'images/stats/' + file_n + 'GLM_newton_resid.png'
+tight_layout()
 savefig(fn, dpi=100)
 #show()
 close(fig)
@@ -756,12 +756,12 @@ while exterminated > 0:
   yhat_f.vector()[valid] = yhat_n
   resi_f.vector()[valid] = resid_n
   
-  plotIce(drg, yhat_f, name='GLM_beta_reduced',
+  plotIce(dm, yhat_f, name='GLM_beta_reduced',
           direc='images/stats/' + file_n, title=r'$\hat{\beta}$',
           cmap='gist_yarg', scale='log', umin=1.0, umax=betaMax, 
           numLvls=12, tp=False, tpAlpha=0.5, show=False)
   
-  plotIce(drg, resi_f, name='GLM_resid_reduced',
+  plotIce(dm, resi_f, name='GLM_resid_reduced',
           direc='images/stats/' + file_n, title=r'$d$',
           cmap='RdGy', scale='lin', umin=-50, umax=50,
           numLvls=13, tp=False, tpAlpha=0.5, show=False)
@@ -840,7 +840,7 @@ while exterminated > 0:
     fn.write(strng % (n, al, a, ah))
   fn.write('\n')
   fn.close()
-  
+
   mu       = mean(yhat_n)                  # mean
   med      = median(yhat_n)                # median
   sigma    = std(yhat_n)                   # standard deviation
@@ -868,9 +868,6 @@ while exterminated > 0:
   v = array(v)
   exterminated = len(ahat_n) - len(v)
   print "eliminated %i fields" % exterminated
-  
-
-
 
 
 
