@@ -1,4 +1,3 @@
-import varglas.physical_constants as pc
 import varglas.model              as model
 from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
@@ -35,7 +34,6 @@ model = model.Model()
 model.set_mesh(mesh)
 model.calculate_boundaries(mask=M, adot=adot)
 model.set_geometry(S, B, deform=True)
-model.set_parameters(pc.IceParameters())
 
 adot     = interpolate(adot, model.Q)
 mask     = interpolate(M,    model.Q)

@@ -43,8 +43,8 @@ def glm(x,y,w=1.0):
 
   # Newton-Raphson :
   converged = False
-  rtol      = 1e-15
-  dtol      = 1e-15
+  rtol      = 1e-4
+  dtol      = 1e-4
   lmbda     = 1.0
   nIter     = 0
   deviance  = 1
@@ -251,7 +251,7 @@ D      = zeros(len(B_v))
 D[B_v < 0] = B_v[B_v < 0]
 
 Ubar_avg = (Ubar5_v + Ubar10_v + Ubar20_v) / 3.0
-ini      = sqrt(917.0 * 9.8 * H_v * gradS / (Ubar_avg + 0.1))
+ini      = sqrt(917.0 * 9.8 * H_v * gradS / (Ubar5_v + 0.1))
 
 # areas of cells for weighting :
 h_v  = project(CellSize(mesh), Q).vector().array()
@@ -265,12 +265,13 @@ if sys.argv[2] == 'limited':
   valid  = intersect1d(valid, where(U_mag > 20)[0])
 else:
   valid  = intersect1d(valid, where(U_mag > 0)[0])
-valid  = intersect1d(valid, where(U_ob_v > 1e-9)[0])
+valid  = intersect1d(valid, where(U_ob_v > 1e-10)[0])
 valid  = intersect1d(valid, where(abs(Mb_v) < 200)[0])
 valid  = intersect1d(valid, where(S_v > -100)[0])
 valid  = intersect1d(valid, where(Ts_v > 100)[0])
 valid  = intersect1d(valid, where(h_v > 0)[0])
-valid  = intersect1d(valid, where(S_v - B_v > 10)[0])
+valid  = intersect1d(valid, where(S_v - B_v > 60)[0])
+valid  = intersect1d(valid, where(adot_v > -100)[0])
 
 valid_f          = Function(Q)
 valid_f_v        = valid_f.vector().array()
@@ -283,22 +284,22 @@ dm       = DataInput(measures, gen_space=False)
 
 betaMax = 200.0
 
-ini_f = Function(Q)
-ini_f.vector()[:] = ini
-plotIce(dm, ini_f, name='ini', direc='images/stats/' + file_n,
-        cmap='gist_yarg', scale='log', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False, umin=1.0, umax=betaMax)
-
-Ubar_avg_f = Function(Q)
-Ubar_avg_f.vector()[:] = Ubar_avg
-plotIce(dm, Ubar_avg_f, name='Ubar_avg', direc='images/stats/' + file_n,
-        title=r'$\Vert \mathbf{\bar{u}}_{\bar{bv}} \Vert$', cmap='gist_yarg', 
-        scale='log', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False, umin=1.0, umax=4000.0)
-
-plotIce(dm, valid_f, name='valid', direc='images/stats/' + file_n,
-        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False)
+#ini_f = Function(Q)
+#ini_f.vector()[:] = ini
+#plotIce(dm, ini_f, name='ini', direc='images/stats/' + file_n,
+#        cmap='gist_yarg', scale='log', numLvls=12, tp=False,
+#        tpAlpha=0.5, show=False, umin=1.0, umax=betaMax)
+#
+#Ubar_avg_f = Function(Q)
+#Ubar_avg_f.vector()[:] = Ubar_avg
+#plotIce(dm, Ubar_avg_f, name='Ubar_avg', direc='images/stats/' + file_n,
+#        title=r'$\Vert \mathbf{\bar{u}}_{\bar{bv}} \Vert$', cmap='gist_yarg', 
+#        scale='log', numLvls=12, tp=False,
+#        tpAlpha=0.5, show=False, umin=1.0, umax=4000.0)
+#
+#plotIce(dm, valid_f, name='valid', direc='images/stats/' + file_n,
+#        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
+#        tpAlpha=0.5, show=False)
 
 #===============================================================================
 # cell declustering :
@@ -441,11 +442,11 @@ V      = [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,
 
 # no u,v,w :
 if sys.argv[1] == 'full':
-  index  = [0,1,2,4,5,7,8,9,13,14,15,16,17,18,19,20,22,23,25]
+  index  = [0,1,2,4,5,7,8,9,13,14,15,16,19,20,25]
 
 # no stresses :
 elif sys.argv[1] == 'no_stress':
-  index  = [0,1,2,4,5,7,8,9,13,14,15,16,25]
+  index  = [0,1,2,4,5,7,8,9,13,16,25]
 
 # no basal velocity :
 elif sys.argv[1] == 'no_U':
@@ -465,7 +466,7 @@ ii_int.extend(ii)
 
 for i,m in enumerate(ii):
   for j,n in enumerate(ii[i:]):
-    if not(m == 17 or m==18 or m==19 or m==20 or m==22 or m==23):
+    if not(m==n and (m == 17 or m==18 or m==19 or m==20 or m==22 or m==23)):
       ii_int.append([m,n])
 
 #fig = figure(figsize=(25,15))
@@ -828,6 +829,28 @@ while exterminated > 0:
   #show()
   close(fig)
 
+  #=============================================================================
+  # plot newton residuals :
+  fig = figure()
+  ax  = fig.add_subplot(111)
+  
+  ax.plot(out_n['rel_a'], 'k-', lw=2.0,
+          label=r'$\Vert \alpha - \alpha_n \Vert^2$')
+  ax.plot(out_n['dev_a'], 'r-', lw=2.0,
+          label=r'$\Vert \mathbf{d} - \mathbf{d}_n \Vert^2$')
+  ax.set_xlabel(r'Iteration')
+  ax.set_yscale('log')
+  ax.set_xlim([0, len(out_n['dev_a'])-1])
+  ax.grid()
+  ax.legend()
+  fn = 'images/stats/' + file_n + 'GLM_newton_resid_reduced.png'
+  tight_layout()
+  savefig(fn, dpi=100)
+  #show()
+  close(fig)
+
+  #=============================================================================
+  # save tables :
   fn = open('dat/'+file_n+'alpha_reduced.dat', 'w')
   for n, a, c in zip(ex_a, ahat_n, ci_n):
     al = a-c

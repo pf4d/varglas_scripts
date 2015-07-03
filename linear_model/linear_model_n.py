@@ -43,8 +43,8 @@ def glm(x,y,w=1.0):
 
   # Newton-Raphson :
   converged = False
-  rtol      = 1e-15
-  dtol      = 1e-15
+  rtol      = 1e-4
+  dtol      = 1e-4
   lmbda     = 1.0
   nIter     = 0
   deviance  = 1
@@ -218,6 +218,9 @@ a_dSdy   = project(a_S.dx(1), a_Q)
                           
 a_dBdx   = project(a_B.dx(0), a_Q)
 a_dBdy   = project(a_B.dx(1), a_Q)
+                          
+a_dHdx   = project((a_S - a_B).dx(0), a_Q)
+a_dHdy   = project((a_S - a_B).dx(1), a_Q)
 
 # vectors :
 a_beta_v   = a_beta.vector().array()
@@ -246,7 +249,10 @@ a_tau_jz_v = a_tau_jz.vector().array()
 a_mask_v   = a_mask.vector().array()
 
 a_H_v    = a_S_v - a_B_v
-a_U_mag  = sqrt(a_u_v**2 + a_v_v**2 + a_w_v**2 + 1e-16)
+a_dHdx_v = a_dHdx.vector().array()
+a_dHdy_v = a_dHdy.vector().array()
+a_gradH  = sqrt(a_dHdx_v**2 + a_dHdy_v**2 + 1e-16)
+a_U_mag  = sqrt(a_u_v**2 + a_v_v**2 + 1e-16)
 a_dSdx_v = a_dSdx.vector().array()
 a_dSdy_v = a_dSdy.vector().array()
 a_gradS  = sqrt(a_dSdx_v**2 + a_dSdy_v**2 + 1e-16)
@@ -256,8 +262,36 @@ a_gradB  = sqrt(a_dBdx_v**2 + a_dBdy_v**2 + 1e-16)
 a_D      = zeros(len(a_B_v))
 a_D[a_B_v < 0] = a_B_v[a_B_v < 0]
 
+a_taux = -917.0 * 9.8 * a_H_v * a_dSdx_v
+a_tauy = -917.0 * 9.8 * a_H_v * a_dSdy_v
+a_tau_mag = sqrt(a_taux**2 + a_tauy**2 + 1e-16)
+
+if sys.argv[1] == 'Ubar':
+  a_uhat = a_taux / a_tau_mag
+  a_vhat = a_tauy / a_tau_mag
+
+elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
+  a_uhat = a_u_v / a_U_mag
+  a_vhat = a_v_v / a_U_mag
+
+a_dBdi = a_dBdx_v * a_uhat + a_dBdy_v * a_vhat
+a_dBdj = a_dBdx_v * a_vhat - a_dBdy_v * a_uhat
+
+a_dSdi = a_dSdx_v * a_uhat + a_dSdy_v * a_vhat
+a_dSdj = a_dSdx_v * a_vhat - a_dSdy_v * a_uhat
+
+a_dHdi = a_dHdx_v * a_uhat + a_dHdy_v * a_vhat
+a_dHdj = a_dHdx_v * a_vhat - a_dHdy_v * a_uhat
+
 a_Ubar_avg = (a_Ubar5_v + a_Ubar10_v + a_Ubar20_v) / 3.0
-a_ini      = sqrt(917.0 * 9.8 * a_H_v * a_gradS / (a_Ubar5_v + 0.1))
+
+if sys.argv[1] == 'Ubar':
+  a_ini_i    = 917.0 * 9.8 * a_H_v * a_dSdi / (a_Ubar5_v + 0.1)
+  a_ini_j    = 917.0 * 9.8 * a_H_v * a_dSdj / (a_Ubar5_v + 0.1)
+
+elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
+  a_ini_i    = 917.0 * 9.8 * a_H_v * a_dSdi / (a_U_mag + 0.1)
+  a_ini_j    = 917.0 * 9.8 * a_H_v * a_dSdj / (a_U_mag + 0.1)
 
 # areas of cells for weighting :
 a_h_v  = project(CellSize(a_mesh), a_Q).vector().array()
@@ -327,6 +361,9 @@ g_dSdy   = project(g_S.dx(1), g_Q)
 
 g_dBdx   = project(g_B.dx(0), g_Q)
 g_dBdy   = project(g_B.dx(1), g_Q)
+                          
+g_dHdx   = project((g_S - g_B).dx(0), g_Q)
+g_dHdy   = project((g_S - g_B).dx(1), g_Q)
 
 # vectors :
 g_beta_v   = g_beta.vector().array()
@@ -355,7 +392,10 @@ g_tau_jz_v = g_tau_jz.vector().array()
 g_mask_v   = g_mask.vector().array()
 
 g_H_v    = g_S_v - g_B_v
-g_U_mag  = sqrt(g_u_v**2 + g_v_v**2 + g_w_v**2 + 1e-16)
+g_dHdx_v = g_dHdx.vector().array()
+g_dHdy_v = g_dHdy.vector().array()
+g_gradH  = sqrt(g_dHdx_v**2 + g_dHdy_v**2 + 1e-16)
+g_U_mag  = sqrt(g_u_v**2 + g_v_v**2 + 1e-16)
 g_dSdx_v = g_dSdx.vector().array()
 g_dSdy_v = g_dSdy.vector().array()
 g_gradS  = sqrt(g_dSdx_v**2 + g_dSdy_v**2 + 1e-16)
@@ -365,8 +405,36 @@ g_gradB  = sqrt(g_dBdx_v**2 + g_dBdy_v**2 + 1e-16)
 g_D      = zeros(len(g_B_v))
 g_D[g_B_v < 0] = g_B_v[g_B_v < 0]
 
+g_taux = -917.0 * 9.8 * g_H_v * g_dSdx_v
+g_tauy = -917.0 * 9.8 * g_H_v * g_dSdy_v
+g_tau_mag = sqrt(g_taux**2 + g_tauy**2 + 1e-16)
+
+if sys.argv[1] == 'Ubar':
+  g_uhat = g_taux / g_tau_mag
+  g_vhat = g_tauy / g_tau_mag
+
+elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
+  g_uhat = g_u_v / g_U_mag
+  g_vhat = g_v_v / g_U_mag
+
+g_dBdi = g_dBdx_v * g_uhat + g_dBdy_v * g_vhat
+g_dBdj = g_dBdx_v * g_vhat - g_dBdy_v * g_uhat
+
+g_dSdi = g_dSdx_v * g_uhat + g_dSdy_v * g_vhat
+g_dSdj = g_dSdx_v * g_vhat - g_dSdy_v * g_uhat
+
+g_dHdi = g_dHdx_v * g_uhat + g_dHdy_v * g_vhat
+g_dHdj = g_dHdx_v * g_vhat - g_dHdy_v * g_uhat
+
 g_Ubar_avg = (g_Ubar5_v + g_Ubar10_v + g_Ubar20_v) / 3.0
-g_ini      = sqrt(917.0 * 9.8 * g_H_v * g_gradS / (g_Ubar5_v + 0.1))
+
+if sys.argv[1] == 'Ubar':
+  g_ini_i    = 917.0 * 9.8 * g_H_v * g_dSdi / (g_Ubar5_v + 0.1)
+  g_ini_j    = 917.0 * 9.8 * g_H_v * g_dSdj / (g_Ubar5_v + 0.1)
+
+elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
+  g_ini_i    = 917.0 * 9.8 * g_H_v * g_dSdi / (g_U_mag + 0.1)
+  g_ini_j    = 917.0 * 9.8 * g_H_v * g_dSdj / (g_U_mag + 0.1)
 
 # areas of cells for weighting :
 g_h_v  = project(CellSize(g_mesh), g_Q).vector().array()
@@ -387,9 +455,16 @@ beta_v    = hstack((a_beta_v,   g_beta_v  ))
 S_v       = hstack((a_S_v,      g_S_v     )) 
 B_v       = hstack((a_B_v,      g_B_v     )) 
 Ts_v      = hstack((a_Ts_v,     g_Ts_v    ))
+gradH     = hstack((a_gradH,    g_gradH   ))
+dHdi      = hstack((a_dHdi,     g_dHdi    ))
+dHdj      = hstack((a_dHdj,     g_dHdj    ))
 gradS     = hstack((a_gradS,    g_gradS   ))
+dSdi      = hstack((a_dSdi,     g_dSdi    ))
+dSdj      = hstack((a_dSdj,     g_dSdj    ))
 D         = hstack((a_D,        g_D       ))
 gradB     = hstack((a_gradB,    g_gradB   ))
+dBdi      = hstack((a_dBdi,     g_dBdi    ))
+dBdj      = hstack((a_dBdj,     g_dBdj    ))
 H_v       = hstack((a_H_v,      g_H_v     ))
 qgeo_v    = hstack((a_qgeo_v,   g_qgeo_v  ))
 adot_v    = hstack((a_adot_v,   g_adot_v  ))
@@ -411,7 +486,8 @@ tau_iz_v  = hstack((a_tau_iz_v, g_tau_iz_v))
 tau_ji_v  = hstack((a_tau_ji_v, g_tau_ji_v))
 tau_jj_v  = hstack((a_tau_jj_v, g_tau_jj_v))
 tau_jz_v  = hstack((a_tau_jz_v, g_tau_jz_v))
-ini       = hstack((a_ini,      g_ini     ))
+ini_i     = hstack((a_ini_i,    g_ini_i   ))
+ini_j     = hstack((a_ini_j,    g_ini_j   ))
 mask_v    = hstack((a_mask_v,   g_mask_v  ))
 h_v       = hstack((a_h_v,      g_h_v     ))
 
@@ -429,7 +505,8 @@ else:
 valid  = intersect1d(valid, where(U_ob_v > 1e-9)[0])
 valid  = intersect1d(valid, where(Ts_v > 100)[0])
 valid  = intersect1d(valid, where(h_v > 0)[0])
-valid  = intersect1d(valid, where(S_v - B_v > 10)[0])
+valid  = intersect1d(valid, where(S_v - B_v > 60)[0])
+valid  = intersect1d(valid, where(adot_v > -100)[0])
 #valid  = intersect1d(valid, where(gradS < 0.05)[0])
 #valid  = intersect1d(valid, where(gradB < 0.2)[0])
 #valid  = intersect1d(valid, where(Mb_v < 0.04)[0])
@@ -469,29 +546,93 @@ betaMax = 200.0
 
 #===============================================================================
 
-plotIce(dm, a_valid_f, name='valid', direc=a_fn,
-        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False)
-
-plotIce(drg, g_valid_f, name='valid', direc=g_fn,
-        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
-        tpAlpha=0.5, show=False)
+#plotIce(dm, a_valid_f, name='valid', direc=a_fn,
+#        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
+#        tpAlpha=0.5, show=False)
+#
+#plotIce(drg, g_valid_f, name='valid', direc=g_fn,
+#        cmap='gist_yarg', scale='bool', numLvls=12, tp=False,
+#        tpAlpha=0.5, show=False)
+#
+#a_dBdi_f = Function(a_Q)
+#a_dBdj_f = Function(a_Q)
+#a_dBdi_f.vector()[a_valid] = dBdi[a_conv]
+#a_dBdj_f.vector()[a_valid] = dBdj[a_conv]
+#  
+#g_dBdi_f = Function(g_Q)
+#g_dBdj_f = Function(g_Q)
+#g_dBdi_f.vector()[g_valid] = dBdi[g_conv]
+#g_dBdj_f.vector()[g_valid] = dBdj[g_conv]
+#
+#plotIce(dm, a_dBdi_f, name='dBdi', direc=a_fn, 
+#        title=r'$\partial_i B$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#plotIce(dm, a_dBdj_f, name='dBdj', direc=a_fn, 
+#        title=r'$\partial_j B$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#plotIce(drg, g_dBdi_f, name='dBdi', direc=g_fn, 
+#        title=r'$\partial_i B$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#plotIce(drg, g_dBdj_f, name='dBdj', direc=g_fn, 
+#        title=r'$\partial_j B$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#a_dSdi_f = Function(a_Q)
+#a_dSdj_f = Function(a_Q)
+#a_dSdi_f.vector()[a_valid] = dSdi[a_conv]
+#a_dSdj_f.vector()[a_valid] = dSdj[a_conv]
+#  
+#g_dSdi_f = Function(g_Q)
+#g_dSdj_f = Function(g_Q)
+#g_dSdi_f.vector()[g_valid] = dSdi[g_conv]
+#g_dSdj_f.vector()[g_valid] = dSdj[g_conv]
+#
+#plotIce(dm, a_dSdi_f, name='dSdi', direc=a_fn, 
+#        title=r'$\partial_i S$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#plotIce(dm, a_dSdj_f, name='dSdj', direc=a_fn, 
+#        title=r'$\partial_j S$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#plotIce(drg, g_dSdi_f, name='dSdi', direc=g_fn, 
+#        title=r'$\partial_i S$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
+#
+#plotIce(drg, g_dSdj_f, name='dSdj', direc=g_fn, 
+#        title=r'$\partial_j S$', cmap='RdGy', scale='lin', extend='max',
+#        umin=-0.1, umax=0.1, numLvls=12, tp=False, tpAlpha=0.5, show=False)
 
 #===============================================================================
 # cell declustering :
+a_n_v    = len(a_valid)
+g_n_v    = len(g_valid)
 n        = len(valid)
-h_v      = h_v[valid]
-A        = sum(h_v)
-wt       = n * h_v / A
-beta_bar = 1.0/n * sum(beta_v[valid] * wt)
+
+a_h_v    = a_h_v[a_valid]
+g_h_v    = g_h_v[g_valid]
+a_A      = sum(a_h_v)
+g_A      = sum(g_h_v)
+
+gam      = float(g_n_v) / float(a_n_v)
+
+a_wt     = n**2 / float(a_n_v) * a_h_v / a_A
+g_wt     = n**2 / float(g_n_v) * g_h_v / g_A
+
+wt       = hstack((a_wt, g_wt))
+
+#h_v      = h_v[valid]
+#A        = sum(h_v)
+#wt       = n * h_v / A
+#beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 
 #===============================================================================
-#g_data = [log(g_beta_v + 1), g_S_v, g_B_v, g_H_v, g_adot_v, g_Mb_v, 
-#          g_Tb_v, g_Ts_v, log(g_Ubar_v + 1), g_qbar_v, g_u_v, 
-#          g_v_v, g_w_v, log(g_U_mag + 1), sqrt(g_gradS + 1), sqrt(g_gradB + 1)]
 #data = [beta_v,  S_v,     B_v,    gradS,   gradB, 
 #        H_v,     adot_v,  Ts_v,   Tb_v,    Mb_v,
-#        Ubar_v,  u_v,     v_v,    w_v,     U_mag]
+#        Ubar5_v, u_v,     v_v,    w_v,     U_mag]
 #names = [r'$\beta$',
 #         r'$S$',
 #         r'$D$',
@@ -502,7 +643,7 @@ beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 #         r'$T_S$', 
 #         r'$T_B$', 
 #         r'$M_B$', 
-#         r'$\Vert \bar{\mathbf{u}_{bv}} \Vert$',
+#         r'$\Vert \bar{\mathbf{u}}_{bv} \Vert$',
 #         r'$u$', 
 #         r'$v$', 
 #         r'$w$', 
@@ -516,7 +657,7 @@ beta_bar = 1.0/n * sum(beta_v[valid] * wt)
 #  ax.set_xlabel(n)
 #  ax.set_ylabel(r'$n$')
 #  ax.grid()
-#fn = 'images/greenland_data.png'
+#fn = 'images/data.png'
 ##savefig(fn, dpi=100)
 #show()
 
@@ -552,7 +693,15 @@ v21  = tau_iz_v
 v22  = tau_ji_v
 v23  = tau_jj_v
 v24  = tau_jz_v
-v25  = ini
+v25  = ini_i
+v26  = ini_j
+v27  = dBdi
+v28  = dBdj
+v29  = dSdi
+v30  = dSdj
+v31  = gradH
+v32  = dHdi
+v33  = dHdj
 
 x0   = v0[valid]
 x1   = v1[valid]
@@ -580,6 +729,14 @@ x22  = v22[valid]
 x23  = v23[valid]
 x24  = v24[valid]
 x25  = v25[valid]
+x26  = v26[valid]
+x27  = v27[valid]
+x28  = v28[valid]
+x29  = v29[valid]
+x30  = v30[valid]
+x31  = v31[valid]
+x32  = v32[valid]
+x33  = v33[valid]
 
 #===============================================================================
 # formulte design matrix and do some EDA :
@@ -608,41 +765,44 @@ names = [r'$S$',
          r'$\tau_{ji}$',
          r'$\tau_{jj}$',
          r'$\tau_{jz}$',
-         r'ini']
+         r'ini$_i$',
+         r'ini$_j$',
+         r'$\partial_i B$',
+         r'$\partial_j B$',
+         r'$\partial_i S$',
+         r'$\partial_j S$',
+         r'$\Vert \nabla H \Vert$',
+         r'$\partial_i H$',
+         r'$\partial_j H$']
 
 X      = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,
-          x19,x20,x21,x22,x23,x24,x25]
+          x19,x20,x21,x22,x23,x24,x25,x26,x27,x28,x29,x30,x31,x32,x33]
 V      = [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,
-          v19,v20,v21,v22,v23,v24,v25]
+          v19,v20,v21,v22,v23,v24,v25,v26,v27,v28,v29,v30,v31,v32,v33]
 
-# no u,v,w :
-if sys.argv[1] == 'full':
-  index  = [0,1,2,4,5,7,8,9,13,14,15,16,17,18,19,20,22,23,25]
+# with stress terms :
+if sys.argv[1] == 'stress':
+  index  = [0,1,5,7,16,27,29,17,19,20,22,23]
 
-# no stresses :
-elif sys.argv[1] == 'no_stress':
-  index  = [0,1,2,4,5,7,8,9,13,14,15,16,25]
-
-# no basal velocity :
-elif sys.argv[1] == 'no_U':
-  index  = [0,1,2,4,5,7,8,9,13,14,15,25]
-
-# no basal melt :
-elif sys.argv[1] == 'no_Mb':
-  index  = [0,1,2,4,5,7,8,13,14,15,25]
+# U instead of Ubar :
+elif sys.argv[1] == 'U':
+  index  = [0,1,5,7,16,27,29]
 
 # independent only :
-elif sys.argv[1] == 'ind_only':
-  index  = [0,1,2,4,5,7,13,25]
+elif sys.argv[1] == 'Ubar':
+  index  = [0,1,5,7,13,27,29]
 
 ii     = index
 ii_int = []
 ii_int.extend(ii)
 
 for i,m in enumerate(ii):
-  for j,n in enumerate(ii[i:]):
-    if not(m == 17 or m==18 or m==19 or m==20 or m==22 or m==23):
-      ii_int.append([m,n])
+  if sys.argv[1] == 'U' or sys.argv[1] == 'Ubar':
+    k = i
+  else:
+    k = i+1
+  for j,n in enumerate(ii[k:]):
+    ii_int.append([m,n])
 
 #fig = figure(figsize=(25,15))
 Xt   = []
@@ -676,6 +836,7 @@ for k,i in enumerate(ii_int):
   Vt.append(v)
 
 ex_n.insert(0, '$\mathbf{1}$')
+ex_n = array(ex_n)
  
 #show()
 
@@ -884,8 +1045,9 @@ v_m_rat  = sigma**2 / mu               # variance-to-mean ratio
 stats_yh = [mu, med, sigma**2, fe_iqr, v_m_rat, 
             out['R2'], out['F'], out['AIC'], out['sighat']]
 
-f = open('dat/' + file_n + 'alpha.dat', 'w')
-for n, a, c in zip(ex_n, ahat, ci):
+srt = argsort(abs(ahat))[::-1]
+f   = open('dat/' + file_n + 'alpha.dat', 'w')
+for n, a, c in zip(ex_n[srt], ahat[srt], ci[srt]):
   al = a-c
   ah = a+c
   if sign(al) != sign(ah):
@@ -1026,8 +1188,31 @@ while exterminated > 0:
   #show()
   close(fig)
 
-  fn = open('dat/'+file_n+'alpha_reduced.dat', 'w')
-  for n, a, c in zip(ex_a, ahat_n, ci_n):
+  #=============================================================================
+  # plot newton residuals :
+  fig = figure()
+  ax  = fig.add_subplot(111)
+  
+  ax.plot(out_n['rel_a'], 'k-', lw=2.0,
+          label=r'$\Vert \alpha - \alpha_n \Vert^2$')
+  ax.plot(out_n['dev_a'], 'r-', lw=2.0,
+          label=r'$\Vert \mathbf{d} - \mathbf{d}_n \Vert^2$')
+  ax.set_xlabel(r'Iteration')
+  ax.set_yscale('log')
+  ax.set_xlim([0, len(out_n['dev_a'])-1])
+  ax.grid()
+  ax.legend()
+  fn = 'images/stats/' + file_n + 'GLM_newton_resid_reduced.png'
+  tight_layout()
+  savefig(fn, dpi=100)
+  #show()
+  close(fig)
+
+  #=============================================================================
+  # save tables :
+  srt = argsort(abs(ahat_n))[::-1]
+  fn  = open('dat/'+file_n+'alpha_reduced.dat', 'w')
+  for n, a, c in zip(ex_a[srt], ahat_n[srt], ci_n[srt]):
     al = a-c
     ah = a+c
     if sign(al) != sign(ah):

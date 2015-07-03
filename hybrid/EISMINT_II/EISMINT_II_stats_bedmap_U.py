@@ -1,11 +1,13 @@
-from fenics          import *
-from varglas.solvers import HybridTransientSolver
-from varglas.helper  import default_config
-from varglas.model   import Model
+from fenics                    import *
+from varglas.data.data_factory import DataFactory
+from varglas.io                import DataInput, print_min_max
+from varglas.solvers           import HybridTransientSolver
+from varglas.helper            import default_config
+from varglas.model             import Model
 
 set_log_active(False)
 
-out_dir = './stats/'
+out_dir = 'dump/stats_bedmap_new/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
@@ -15,23 +17,26 @@ parameters['form_compiler']['representation']    = 'quadrature'
 
 mesh = Mesh('meshes/circle_mesh.xml')
 
+x0 = 1.3e6
+y0 = 6.5e5
+
 thklim = 1.0
 L      = 800000.
 
 for x in mesh.coordinates():
   # transform x :
-  x[0]  = x[0]  * L
+  x[0]  = x0 + x[0] * L
   # transform y :
-  x[1]  = x[1]  * L
+  x[1]  = y0 + x[1] * L
 
 config = default_config()
 config['log']                          = True
-config['log_history']                  = False
+config['log_history']                  = True
 config['mode']                         = 'transient'
 config['model_order']                  = 'L1L2'
 config['output_path']                  = out_dir
 config['t_start']                      = 0.0
-config['t_end']                        = 17000#200000.0
+config['t_end']                        = 100000
 config['time_step']                    = 10.0
 config['periodic_boundary_conditions'] = False
 config['velocity']['poly_degree']      = 2
@@ -41,35 +46,33 @@ config['free_surface']['on']           = True
 config['free_surface']['thklim']       = thklim
 config['velocity']['transient_beta']   = 'stats'
 config['balance_velocity']['on']       = True
+config['balance_velocity']['kappa']    = 5.0
+
+bedmap2 = DataFactory.get_bedmap2()
+db2     = DataInput(bedmap2, mesh=mesh)
+
+db2.data['Sn'] = db2.data['S'] + thklim
+
+B       = db2.get_expression("B",  near=True)
+S       = db2.get_expression("Sn", near=True)
 
 model = Model(config)
 model.set_mesh(mesh)
 
 model.rhoi = 910.0
 
-# GEOMETRY AND INPUT DATA
-class Surface(Expression):
-  def eval(self,values,x):
-    values[0] = thklim
-S = Surface(element=model.Q.ufl_element())
-
-class Bed(Expression):
-  def eval(self,values,x):
-    values[0] = 0
-B = Bed(element=model.Q.ufl_element())
-
 class Adot(Expression):
   Rel = 450000
   s   = 1e-5
   def eval(self,values,x):
-    values[0] = min(0.5,self.s*(self.Rel-sqrt(x[0]**2 + x[1]**2)))
+    values[0] = min(0.5,self.s*(self.Rel-sqrt((x[0] - x0)**2 + (x[1] - y0)**2)))
 adot = Adot(element=model.Q.ufl_element())
 
 class SurfaceTemperature(Expression):
   Tmin = 238.15
   St   = 1.67e-5
   def eval(self,values,x):
-    values[0] = self.Tmin + self.St*sqrt(x[0]**2 + x[1]**2)
+    values[0] = self.Tmin + self.St*sqrt((x[0] - x0)**2 + (x[1] - y0)**2)
 T_s = SurfaceTemperature(element=model.Q.ufl_element())
 
 model.set_geometry(S, B, deform=False)
@@ -80,7 +83,12 @@ model.init_T_surface(T_s)
 model.init_H(thklim)
 model.init_H_bounds(thklim, 1e4)
 model.init_q_geo(model.ghf)
-model.init_beta_stats()
+model.init_beta_stats('full')
+
+model.save_pvd(model.S, 'S')
+model.save_pvd(model.B, 'B')
+model.save_pvd(model.adot, 'adot')
+model.save_pvd(model.T_surface, 'T_surface')
 
 model.eps_reg = 1e-10
 
