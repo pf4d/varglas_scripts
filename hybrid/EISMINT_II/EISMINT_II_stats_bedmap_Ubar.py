@@ -7,7 +7,7 @@ from varglas.model             import Model
 
 set_log_active(False)
 
-out_dir = 'dump2/stats_bedmap_new_ind_only/'
+out_dir = 'dump/stats_bedmap_Ubar/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
@@ -36,7 +36,7 @@ config['mode']                         = 'transient'
 config['model_order']                  = 'L1L2'
 config['output_path']                  = out_dir
 config['t_start']                      = 0.0
-config['t_end']                        = 100000
+config['t_end']                        = 35000.0
 config['time_step']                    = 10.0
 config['periodic_boundary_conditions'] = False
 config['velocity']['poly_degree']      = 2
@@ -45,8 +45,6 @@ config['enthalpy']['N_T']              = 8
 config['free_surface']['on']           = True
 config['free_surface']['thklim']       = thklim
 config['velocity']['transient_beta']   = 'stats'
-config['balance_velocity']['on']       = True
-config['balance_velocity']['kappa']    = 5.0
 
 bedmap2 = DataFactory.get_bedmap2()
 db2     = DataInput(bedmap2, mesh=mesh)
@@ -58,8 +56,6 @@ S       = db2.get_expression("Sn", near=True)
 
 model = Model(config)
 model.set_mesh(mesh)
-
-model.rhoi = 910.0
 
 class Adot(Expression):
   Rel = 450000
@@ -83,7 +79,7 @@ model.init_T_surface(T_s)
 model.init_H(thklim)
 model.init_H_bounds(thklim, 1e4)
 model.init_q_geo(model.ghf)
-model.init_beta_stats('ind_only')
+model.init_beta_stats('Ubar')
 
 model.save_pvd(model.S, 'S')
 model.save_pvd(model.B, 'B')

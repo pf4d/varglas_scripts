@@ -5,7 +5,7 @@ from varglas.model             import Model
 
 set_log_active(False)
 
-out_dir = 'dump2/stats_trough_ind_only_new/'
+out_dir = 'dump/stats_trough_Ubar_dirU/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
@@ -31,7 +31,7 @@ config['mode']                         = 'transient'
 config['model_order']                  = 'L1L2'
 config['output_path']                  = out_dir
 config['t_start']                      = 0.0
-config['t_end']                        = 100000.0
+config['t_end']                        = 35000.0
 config['time_step']                    = 10.0
 config['periodic_boundary_conditions'] = False
 config['velocity']['poly_degree']      = 2
