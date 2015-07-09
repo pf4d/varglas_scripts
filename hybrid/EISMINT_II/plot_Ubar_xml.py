@@ -31,17 +31,17 @@ u     = Function(Q)
 v     = Function(Q)
 w     = Function(Q)
 
-Bmin = 30.0
-Bmax = 400.0
+Bmin = 31.62 
+Bmax = 200.0
 
-Smin = -2233
-Smax = 3500
+Smin = -834
+Smax = 3900
 
-Umin = 1.0
-Umax = 200.0
+Umin = 0.0
+Umax = 220.0
 
 Hmin = 1.0
-Hmax = 3500
+Hmax = 4200
 
 #===============================================================================
 # save S colorbar :
@@ -106,7 +106,8 @@ ax  = fig.add_subplot(111)
 # the colorbar will be used.
 cmap = mpl.cm.gist_yarg
 
-levels    = np.logspace(np.log10(Umin), np.log10(Umax), 12)
+levels    = linspace(Umin, Umax, 12)
+#levels    = np.logspace(np.log10(Umin), np.log10(Umax), 12)
 formatter = ScalarFormatter()
 norm      = mpl.colors.BoundaryNorm(levels, cmap.N)
 
@@ -153,7 +154,7 @@ savefig(img_dir + 'beta_cb.png', dpi=300)
 
 #===============================================================================
 # plot the observed values :
-for i in range(0,35000,100):
+for i in range(0,35100,100):
   File(in_dir + 'beta_' + str(i) + '.xml') >> beta
   File(in_dir + 'S_'    + str(i) + '.xml') >> S
   File(in_dir + 'H_'    + str(i) + '.xml') >> H
@@ -175,7 +176,7 @@ for i in range(0,35000,100):
                 show=False, hide_ax_tick_labels=True, label_axes=False,
                 colorbar_loc='bottom')
   plot_variable(U,    'U_mag_'+str(i), img_dir, tp=False,
-                umin=Umin, umax=Umax, scale='log', hide_axis=True,
+                umin=Umin, umax=Umax, scale='lin', hide_axis=True,
                 title='$\\Vert \\mathbf{u}_S \\Vert$',
                 show=False, hide_ax_tick_labels=cb, label_axes=False,
                 use_colorbar=cb, colorbar_loc='bottom')

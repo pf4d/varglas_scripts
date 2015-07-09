@@ -3,8 +3,8 @@ from fenics          import *
 from pylab           import *
 from matplotlib.ticker import ScalarFormatter, LogFormatter
 
-in_dir  = 'dump2/U_xml/'
-img_dir = 'images_stats_U/'
+in_dir  = 'dump2/H_xml/'
+img_dir = 'images_H/'
 
 set_log_active(False)
 
@@ -31,8 +31,8 @@ u     = Function(Q)
 v     = Function(Q)
 w     = Function(Q)
 
-Bmin = 31.62 
-Bmax = 200.0
+Bmin = sqrt(1e3) - 1e-10
+Bmax = sqrt(1e9) + 1e-10
 
 Smin = -834
 Smax = 3900
@@ -134,7 +134,7 @@ ax  = fig.add_subplot(111)
 # the colorbar will be used.
 cmap = mpl.cm.gist_yarg
 
-levels    = np.logspace(np.log10(Bmin), np.log10(Bmax), 12)
+levels    = linspace(Bmin, Bmax, 12)
 formatter = ScalarFormatter()
 norm      = mpl.colors.BoundaryNorm(levels, cmap.N)
 
@@ -154,7 +154,7 @@ savefig(img_dir + 'beta_cb.png', dpi=300)
 
 #===============================================================================
 # plot the observed values :
-for i in range(0,35100,100):
+for i in range(10000,17100,100):
   File(in_dir + 'beta_' + str(i) + '.xml') >> beta
   File(in_dir + 'S_'    + str(i) + '.xml') >> S
   File(in_dir + 'H_'    + str(i) + '.xml') >> H
@@ -171,7 +171,7 @@ for i in range(0,35100,100):
   cb = False
   
   plot_variable(beta, 'beta_'+str(i),  img_dir, tp=False,
-                umin=Bmin, umax=Bmax, scale='log',
+                umin=Bmin, umax=Bmax, scale='lin',
                 title='$\\beta$', use_colorbar=cb, hide_axis=True,
                 show=False, hide_ax_tick_labels=True, label_axes=False,
                 colorbar_loc='bottom')

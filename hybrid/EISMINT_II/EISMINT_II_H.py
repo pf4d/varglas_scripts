@@ -7,7 +7,7 @@ from varglas.model   import Model
 
 set_log_active(False)
 
-out_dir = 'dump2/bedmap_H/'
+out_dir = 'dump/bedmap_H/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
@@ -92,6 +92,10 @@ model.eps_reg = 1e-10
 
 model.save_pvd(model.S, 'S')
 model.save_pvd(model.B, 'B')
+
+model.save_xml(model.B,         'B')
+model.save_xml(model.T_surface, 'T_s')
+model.save_xml(model.adot,      'adot')
 
 T = HybridTransientSolver(model, config)
 T.solve()
