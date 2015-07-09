@@ -133,102 +133,102 @@ etabar.vector()[:] = etabar_v
 measures   = DataFactory.get_ant_measures(res=900)
 dm         = DataInput(measures, gen_space=False)
 
-plotIce(dm, mask, name='mask', direc='images/model/', cmap='gist_yarg',
-        title=r'', scale='bool', umin=0.0, umax=1.0,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
-plotIce(dm, S, name='S', direc='images/model/', cmap='gist_yarg',
-        title=r'$S$', scale='lin', umin=None, umax=None,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
-plotIce(dm, B, name='B', direc='images/model/', cmap='gist_yarg',
-        title=r'$B$', scale='lin', umin=None, umax=None,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
-plotIce(dm, gradS, name='gradS', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert \nabla S \Vert$', scale='log', umin=1e-4, umax=None,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
-plotIce(dm, gradB, name='gradB', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert \nabla B \Vert$', scale='log', umin=1e-4, umax=None,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
-plotIce(dm, H, name='H', direc='images/model/', cmap='gist_yarg',
-        title=r'$H$', scale='lin', umin=None, umax=None,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
-plotIce(dm, D, name='D', direc='images/model/', cmap='gist_yarg',
-        title=r'$D$', scale='lin', umin=None, umax=-1e-12,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
-plotIce(dm, Tb, name='Tb', direc='images/model/', cmap='gist_yarg',
-        title=r'$T_B$', scale='lin', umin=240, umax=273.15,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
-plotIce(dm, Ts, name='Ts', direc='images/model/', cmap='gist_yarg',
-        title=r'$T_S$', scale='lin', umin=210, umax=273.15,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
-plotIce(dm, adot, name='adot', direc='images/model/', cmap='gist_yarg',
-        title=r'$\dot{a}$', scale='lin', umin=0.0, umax=1.0,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, etabar, name='etabar', direc='images/model/', cmap='gist_yarg',
-        title=r'$\bar{\eta}$', scale='log', umin=1.0, umax=5e3,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, Ub_mag_f, name='Ub', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{u}_B\Vert$', scale='log', umin=1.0, umax=4000,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, Us_mag_f, name='Us', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{u}_S\Vert$', scale='log', umin=1.0, umax=4000,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, Ubar_mag_f, name='Ubar', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{\bar{u}}\Vert$', scale='log', umin=1.0, umax=4000,
-        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, Ubar1, name='Ubar_bv_1', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{\bar{u}}_{bv1}\Vert$', scale='log',
-        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
-        extend='both', show=False)
-plotIce(dm, Ubar5, name='Ubar_bv_5', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{\bar{u}}_{bv5}\Vert$', scale='log',
-        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
-        extend='both', show=False)
-plotIce(dm, Ubar10, name='Ubar_bv_10', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{\bar{u}}_{bv10}\Vert$', scale='log',
-        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
-        extend='both', show=False)
-plotIce(dm, Ubar20, name='Ubar_bv_20', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{\bar{u}}_{bv20}\Vert$', scale='log',
-        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
-        extend='both', show=False)
-plotIce(dm, Ubar50, name='Ubar_bv_50', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert\mathbf{\bar{u}}_{bv50}\Vert$', scale='log',
-        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
-        extend='both', show=False)
-plotIce(dm, U_ob,   name='U_ob', direc='images/model/', cmap='gist_yarg',
-        title=r'$\Vert \mathbf{u}_{ob} \Vert$', scale='log',
-        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
-        extend='both', show=False)
+#plotIce(dm, mask, name='mask', direc='images/model/', cmap='gist_yarg',
+#        title=r'', scale='bool', umin=0.0, umax=1.0,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
+#plotIce(dm, S, name='S', direc='images/model/', cmap='gist_yarg',
+#        title=r'$S$', scale='lin', umin=None, umax=None,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
+#plotIce(dm, B, name='B', direc='images/model/', cmap='gist_yarg',
+#        title=r'$B$', scale='lin', umin=None, umax=None,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
+#plotIce(dm, gradS, name='gradS', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert \nabla S \Vert$', scale='log', umin=1e-4, umax=None,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
+#plotIce(dm, gradB, name='gradB', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert \nabla B \Vert$', scale='log', umin=1e-4, umax=None,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
+#plotIce(dm, H, name='H', direc='images/model/', cmap='gist_yarg',
+#        title=r'$H$', scale='lin', umin=None, umax=None,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
+#plotIce(dm, D, name='D', direc='images/model/', cmap='gist_yarg',
+#        title=r'$D$', scale='lin', umin=None, umax=-1e-12,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='neither', show=False)
+#plotIce(dm, Tb, name='Tb', direc='images/model/', cmap='gist_yarg',
+#        title=r'$T_B$', scale='lin', umin=240, umax=273.15,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
+#plotIce(dm, Ts, name='Ts', direc='images/model/', cmap='gist_yarg',
+#        title=r'$T_S$', scale='lin', umin=210, umax=273.15,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='min', show=False)
+#plotIce(dm, adot, name='adot', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\dot{a}$', scale='lin', umin=0.0, umax=1.0,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, etabar, name='etabar', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\bar{\eta}$', scale='log', umin=1.0, umax=5e3,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, Ub_mag_f, name='Ub', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{u}_B\Vert$', scale='log', umin=1.0, umax=4000,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, Us_mag_f, name='Us', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{u}_S\Vert$', scale='log', umin=1.0, umax=4000,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, Ubar_mag_f, name='Ubar', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{\bar{u}}\Vert$', scale='log', umin=1.0, umax=4000,
+#        numLvls=12, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, Ubar1, name='Ubar_bv_1', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{\bar{u}}_{bv1}\Vert$', scale='log',
+#        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
+#        extend='both', show=False)
+#plotIce(dm, Ubar5, name='Ubar_bv_5', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{\bar{u}}_{bv5}\Vert$', scale='log',
+#        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
+#        extend='both', show=False)
+#plotIce(dm, Ubar10, name='Ubar_bv_10', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{\bar{u}}_{bv10}\Vert$', scale='log',
+#        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
+#        extend='both', show=False)
+#plotIce(dm, Ubar20, name='Ubar_bv_20', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{\bar{u}}_{bv20}\Vert$', scale='log',
+#        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
+#        extend='both', show=False)
+#plotIce(dm, Ubar50, name='Ubar_bv_50', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert\mathbf{\bar{u}}_{bv50}\Vert$', scale='log',
+#        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
+#        extend='both', show=False)
+#plotIce(dm, U_ob,   name='U_ob', direc='images/model/', cmap='gist_yarg',
+#        title=r'$\Vert \mathbf{u}_{ob} \Vert$', scale='log',
+#        umin=1.0, umax=4000, numLvls=12, tp=False, tpAlpha=0.5,
+#        extend='both', show=False)
 plotIce(dm, beta,  name='beta', direc='images/model/', cmap='gist_yarg',
-        title=r'$\beta$', scale='log', umin=1.0, umax=200,
+        title=r'$\beta$', scale='lin', umin=0.0, umax=200,
         numLvls=12, tp=False, tpAlpha=0.5, extend='max', show=False)
-plotIce(dm, Mb,  name='Mb', direc='images/model/', cmap='gist_yarg',
-        title=r'$M_B$', scale='log', umin=0.003, umax=1.0,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_id,  name='tau_id', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{id}$', scale='lin', umin=-1e5, umax=1e5,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_jd,  name='tau_jd', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{jd}$', scale='lin', umin=-1e5, umax=1e5,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_ii,  name='tau_ii', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{ii}$', scale='lin', umin=-1e4, umax=1e4,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_ij,  name='tau_ij', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{ij}$', scale='lin', umin=-1e4, umax=1e4,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_iz,  name='tau_iz', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{iz}$', scale='lin', umin=-1e5, umax=1e5,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_ji,  name='tau_ji', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{ji}$', scale='lin', umin=-1e4, umax=1e4,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_jj,  name='tau_jj', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{jj}$', scale='lin', umin=-1e4, umax=1e4,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
-plotIce(dm, tau_jz,  name='tau_jz', direc='images/model/', cmap='RdGy',
-        title=r'$\tau_{jz}$', scale='lin', umin=-1e5, umax=1e5,
-        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, Mb,  name='Mb', direc='images/model/', cmap='gist_yarg',
+#        title=r'$M_B$', scale='log', umin=0.003, umax=1.0,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_id,  name='tau_id', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{id}$', scale='lin', umin=-1e5, umax=1e5,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_jd,  name='tau_jd', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{jd}$', scale='lin', umin=-1e5, umax=1e5,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_ii,  name='tau_ii', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{ii}$', scale='lin', umin=-1e4, umax=1e4,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_ij,  name='tau_ij', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{ij}$', scale='lin', umin=-1e4, umax=1e4,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_iz,  name='tau_iz', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{iz}$', scale='lin', umin=-1e5, umax=1e5,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_ji,  name='tau_ji', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{ji}$', scale='lin', umin=-1e4, umax=1e4,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_jj,  name='tau_jj', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{jj}$', scale='lin', umin=-1e4, umax=1e4,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
+#plotIce(dm, tau_jz,  name='tau_jz', direc='images/model/', cmap='RdGy',
+#        title=r'$\tau_{jz}$', scale='lin', umin=-1e5, umax=1e5,
+#        numLvls=13, tp=False, tpAlpha=0.5, extend='both', show=False)
 
 
 

@@ -5,7 +5,7 @@ from varglas.model             import Model
 
 set_log_active(False)
 
-out_dir = 'dump/stats_trough_U/'
+out_dir = 'dump2/stats_trough_U_Ubar/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
@@ -96,7 +96,7 @@ model.init_T_surface(T_s)
 model.init_H(thklim)
 model.init_H_bounds(thklim, 1e4)
 model.init_q_geo(model.ghf)
-model.init_beta_stats('U')
+model.init_beta_stats('U_Ubar')
 
 model.eps_reg = 1e-10
 

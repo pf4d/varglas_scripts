@@ -266,13 +266,15 @@ a_taux = -917.0 * 9.8 * a_H_v * a_dSdx_v
 a_tauy = -917.0 * 9.8 * a_H_v * a_dSdy_v
 a_tau_mag = sqrt(a_taux**2 + a_tauy**2 + 1e-16)
 
-if sys.argv[1] == 'Ubar':
-  a_uhat = a_taux / a_tau_mag
-  a_vhat = a_tauy / a_tau_mag
-
-elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
-  a_uhat = a_u_v / a_U_mag
-  a_vhat = a_v_v / a_U_mag
+#if sys.argv[1] == 'Ubar' or  sys.argv[1] == 'Ubar_temp':
+#  a_uhat = a_taux / a_tau_mag
+#  a_vhat = a_tauy / a_tau_mag
+#
+#elif sys.argv[1] == 'U' or sys.argv[1] == 'stress' or sys.argv[1] == 'U_temp':
+#  a_uhat = a_u_v / a_U_mag
+#  a_vhat = a_v_v / a_U_mag
+a_uhat = a_u_v / a_U_mag
+a_vhat = a_v_v / a_U_mag
 
 a_dBdi = a_dBdx_v * a_uhat + a_dBdy_v * a_vhat
 a_dBdj = a_dBdx_v * a_vhat - a_dBdy_v * a_uhat
@@ -285,11 +287,11 @@ a_dHdj = a_dHdx_v * a_vhat - a_dHdy_v * a_uhat
 
 a_Ubar_avg = (a_Ubar5_v + a_Ubar10_v + a_Ubar20_v) / 3.0
 
-if sys.argv[1] == 'Ubar':
+if sys.argv[1] == 'Ubar' or sys.argv[1] == 'Ubar_temp':
   a_ini_i    = 917.0 * 9.8 * a_H_v * a_dSdi / (a_Ubar5_v + 0.1)
   a_ini_j    = 917.0 * 9.8 * a_H_v * a_dSdj / (a_Ubar5_v + 0.1)
 
-elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
+elif sys.argv[1] == 'U' or sys.argv[1] == 'stress' or sys.argv[1] == 'U_temp':
   a_ini_i    = 917.0 * 9.8 * a_H_v * a_dSdi / (a_U_mag + 0.1)
   a_ini_j    = 917.0 * 9.8 * a_H_v * a_dSdj / (a_U_mag + 0.1)
 
@@ -409,13 +411,15 @@ g_taux = -917.0 * 9.8 * g_H_v * g_dSdx_v
 g_tauy = -917.0 * 9.8 * g_H_v * g_dSdy_v
 g_tau_mag = sqrt(g_taux**2 + g_tauy**2 + 1e-16)
 
-if sys.argv[1] == 'Ubar':
-  g_uhat = g_taux / g_tau_mag
-  g_vhat = g_tauy / g_tau_mag
-
-elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
-  g_uhat = g_u_v / g_U_mag
-  g_vhat = g_v_v / g_U_mag
+#if sys.argv[1] == 'Ubar' or sys.argv[1] == 'Ubar_temp':
+#  g_uhat = g_taux / g_tau_mag
+#  g_vhat = g_tauy / g_tau_mag
+#
+#elif sys.argv[1] == 'U' or sys.argv[1] == 'stress' or sys.argv[1] == 'U_temp':
+#  g_uhat = g_u_v / g_U_mag
+#  g_vhat = g_v_v / g_U_mag
+g_uhat = g_u_v / g_U_mag
+g_vhat = g_v_v / g_U_mag
 
 g_dBdi = g_dBdx_v * g_uhat + g_dBdy_v * g_vhat
 g_dBdj = g_dBdx_v * g_vhat - g_dBdy_v * g_uhat
@@ -428,11 +432,12 @@ g_dHdj = g_dHdx_v * g_vhat - g_dHdy_v * g_uhat
 
 g_Ubar_avg = (g_Ubar5_v + g_Ubar10_v + g_Ubar20_v) / 3.0
 
-if sys.argv[1] == 'Ubar':
+
+if sys.argv[1] == 'Ubar' or sys.argv[1] == 'Ubar_temp':
   g_ini_i    = 917.0 * 9.8 * g_H_v * g_dSdi / (g_Ubar5_v + 0.1)
   g_ini_j    = 917.0 * 9.8 * g_H_v * g_dSdj / (g_Ubar5_v + 0.1)
 
-elif sys.argv[1] == 'U' or sys.argv[1] == 'stress':
+elif sys.argv[1] == 'U' or sys.argv[1] == 'stress' or sys.argv[1] == 'U_temp':
   g_ini_i    = 917.0 * 9.8 * g_H_v * g_dSdi / (g_U_mag + 0.1)
   g_ini_j    = 917.0 * 9.8 * g_H_v * g_dSdj / (g_U_mag + 0.1)
 
@@ -681,10 +686,10 @@ v9   = Mb_v
 v10  = u_v
 v11  = v_v
 v12  = w_v
-v13  = log(Ubar5_v+1)
-v14  = log(Ubar10_v+1)
-v15  = log(Ubar20_v+1)
-v16  = log(U_mag+1)
+v13  = log(Ubar5_v + DOLFIN_EPS)
+v14  = log(Ubar10_v + DOLFIN_EPS)
+v15  = log(Ubar20_v + DOLFIN_EPS)
+v16  = log(U_mag + DOLFIN_EPS)
 v17  = tau_id_v
 v18  = tau_jd_v
 v19  = tau_ii_v
@@ -753,10 +758,10 @@ names = [r'$S$',
          r'$u$', 
          r'$v$', 
          r'$w$', 
-         r'$\ln\left(\Vert \bar{\mathbf{u}}_{5} \Vert + 1\right)$',
-         r'$\ln\left(\Vert \bar{\mathbf{u}}_{10} \Vert + 1\right)$',
-         r'$\ln\left(\Vert \bar{\mathbf{u}}_{20} \Vert + 1\right)$',
-         r'$\ln\left(\Vert \mathbf{u}_B \Vert + 1\right)$',
+         r'$\ln\left( \Vert \bar{\mathbf{u}}_{5} \Vert \right)$',
+         r'$\ln\left( \Vert \bar{\mathbf{u}}_{10} \Vert \right)$',
+         r'$\ln\left( \Vert \bar{\mathbf{u}}_{20} \Vert \right)$',
+         r'$\ln\left( \Vert \mathbf{u}_B \Vert \right)$',
          r'$\tau_{id}$',
          r'$\tau_{jd}$',
          r'$\tau_{ii}$',
@@ -788,9 +793,16 @@ if sys.argv[1] == 'stress':
 elif sys.argv[1] == 'U':
   index  = [0,1,5,7,16,27,29]
 
+elif sys.argv[1] == 'U_temp':
+  index  = [0,1,5,7,8,9,16,27,29]
+
 # independent only :
 elif sys.argv[1] == 'Ubar':
   index  = [0,1,5,7,13,27,29]
+
+# independent only :
+elif sys.argv[1] == 'Ubar_temp':
+  index  = [0,1,5,7,8,9,13,27,29]
 
 ii     = index
 ii_int = []
@@ -1045,9 +1057,10 @@ v_m_rat  = sigma**2 / mu               # variance-to-mean ratio
 stats_yh = [mu, med, sigma**2, fe_iqr, v_m_rat, 
             out['R2'], out['F'], out['AIC'], out['sighat']]
 
-srt = argsort(abs(ahat))[::-1]
+#srt = argsort(abs(ahat))[::-1]
 f   = open('dat/' + file_n + 'alpha.dat', 'w')
-for n, a, c in zip(ex_n[srt], ahat[srt], ci[srt]):
+#for n, a, c in zip(ex_n[srt], ahat[srt], ci[srt]):
+for n, a, c in zip(ex_n, ahat, ci):
   al = a-c
   ah = a+c
   if sign(al) != sign(ah):
@@ -1210,9 +1223,10 @@ while exterminated > 0:
 
   #=============================================================================
   # save tables :
-  srt = argsort(abs(ahat_n))[::-1]
+  #srt = argsort(abs(ahat_n))[::-1]
   fn  = open('dat/'+file_n+'alpha_reduced.dat', 'w')
-  for n, a, c in zip(ex_a[srt], ahat_n[srt], ci_n[srt]):
+  #for n, a, c in zip(ex_a[srt], ahat_n[srt], ci_n[srt]):
+  for n, a, c in zip(ex_a, ahat_n, ci_n):
     al = a-c
     ah = a+c
     if sign(al) != sign(ah):
