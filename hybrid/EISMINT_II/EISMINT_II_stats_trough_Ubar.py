@@ -5,7 +5,7 @@ from varglas.model             import Model
 
 set_log_active(False)
 
-out_dir = 'dump/stats_trough_Ubar_dirU/'
+out_dir = 'dump/stats_trough_Ubar_dirU_stable/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
