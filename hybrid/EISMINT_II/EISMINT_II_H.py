@@ -93,6 +93,10 @@ model.eps_reg = 1e-10
 model.save_pvd(model.S, 'S')
 model.save_pvd(model.B, 'B')
 
+model.save_xml(model.B,         'B')
+model.save_xml(model.T_surface, 'T_s')
+model.save_xml(model.adot,      'adot')
+
 T = HybridTransientSolver(model, config)
 T.solve()
 
