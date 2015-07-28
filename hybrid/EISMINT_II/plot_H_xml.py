@@ -3,7 +3,7 @@ from fenics          import *
 from pylab           import *
 from matplotlib.ticker import ScalarFormatter, LogFormatter
 
-in_dir  = 'dump2/H_xml/'
+in_dir  = 'dump2/H_xml_20000/'
 img_dir = 'images_H/'
 
 set_log_active(False)
@@ -154,7 +154,8 @@ savefig(img_dir + 'beta_cb.png', dpi=300)
 
 #===============================================================================
 # plot the observed values :
-for i in range(10000,17100,100):
+#for i in range(10000,17100,100):
+i = 20000
   File(in_dir + 'beta_' + str(i) + '.xml') >> beta
   File(in_dir + 'S_'    + str(i) + '.xml') >> S
   File(in_dir + 'H_'    + str(i) + '.xml') >> H

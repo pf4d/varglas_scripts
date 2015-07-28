@@ -15,7 +15,7 @@ from scipy.io                     import loadmat
 t0 = time()
 
 # get the input args :
-out_dir = 'dump/linear_model_Ubar/'
+out_dir = 'dump/age_run/'
 var_dir = 'dump/vars_high/'
 in_dir  = 'dump/high/07/'
 bv_dir  = 'dump/bed/07/bv/'
@@ -76,9 +76,10 @@ config['coupled']['max_iter']             = 5
 config['velocity']['newton_params']       = params
 config['velocity']['vert_solve_method']   = 'mumps'#'superlu_dist'
 config['velocity']['calc_pressure']       = False
+config['velocity']['transient_beta']      = None #'stats'
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
-config['age']['on']                       = False
+config['age']['on']                       = True
 config['age']['use_smb_for_ela']          = True
 config['balance_velocity']['kappa']       = 5.0
 
@@ -96,23 +97,24 @@ model.init_adot(adot)
 model.init_E(1.0)
 
 model.init_T(in_dir + 'T.xml')             # temp
+model.init_beta(in_dir + 'beta.xml')       # friction
 model.init_W(in_dir + 'W.xml')             # water
 model.init_E_shf(in_dir + 'E_shf.xml')     # enhancement
 model.init_U(in_dir + 'u.xml',
              in_dir + 'v.xml',
              in_dir + 'w.xml')
-model.init_Ubar(Ubar)
+#model.init_Ubar(Ubar)
 
-model.save_pvd(model.Ubar, 'Ubar')
+#model.save_pvd(model.Ubar, 'Ubar')
 
 ## get the balance velocity :
 #F = solvers.BalanceVelocitySolver(model, config)
 #F.solve()
 
-model.init_beta_stats('Ubar')
+#model.init_beta_stats('Ubar')
 
-model.save_pvd(model.beta, 'beta')
-model.save_xml(model.beta, 'beta')
+#model.save_pvd(model.beta, 'beta')
+#model.save_xml(model.beta, 'beta')
 
 # solve the BP model :
 F = solvers.SteadySolver(model, config)
