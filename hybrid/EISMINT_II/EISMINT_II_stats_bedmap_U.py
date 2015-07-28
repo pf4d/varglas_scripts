@@ -7,7 +7,7 @@ from varglas.model             import Model
 
 set_log_active(False)
 
-out_dir = 'dump/stats_bedmap_U/'
+out_dir = 'dump/stats_bedmap_U_xml/'
 
 parameters['form_compiler']['quadrature_degree'] = 2
 parameters['form_compiler']['precision']         = 30
