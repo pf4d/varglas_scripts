@@ -7,15 +7,10 @@ from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
 from fenics                       import *
-from time                         import time
-from termcolor                    import colored, cprint
 from scipy.io                     import loadmat
 
-
-t0 = time()
-
 # get the input args :
-out_dir = 'dump/linear_model_Ubar/'
+out_dir = 'dump/age_run_bub/'
 var_dir = 'dump/vars_high/'
 in_dir  = 'dump/high/07/'
 bv_dir  = 'dump/bed/07/bv/'
@@ -51,8 +46,8 @@ f.read(ff_acc,'ff_acc')
 params = default_nonlin_solver_params()
 params['nonlinear_solver']                          = 'newton'
 params['newton_solver']['relaxation_parameter']     = 0.7
-params['newton_solver']['relative_tolerance']       = 1e-9
-params['newton_solver']['maximum_iterations']       = 25
+params['newton_solver']['relative_tolerance']       = 1e-4
+params['newton_solver']['maximum_iterations']       = 16
 params['newton_solver']['error_on_nonconvergence']  = False
 params['newton_solver']['linear_solver']            = 'cg'
 params['newton_solver']['preconditioner']           = 'hypre_amg'
@@ -70,7 +65,7 @@ config['velocity']['calc_pressure']       = False
 config['velocity']['transient_beta']      = None
 config['enthalpy']['on']                  = True
 config['enthalpy']['solve_method']        = 'mumps'#'superlu_dist'
-config['age']['on']                       = False
+config['age']['on']                       = True
 config['age']['use_smb_for_ela']          = True
 config['balance_velocity']['kappa']       = 5.0
 
@@ -105,18 +100,6 @@ model.save_xml(model.u,  'u')
 model.save_xml(model.v,  'v')
 model.save_xml(model.w,  'w')
 model.save_xml(model.Mb, 'Mb')
-
-# calculate total time to compute
-tf = time()
-s  = tf - t0
-m  = s / 60.0
-h  = m / 60.0
-s  = s % 60
-m  = m % 60
-if model.MPI_rank == 0:
-  s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
-  text = colored(s, 'red', attrs=['bold'])
-  print text
 
 
 

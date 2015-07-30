@@ -64,7 +64,7 @@ m.create_contour('mask', zero_cntr=1, skip_pts=5)
 m.eliminate_intersections(dist=200)
 #m.plot_contour()
 m.write_gmsh_contour(boundary_extend=False)
-m.extrude(h=100000, n_layers=10)
+#m.extrude(h=100000, n_layers=10)
 m.close_file()
 
 
@@ -78,7 +78,7 @@ ref_bm.set_background_field(aid)
 
 #===============================================================================
 # finish stuff up :
-ref_bm.finish(gui=False, out_file_name= out_dir + 'mesh')
+ref_bm.finish(gui=False, out_file_name= out_dir + 'antarctica_2D_medium_mesh')
 
 
 

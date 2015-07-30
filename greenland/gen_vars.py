@@ -4,10 +4,6 @@ from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.data.data_factory    import DataFactory
 from varglas.io                   import DataInput
 from fenics                       import *
-from time                         import time
-from termcolor                    import colored, cprint
-
-t0 = time()
 
 out_dir  = 'dump/vars_ant_spacing/'
 thklim   = 1.0
@@ -69,16 +65,5 @@ f.write(u,            'u')
 f.write(v,            'v')
 f.write(U_ob,         'U_ob')
 
-tf = time()
 
-# calculate total time to compute
-s = tf - t0
-m = s / 60.0
-h = m / 60.0
-s = s % 60
-m = m % 60
-if model.MPI_rank == 0:
-  s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
-  text = colored(s, 'red', attrs=['bold'])
-  print text
 

@@ -5,9 +5,6 @@ from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
 from varglas.io                   import print_min_max, print_text
 from fenics                       import *
-from time                         import time
-
-t0 = time()
 
 #set_log_active(False)
 #set_log_level(PROGRESS)
@@ -132,15 +129,5 @@ model.save_xml(model.w,    'w')
 model.save_xml(model.beta, 'beta')
 model.save_xml(model.Mb,   'Mb')
 
-#===============================================================================
-# calculate total time to compute
-s   = time() - t0
-m   = s / 60.0
-h   = m / 60.0
-s   = s % 60
-m   = m % 60
-txt = "Total time to compute SteadySolver: %02d:%02d:%02d" % (h,m,s)
-print_text(txt, 'red', 1)
-#===============================================================================
 
 

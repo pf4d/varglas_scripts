@@ -6,9 +6,6 @@ from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
 from varglas.io                   import print_min_max, print_text
 from fenics                       import *
-from time                         import time
-
-t0 = time()
 
 #set_log_active(False)
 #set_log_level(PROGRESS)
@@ -160,16 +157,6 @@ File(out_dir + 'v.xml')       << model.v
 File(out_dir + 'w.xml')       << model.w 
 File(out_dir + 'beta.xml')    << model.beta
 File(out_dir + 'Mb.xml')      << model.Mb
-
-# calculate total time to compute
-s   = time() - t0
-m   = s / 60.0
-h   = m / 60.0
-s   = s % 60
-m   = m % 60
-txt = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
-print_text(txt, 'red', 1)
-
 
 
 

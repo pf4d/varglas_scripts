@@ -7,12 +7,7 @@ from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.helper               import default_nonlin_solver_params, \
                                          default_config
 from fenics                       import *
-from time                         import time
-from termcolor                    import colored, cprint
 from scipy.io                     import loadmat
-
-
-t0 = time()
 
 # get the input args :
 out_dir = 'dump/linear_model_Ubar/'
@@ -126,18 +121,6 @@ model.save_xml(model.u,  'u')
 model.save_xml(model.v,  'v')
 model.save_xml(model.w,  'w')
 model.save_xml(model.Mb, 'Mb')
-
-# calculate total time to compute
-tf = time()
-s  = tf - t0
-m  = s / 60.0
-h  = m / 60.0
-s  = s % 60
-m  = m % 60
-if model.MPI_rank == 0:
-  s    = "Total time to compute: %02d:%02d:%02d" % (h,m,s)
-  text = colored(s, 'red', attrs=['bold'])
-  print text
 
 
 
