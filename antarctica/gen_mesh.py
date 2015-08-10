@@ -40,7 +40,7 @@ nan = mask >  10
 
 #===============================================================================
 # form field from which to refine :
-dbm.data['ref'] = (0.05 + 1/(1 + dbm.data['U_ob'])) * 50000
+dbm.data['ref'] = dbm.data['U_ob']#(0.05 + 1/(1 + dbm.data['U_ob'])) * 50000
 
 # restrict element size on the shelves and outside the domain of the data :
 #dbm.data['ref'][slp] = 2000.0

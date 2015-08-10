@@ -4,11 +4,12 @@ from varglas.io                import DataInput, print_min_max
 from pylab                     import *
 from scipy.interpolate         import interp2d
 
+kappa = 1.0  # ice thickness to refine
 
 #===============================================================================
 # data preparation :
 out_dir   = 'dump/meshes/'
-mesh_name = 'basin_mesh_low'
+mesh_name = 'thwaites_3D_%iH' % int(kappa)
 
 # get the data :
 measure = DataFactory.get_ant_measures()
@@ -41,14 +42,17 @@ nan = mask >  10
 
 #===============================================================================
 # form field from which to refine :
-dbm.data['ref'] = (0.15 + 1/(1 + dbm.data['U_ob'])) * 40000
+#dbm.data['ref'] = (0.15 + 1/(1 + dbm.data['U_ob'])) * 40000
 
 # restrict element size on the shelves and outside the domain of the data :
 #dbm.data['ref'][slp] = 2000.0
-dbm.data['ref'][shf] = 10000.0
-dbm.data['ref'][nan] = 10000.0
+#dbm.data['ref'][shf] = 10000.0
+#dbm.data['ref'][nan] = 10000.0
 
-print_min_max(dbm.data['ref'], 'ref')
+db2.data['ref'] = kappa*db2.data['H'].copy()
+db2.data['ref'][db2.data['ref'] < kappa*1000.0] = kappa*1000.0
+
+print_min_max(db2.data['ref'], 'ref')
 
 ## plot to check :
 #imshow(dbm.data['ref'][::-1,:])
@@ -63,7 +67,7 @@ m = MeshGenerator(db2, mesh_name, out_dir)
 
 m.create_contour('mask', zero_cntr=1, skip_pts=1)
 
-gb = GetBasin(dbm, basin='17', edge_resolution=500)
+gb = GetBasin(dbm, basin='21', edge_resolution=500)
 #gb.extend_edge(20000)
 gb.intersection(m.longest_cont)
 
@@ -79,7 +83,7 @@ m.close_file()
 
 #===============================================================================
 # refine :
-ref_bm = MeshRefiner(dbm, 'ref', gmsh_file_name = out_dir + mesh_name)
+ref_bm = MeshRefiner(db2, 'ref', gmsh_file_name = out_dir + mesh_name)
 
 a,aid = ref_bm.add_static_attractor()
 ref_bm.set_background_field(aid)
