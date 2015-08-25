@@ -56,21 +56,21 @@ drg     = DataInput(rignot,   gen_space=False)
 #
 #num_mask = len(unique(m))
 
-x1 = -500000; y1 = -2190000
-x2 = -270000; y2 = -2320000
-
-x = dbm.x
-y = dbm.y
-
-x_valid  = where(x > x1)[0]
-x_valid  = intersect1d(x_valid, where(x < x2)[0])
-
-y_valid  = where(y < y1)[0]
-y_valid  = intersect1d(y_valid, where(y > y2)[0])
-
-for i in y_valid:
-  for j in x_valid:
-    dbm.data['H'][i,j] = 1.0
+#x1 = -500000; y1 = -2190000
+#x2 = -270000; y2 = -2320000
+#
+#x = dbm.x
+#y = dbm.y
+#
+#x_valid  = where(x > x1)[0]
+#x_valid  = intersect1d(x_valid, where(x < x2)[0])
+#
+#y_valid  = where(y < y1)[0]
+#y_valid  = intersect1d(y_valid, where(y > y2)[0])
+#
+#for i in y_valid:
+#  for j in x_valid:
+#    dbm.data['H'][i,j] = 1.0
 
 #plotIce(dbm, 'mask', name='mask', direc='images/data/', cmap='gist_yarg',
 #        title=r'', scale='lin', umin=None, umax=None, numLvls=num_mask)

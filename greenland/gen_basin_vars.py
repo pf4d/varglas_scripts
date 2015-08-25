@@ -15,7 +15,7 @@ bamber   = DataFactory.get_bamber(thklim = thklim)
 rignot   = DataFactory.get_rignot()
 
 # define the mesh :
-mesh = Mesh('dump/meshes/jakobshavn_3D_1H_mesh.xml.gz')
+mesh = Mesh('dump/meshes/jakobshavn_3D_5H_mesh_block.xml.gz')
 
 # create data objects to use with varglas :
 dsr     = DataInput(searise,  mesh=mesh)
@@ -43,13 +43,13 @@ dbm.data['ref'] = ref
 drg.change_projection(dbm)
 
 # get the expressions used by varglas :
-S     = dbm.get_expression('S',        near=False)
-B     = dbm.get_expression('B',        near=False)
-M     = dbm.get_expression('ref',     near=True)
+S     = dbm.get_expression('S',        near=False, kx=1, ky=1)
+B     = dbm.get_expression('B',        near=False, kx=1, ky=1)
+M     = dbm.get_expression('ref',      near=True)
 adot  = dsr.get_expression('adot',     near=False)
 T_s   = dsr.get_interpolation('T',     near=False)
-u     = drg.get_interpolation('vx',    near=True)
-v     = drg.get_interpolation('vy',    near=True)
+u     = drg.get_interpolation('vx',    near=False)
+v     = drg.get_interpolation('vy',    near=False)
 
 config = default_config()
 config['output_path'] = out_dir
