@@ -1,5 +1,5 @@
 from varglas.D3Model  import D3Model
-from varglas.momentum import MomentumBP
+from varglas.momentum import MomentumDukowiczStokesReduced
 from varglas.energy   import Enthalpy 
 from varglas.io       import print_text, print_min_max
 from scipy            import random
@@ -89,7 +89,7 @@ m_params  = {'solver'               : nparams,
 e_params  = {'solver'               : 'mumps',
              'use_surface_climate'  : False}
 
-mom = MomentumBP(model, m_params)
+mom = MomentumDukowiczStokesReduced(model, m_params)
 nrg = Enthalpy(model, e_params)
 
 model.save_pvd(model.beta, 'beta0')
@@ -113,7 +113,7 @@ nparams['newton_solver']['relaxation_parameter'] = 1.0
 nparams['newton_solver']['relative_tolerance']   = 1e-8
 nparams['newton_solver']['maximum_iterations']   = 3
 
-mom = MomentumBP(model, m_params, linear=True)
+mom = MomentumDukowiczStokesReduced(model, m_params, linear=True)
 mom.solve(annotate=True)
 
 model.set_out_dir(out_dir = out_dir + 'inverted/')
